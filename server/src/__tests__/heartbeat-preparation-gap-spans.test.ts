@@ -101,6 +101,7 @@ describe.skipIf(!support.supported)("heartbeat preparation gap spans", () => {
 
       await provider.forceFlush();
       const spans = exporter.getFinishedSpans();
+      console.log("SPAN_DIAGNOSTIC", JSON.stringify(spans.map(span => ({ name: span.name, id: span.spanContext().spanId, parent: span.parentSpanContext?.spanId, run: span.attributes["paperclip.task.run.run_id"] }))));
       const names = new Set(spans.map(span => span.name));
       const preparation = [
         "heartbeat.prepare.chat_retry_admission",

@@ -1,0 +1,35 @@
+name: papermarketing focused CI diagnosis
+on:
+  push:
+    branches: [fix/ci-observability-probe]
+permissions:
+  contents: read
+env:
+  PAPERCLIP_TELEMETRY_DISABLED: "1"
+  NODE_OPTIONS: --max-old-space-size=6144
+jobs:
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/ensure-plugin-build-deps.mjs
+      - run: pnpm exec vitest run server/src/__tests__/heartbeat-preparation-gap-spans.test.ts server/src/services/execution-timing-context.test.ts --retry=0
+  policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test scripts/__tests__/run-vitest-stable-shard.test.mjs scripts/__tests__/e2e-shard.test.mjs scripts/__tests__/release-verify-workflow.test.mjs scripts/__tests__/eval-schedule-monitor.test.mjs scripts/__tests__/prepare-runner-release-image.test.mjs scripts/cloud-source-verification.test.mjs scripts/standard-image-contract.test.mjs scripts/reuse-canary-image.test.mjs scripts/__tests__/build-standalone-concurrency.test.mjs
+      - run: node scripts/release-package-map.mjs check
