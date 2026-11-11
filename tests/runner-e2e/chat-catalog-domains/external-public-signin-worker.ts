@@ -64,7 +64,7 @@ async function main() {
       waitUntil: "domcontentloaded",
     });
     await page
-      .getByRole("heading", { name: "Sign in to Paperclip", exact: true })
+      .getByRole("heading", { name: "Sign in to Papermarketing", exact: true })
       .waitFor();
     const email = page.getByLabel("Email", { exact: true }),
       password = page.getByLabel("Password", { exact: true });

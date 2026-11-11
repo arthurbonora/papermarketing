@@ -63,7 +63,7 @@ export const signInIdentityBoundaryCases: readonly IdentityBoundaryCase[] = [{
     await person.expireSession();
     const expired = await person.context.request.get(`${api.baseURL}/api/issues/${conversation.id}`); const expiredReadStatus = expired.status(); await expired.dispose();
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Sign in to Paperclip", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign in to Papermarketing", exact: true })).toBeVisible();
     const safeReturnPath = new URL(page.url()).searchParams.get("next") ?? "";
     const expiredComposerAbsent = await page.getByTestId("task-chat-composer-input").count() === 0;
     await person.signInThroughBrowser(page, intendedReturnPath); person.bindApiSession(api);
