@@ -51,7 +51,7 @@ describe("GitHub star prompt", () => {
     expect(visible()).toBe(true);
     expect(state.listCompact).toHaveBeenCalledWith("company", { status: "done", limit: 5 }, expect.anything());
     expect(window.localStorage.getItem(STAR_PROMPT_SEEN_KEY)).not.toBeNull();
-    const star = document.querySelector<HTMLAnchorElement>('a[href="https://github.com/paperclipai/paperclip"]');
+    const star = document.querySelector<HTMLAnchorElement>('a[href="https://github.com/arthurbonora/papermarketing"]');
     expect(star?.target).toBe("_blank");
 
     await act(async () => root.unmount());

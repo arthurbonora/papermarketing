@@ -16,7 +16,7 @@ function offlineNavigationResponse() {
   return new Response(`<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark"><title>Paperclip is offline</title>
+<meta name="color-scheme" content="dark"><title>Papermarketing is offline</title>
 <style>${OFFLINE_STYLES}</style></head>
 <body class="paperclip-offline"><main aria-labelledby="offline-title">
 <div class="paperclip-offline-message">
@@ -67,7 +67,7 @@ function offlineNavigationResponse() {
 </g>
 </g>
 </svg>
-<h1 id="offline-title">Paperclip is offline</h1>
+<h1 id="offline-title">Papermarketing is offline</h1>
 </div>
 <p>Check your connection, then reload this page to try again.</p>
 </div>
