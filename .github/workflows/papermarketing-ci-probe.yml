@@ -9,7 +9,7 @@ env:
   NODE_OPTIONS: --max-old-space-size=6144
 jobs:
   trace:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,8 @@ jobs:
             pnpm install --frozen-lockfile
           fi
       - run: node scripts/ensure-plugin-build-deps.mjs
-      - run: pnpm exec vitest run server/src/__tests__/heartbeat-preparation-gap-spans.test.ts server/src/services/execution-timing-context.test.ts --retry=0
+      - run: test -x /usr/bin/bwrap
+      - run: pnpm exec vitest run server/src/__tests__/heartbeat-preparation-gap-spans.test.ts server/src/services/execution-timing-context.test.ts server/src/services/native-runtime/runner-bridge-tools.test.ts --retry=0
   policy:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
