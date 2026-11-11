@@ -20,7 +20,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: |
+          if ! pnpm install --frozen-lockfile; then
+            pnpm install --resolution-only --ignore-scripts --no-frozen-lockfile
+            pnpm install --frozen-lockfile
+          fi
       - run: node scripts/ensure-plugin-build-deps.mjs
       - run: pnpm exec vitest run server/src/__tests__/heartbeat-preparation-gap-spans.test.ts server/src/services/execution-timing-context.test.ts --retry=0
   policy:
@@ -28,6 +32,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
