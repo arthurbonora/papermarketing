@@ -43,6 +43,7 @@ import {
   type SearchQueryParserContext,
 } from "../lib/search-query-parser";
 import { companyProjectsQuery } from "@/lib/company-projects-query";
+import { MARKETING_DESTINATIONS } from "@/lib/marketing-navigation";
 
 const SEARCH_ALL_VALUE = "__paperclip-search-all__";
 
@@ -89,19 +90,20 @@ function scoreProjectMatch(name: string, description: string, q: string): number
   return null;
 }
 
-export function CommandPalette() {
+export function CommandPalette({ marketingNavigation = false }: { marketingNavigation?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedCompanyId } = useCompany();
-  const { openNewIssue, openNewAgent } = useDialogActions();
+  const { openNewIssue, openNewAgent, openNewProject } = useDialogActions();
   const { isMobile, setSidebarOpen } = useSidebar();
   const searchQuery = query.trim();
   const onIssueDetail = isOnIssueDetail(location.pathname);
   const { data: experimentalSettings } = useQuery({
     queryKey: queryKeys.instance.experimentalSettings,
     queryFn: () => instanceSettingsApi.getExperimental(),
+    enabled: !marketingNavigation,
   });
   const { enabled: combinedInboxTasksEnabled } = useCombinedInboxTasksEnabled();
   const fileViewerEnabled = experimentalSettings?.enableExperimentalFileViewer === true;
@@ -321,10 +323,10 @@ export function CommandPalette() {
             }}
           >
             <SquarePen className="mr-2 h-4 w-4" />
-            Create new task
+            {marketingNavigation ? "Nova tarefa" : "Create new task"}
             <span className="ml-auto text-xs text-muted-foreground">C</span>
           </CommandItem>
-          {onIssueDetail && fileViewerEnabled && (
+          {!marketingNavigation && onIssueDetail && fileViewerEnabled && (
             <CommandItem
               onSelect={() => {
                 setOpen(false);
@@ -343,17 +345,37 @@ export function CommandPalette() {
             }}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create new agent
+            {marketingNavigation ? "Criar agente" : "Create new agent"}
           </CommandItem>
-          <CommandItem onSelect={() => go("/projects")}>
+          <CommandItem onSelect={() => {
+            if (marketingNavigation) {
+              setOpen(false);
+              openNewProject();
+            } else {
+              go("/projects");
+            }
+          }}>
             <Plus className="mr-2 h-4 w-4" />
-            Create new project
+            {marketingNavigation ? "Criar projeto" : "Create new project"}
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Pages">
+        {marketingNavigation ? (
+          <CommandGroup heading="Páginas">
+            {Object.values(MARKETING_DESTINATIONS).map(({ to, label, icon: Icon }) => (
+              <CommandItem key={to} onSelect={() => go(to)}>
+                <Icon className="mr-2 size-4" />
+                {label}
+              </CommandItem>
+            ))}
+            <CommandItem onSelect={() => go("/inbox")}>
+              <Inbox className="mr-2 size-4" />
+              Caixa de entrada
+            </CommandItem>
+          </CommandGroup>
+        ) : <CommandGroup heading="Pages">
           <CommandItem onSelect={() => go("/dashboard")}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Dashboard
@@ -386,7 +408,7 @@ export function CommandPalette() {
             <History className="mr-2 h-4 w-4" />
             Activity
           </CommandItem>
-        </CommandGroup>
+        </CommandGroup>}
 
         {visibleIssues.length > 0 && (
           <>

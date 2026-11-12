@@ -191,7 +191,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
   // exceptions in Streamlined UI: their local navigation is a second rail
   // beside the persistent company nav.
   const sharedSecondarySidebar = isCompanySettingsRoute ? (
-    <CompanySettingsSidebar />
+    <CompanySettingsSidebar marketingNavigation={marketingNavigation} />
   ) : !streamlinedUiEnabled && shellRoute.builtInContextualSurface === "skills" ? (
     <SkillsContextualSidebar />
   ) : appDetailConnectionId ? (
@@ -691,7 +691,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
             <BreadcrumbBar showPropertiesToggle={isAgentChatRoute} />
             {isMobile && isCompanySettingsRoute ? (
               <div className="border-b border-border px-4 pb-3">
-                <CompanySettingsNav />
+                <CompanySettingsNav marketingNavigation={marketingNavigation} />
               </div>
             ) : null}
           </div>
@@ -769,8 +769,8 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
         </div>
       </div>
       {isMobile && <MobileBottomNav visible={mobileNavVisible} marketingNavigation={marketingNavigation} />}
-      <CommandPalette />
-      <BoardDialogs />
+      <CommandPalette marketingNavigation={marketingNavigation} />
+      <BoardDialogs marketingNavigation={marketingNavigation} />
       <KeyboardShortcutsCheatsheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <ToastViewport />
       {isMobile ? <AnnouncementWell health={health} placement="floating" /> : null}

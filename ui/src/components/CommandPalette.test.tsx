@@ -23,6 +23,7 @@ const companyState = vi.hoisted(() => ({
 const dialogState = vi.hoisted(() => ({
   openNewIssue: vi.fn(),
   openNewAgent: vi.fn(),
+  openNewProject: vi.fn(),
 }));
 
 const sidebarState = vi.hoisted(() => ({
@@ -197,6 +198,7 @@ describe("CommandPalette", () => {
     document.body.appendChild(container);
     dialogState.openNewIssue.mockReset();
     dialogState.openNewAgent.mockReset();
+    dialogState.openNewProject.mockReset();
     sidebarState.setSidebarOpen.mockReset();
     mockIssuesApi.list.mockReset();
     mockIssuesApi.listLabels.mockReset();
@@ -220,6 +222,25 @@ describe("CommandPalette", () => {
 
   afterEach(() => {
     container.remove();
+  });
+
+  it("shows marketing destinations and opens project creation in the active workspace", () => {
+    locationState.location.pathname = "/PAP/issues/PAP-1";
+    const { root } = renderWithQueryClient(<CommandPalette marketingNavigation />, container, client => {
+      client.setQueryData(queryKeys.instance.experimentalSettings, { enableExperimentalFileViewer: true });
+    });
+    const open = () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }));
+    const command = (name: string) => [...container.querySelectorAll("button")].find(button => button.textContent === name);
+    act(() => { open(); });
+    expect(command("Goals")).toBeUndefined();
+    expect(container.textContent).not.toContain("Open file in this issue");
+    expect(command("Entregas")).toBeDefined();
+    act(() => command("Conexões")!.click());
+    expect(navigateState.navigate).toHaveBeenCalledWith("/apps");
+    act(() => { open(); });
+    act(() => command("Criar projeto")!.click());
+    expect(dialogState.openNewProject).toHaveBeenCalledOnce();
+    act(() => root.unmount());
   });
 
   it("includes routine execution issues in search queries", async () => {
