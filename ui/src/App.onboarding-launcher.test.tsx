@@ -98,7 +98,7 @@ const COMPANY_GOAL = {
   updatedAt: new Date("2026-03-02T00:00:00Z"),
 };
 
-describe("the onboarding launcher's Add Agent button", () => {
+describe("the onboarding launcher", () => {
   let container: HTMLDivElement;
   let queryClient: QueryClient;
   let root: Root | null = null;
@@ -124,7 +124,7 @@ describe("the onboarding launcher's Add Agent button", () => {
 
   function addAgentButton(): HTMLButtonElement {
     const button = [...container.querySelectorAll("button")].find((b) =>
-      b.textContent?.includes("Add Agent"),
+      b.textContent?.includes("Criar agente"),
     );
     // Asserted rather than optional-chained: a lookup that silently matches
     // nothing turns the click below into a no-op and the test into decoration.
@@ -168,7 +168,7 @@ describe("the onboarding launcher's Add Agent button", () => {
 
   it("goes to the agent step whatever the goals lookup says", async () => {
     // Two tests lived here — company with no mission, and a lookup that failed —
-    // and both sent "Add Agent" to the mission step first. Onboarding no longer
+    // and both sent "Criar agente" to the mission step first. Onboarding no longer
     // asks for the mission, so neither goal state can divert a button whose
     // whole purpose is adding an agent.
     for (const goals of [
@@ -197,7 +197,7 @@ describe("the onboarding launcher's Add Agent button", () => {
     await settle();
 
     const start = [...container.querySelectorAll("button")].find((b) =>
-      b.textContent?.includes("Start Onboarding"),
+      b.textContent?.includes("Criar workspace"),
     );
     expect(start).toBeDefined();
     await act(async () => {
