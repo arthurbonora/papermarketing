@@ -1,5 +1,15 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { json, setup } from "./agent-chat.shared";
+
+async function expectPapermarketingAccountMenu(page: Page) {
+  await expect(page.getByRole("link", { name: "Share feedback" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Open account menu" }).click();
+  await expect(page.getByRole("link", { name: /Documentação/ })).toHaveAttribute(
+    "href", "https://github.com/arthurbonora/papermarketing/blob/master/README.md",
+  );
+  await expect(page.getByRole("link", { name: "View profile" })).toBeVisible();
+  await page.keyboard.press("Escape");
+}
 
 test("Classic changes the task presentation while preserving workspace navigation", async ({ page, request }) => {
   const original = await json(await request.get("/api/workspace-preferences/me"));
@@ -10,6 +20,7 @@ test("Classic changes the task presentation while preserving workspace navigatio
     expect(original.coordinatorWorkspaceEnabled).toBe(true);
     await page.goto(f.route);
     await expect(page.getByRole("navigation", { name: "Workspace navigation" })).toBeVisible();
+    await expectPapermarketingAccountMenu(page);
     await page.goto(settingsUrl);
     const classic = page.getByRole("switch", { name: "Enable classic workspace", exact: true });
     await expect(classic).toBeEnabled();
@@ -21,6 +32,7 @@ test("Classic changes the task presentation while preserving workspace navigatio
     await expect.poll(async () => (await json(await request.get("/api/workspace-preferences/me"))).coordinatorWorkspaceEnabled).toBe(false);
     await page.goto(f.route);
     await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Projetos" })).toBeVisible();
+    await expectPapermarketingAccountMenu(page);
     await page.goto(settingsUrl);
     await page.reload();
     await expect(classic).toBeChecked();

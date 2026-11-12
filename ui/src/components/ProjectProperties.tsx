@@ -32,6 +32,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
 interface ProjectPropertiesProps {
   project: Project;
   repositories?: ReactNode;
+  compactTechnicalSettings?: boolean;
   onUpdate?: (data: Record<string, unknown>) => void;
   onFieldUpdate?: (field: ProjectConfigFieldKey, data: Record<string, unknown>) => void;
   getFieldSaveState?: (field: ProjectConfigFieldKey) => ProjectFieldSaveState;
@@ -211,7 +212,28 @@ function ArchiveDangerZone({
   );
 }
 
-export function ProjectProperties({ project, repositories, onUpdate, onFieldUpdate, getFieldSaveState, onArchive, archivePending }: ProjectPropertiesProps) {
+function ProjectTechnicalSettings({ compact, children }: { compact: boolean; children: ReactNode }) {
+  const [visited, setVisited] = useState(false);
+  if (!compact) return <>{children}</>;
+
+  return (
+    <details
+      className="border-y border-border py-2"
+      onToggle={(event) => {
+        if (event.currentTarget.open) setVisited(true);
+      }}
+    >
+      <summary className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        Configuração técnica
+      </summary>
+      {visited ? children : null}
+    </details>
+  );
+}
+
+export function ProjectProperties({
+  project, repositories, compactTechnicalSettings = false, onUpdate, onFieldUpdate, getFieldSaveState, onArchive, archivePending,
+}: ProjectPropertiesProps) {
   const { visible: workspaceIsolationControlsVisible } = useWorkspaceIsolationControls();
   const { selectedCompanyId } = useCompany();
   const { data: privacySession } = useQuery({ queryKey: queryKeys.auth.session, queryFn: () => authApi.getSession() });
@@ -501,6 +523,18 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
             {project.visibility === "private" ? <ProjectAccessMembers project={project} canManage={canManagePrivacy} /> : null}
           </div>
         </PropertyRow>
+        <PropertyRow label={<FieldLabel label="Updated" state="idle" />}>
+          <span className="text-sm">{formatDate(project.updatedAt)}</span>
+        </PropertyRow>
+        {project.targetDate && (
+          <PropertyRow label={<FieldLabel label="Target Date" state="idle" />}>
+            <span className="text-sm">{formatDate(project.targetDate)}</span>
+          </PropertyRow>
+        )}
+      </div>
+
+      <ProjectTechnicalSettings compact={compactTechnicalSettings}>
+      <div className="space-y-1 pb-4">
         {repositories ?? <ProjectRepositories key={project.id} project={project} />}
         <ProjectGitAuthorization key={`git-${project.id}`} project={project} />
         <PropertyRow
@@ -523,14 +557,6 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
 
           </div>
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Updated" state="idle" />}>
-          <span className="text-sm">{formatDate(project.updatedAt)}</span>
-        </PropertyRow>
-        {project.targetDate && (
-          <PropertyRow label={<FieldLabel label="Target Date" state="idle" />}>
-            <span className="text-sm">{formatDate(project.targetDate)}</span>
-          </PropertyRow>
-        )}
       </div>
 
       <Separator className="my-4" />
@@ -1042,6 +1068,8 @@ export function ProjectProperties({ project, repositories, onUpdate, onFieldUpda
         ) : null}
 
       </div>
+
+      </ProjectTechnicalSettings>
 
       {onArchive && (
         <>

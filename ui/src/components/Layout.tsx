@@ -636,6 +636,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
             </div>
             <SidebarAccountMenu
               deploymentMode={health?.deploymentMode}
+              marketingNavigation={marketingNavigation}
               forceExpanded={replacesPrimarySidebar}
             />
           </div>
@@ -667,6 +668,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
               ) : null}
               <SidebarAccountMenu
                 deploymentMode={health?.deploymentMode}
+                marketingNavigation={marketingNavigation}
                 forceExpanded={replacesPrimarySidebar}
               />
             </>}

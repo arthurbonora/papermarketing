@@ -640,7 +640,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
                   {hasSecondarySidebar ? secondarySidebar : <PrimarySidebar />}
                 </div>
               </div>
-              <SidebarAccountMenu deploymentMode={health?.deploymentMode} />
+              <SidebarAccountMenu deploymentMode={health?.deploymentMode} marketingNavigation={marketingNavigation} />
             </div>
           ) : (
             <SidebarShell
@@ -658,7 +658,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
                 <div className="flex flex-1 min-h-0">
                   <PrimarySidebar />
                 </div>
-                <SidebarAccountMenu deploymentMode={health?.deploymentMode} />
+                <SidebarAccountMenu deploymentMode={health?.deploymentMode} marketingNavigation={marketingNavigation} />
               </>}
             </SidebarShell>
           )}
