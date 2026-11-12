@@ -42,10 +42,12 @@ async function health(port) {
 }
 async function bootstrap(a,port) {
   const password=privateDecrypt({key:privateKey,padding:constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},Buffer.from(a.sealed,'base64')).toString();
-  const origin=`http://localhost:${port}`;
+  // Private auth normalizes loopback origins to the container's listen port.
+  // Connect through the published port, but keep Host and Origin at port 3100.
+  const origin='http://localhost:3100';
   let cookies='';
   async function api(path,body) {
-    const r=await fetch(`http://127.0.0.1:${port}/api${path}`,{method:body===undefined?'GET':'POST',headers:{Host:`localhost:${port}`,Origin:origin,'Content-Type':'application/json',...(cookies?{Cookie:cookies}:{})},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(60000)});
+    const r=await fetch(`http://127.0.0.1:${port}/api${path}`,{method:body===undefined?'GET':'POST',headers:{Host:'localhost:3100',Origin:origin,'Content-Type':'application/json',...(cookies?{Cookie:cookies}:{})},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(60000)});
     const next=r.headers.getSetCookie();if(next.length)cookies=next.map(v=>v.split(';')[0]).join('; ');
     let data;try{data=await r.json();}catch{data=null;}
     return {r,data};
