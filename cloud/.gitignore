@@ -1,0 +1,5 @@
+state/
+*.pem
+*.sqlite*
+*.env
+__pycache__/

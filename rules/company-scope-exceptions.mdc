@@ -1,6 +1,6 @@
 ---
-description: The known instance-wide data is announcement dismissals, the announcement publication-ID registry, personal workspace presentation preferences, and the per-user sidebar company order; these grant no authority, and a new exception must be added to this list.
-globs: "packages/db/src/schema/announcement_dismissals.ts,packages/shared/src/announcements.ts,server/src/routes/announcements.ts,server/src/services/announcements.ts,server/src/services/announcement-feed.ts,packages/db/src/schema/user_workspace_preferences.ts,packages/shared/src/workspace-preferences.ts,server/src/routes/workspace-preferences.ts,server/src/services/workspace-preferences.ts,packages/db/src/schema/user_sidebar_preferences.ts,packages/shared/src/types/sidebar-preferences.ts,server/src/routes/sidebar-preferences.ts,server/src/services/sidebar-preferences.ts"
+description: Enumerate instance-wide preferences and the separate hosting account registry; enforce their stated authority and isolation boundaries.
+globs: "cloud/**,packages/db/src/schema/announcement_dismissals.ts,packages/shared/src/announcements.ts,server/src/routes/announcements.ts,server/src/services/announcements.ts,server/src/services/announcement-feed.ts,packages/db/src/schema/user_workspace_preferences.ts,packages/shared/src/workspace-preferences.ts,server/src/routes/workspace-preferences.ts,server/src/services/workspace-preferences.ts,packages/db/src/schema/user_sidebar_preferences.ts,packages/shared/src/types/sidebar-preferences.ts,server/src/routes/sidebar-preferences.ts,server/src/services/sidebar-preferences.ts"
 alwaysApply: false
 ---
 
@@ -15,6 +15,17 @@ exceptions. `AGENTS.md` section 5 sends any change that adds data without a
 company scope here.
 
 ## The exceptions
+
+- **The PaperMarketing hosting account registry** in `cloud/` belongs to a
+  separate hosting service, before a customer instance or company exists.
+  Invitations, sessions, provisioning state and audit events are scoped to the
+  hosting account. An authenticated request can only read its own account.
+  The portal cannot access Docker, tenant volumes or the provisioning private
+  key. A host-only operator issues email-bound invitations; a separate privileged
+  worker creates one isolated Compose project per account and claims the first
+  administrator through application APIs before publishing its route. This
+  grants instance ownership only inside that account's new installation.
+  Existing application company membership and execution controls remain intact.
 
 - **Announcement dismissals** are instance-wide user preferences, keyed by user
   and announcement so they persist across companies. Their audit context must

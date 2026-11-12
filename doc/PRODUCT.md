@@ -2,6 +2,14 @@
 
 ## papermarketing fork
 
+The separate `cloud/` service hosts the English public website and an
+invitation-only hosting pilot. One accepted hosting account creates one dedicated
+Docker Compose project, application volume and PostgreSQL database. The first
+pilot is Bonorasw. The hosting registry is separate from application companies;
+existing workspace permissions still apply inside each instance. No billing is
+enabled. See [Cloud operations](../cloud/README.md) for the deployment, capacity
+and recovery boundaries.
+
 For this fork, a company is presented as a workspace, the sole administrative
 boundary. New workspace setup does not create an agent or start work. The agent
 form requires one of the twelve marketing types and an editable profile before
