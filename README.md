@@ -1,38 +1,3 @@
-# papermarketing
-
-Ferramenta open source e auto-hospedável para equipes de agentes de marketing.
-Repositório oficial: [arthurbonora/papermarketing](https://github.com/arthurbonora/papermarketing).
-
-Este fork começa no Paperclip **v2026.1106.0**, commit
-`d69631b01b9c658f80bf8bed389863dce82643e1`. A licença MIT e os avisos de autoria
-upstream são preservados. Os pacotes e as APIs mantêm seus nomes internos para
-facilitar atualizações.
-
-- **Workspaces** como única divisão administrativa, com projetos e tarefas dentro deles.
-- **12 tipos de agentes** com perfil inicial editável: CMO, VP de Estratégia, Designer,
-  Redação / Copywriting, Analista de Mídia Paga, Analista de Mídia Orgânica,
-  Social Media, Tecnologia / Desenvolvimento, Motion Designer, BI & Data Analytics,
-  Pesquisa e Insights e Coordenador de Performance.
-- Modelo, runtime e conta independentes do cargo. Cadastro salvo antes da conexão
-  permanece em configuração e não inicia tarefas.
-- Estrutura existente de equipe visual, documentos, aprovações e histórico.
-- Grafo de agentes e dashboard personalizável, com layouts separados por usuário
-  e workspace. Ative `enableAgentGraph` e `enableCustomizableDashboard` nas
-  configurações experimentais da instância para testar essas telas.
-- Sem WordPress, CMS, rede social ou analytics obrigatórios.
-
-Comece pelo [guia de auto-hospedagem](docker/papermarketing/README.md).
-O pacote está em desenvolvimento; a execução de contêineres, o isolamento dos
-trabalhadores e o uso efetivo das assinaturas exigem homologação antes do MVP.
-Veja [o escopo do primeiro incremento](doc/plans/2026-11-09-papermarketing-foundation.md).
-Veja também [o contrato da integração visual e seus testes](doc/plans/2026-11-11-papermarketing-integration.md).
-
-As instruções abaixo documentam o **Paperclip original**. Comandos `npx paperclipai`
-instalam o upstream; para usar as alterações deste fork, construa a partir deste
-repositório seguindo o guia acima.
-
----
-
 <p align="center">
   <img src="doc/assets/papermarketing-banner.png" alt="Papermarketing. Da estratégia à campanha." width="900" />
 </p>
@@ -56,7 +21,9 @@ Esse é um exemplo de fluxo que você pode configurar com projetos, tarefas, doc
 
 ## O que você pode fazer
 
-- Organizar agentes em equipes, com funções, instruções e responsabilidades.
+- Criar workspaces com projetos e tarefas. Cada workspace novo começa sem agentes.
+- Escolher entre 12 perfis de marketing e revisar responsabilidades antes de configurar runtime, conta e modelo. O agente permanece pausado até concluir a configuração.
+- Usar o grafo de agentes e o dashboard personalizável. As opções experimentais `enableAgentGraph` e `enableCustomizableDashboard` habilitam essas telas, com layouts por usuário e workspace.
 - Vincular tarefas e projetos a objetivos e acompanhar a execução no painel.
 - Revisar documentos, comentários e entregas no contexto da tarefa.
 - Acompanhar custos reportados e definir limites de orçamento.
@@ -69,12 +36,17 @@ Você precisa do **Node.js 24.11 ou superior**, do **pnpm 9.15.4** e do Git. Use
 ```sh
 git clone https://github.com/arthurbonora/papermarketing.git
 cd papermarketing
+# Atualize o lockfile local para incluir a dependência do grafo.
+pnpm install --resolution-only --ignore-scripts --no-frozen-lockfile
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Abra [localhost:3100](http://localhost:3100). Para usar o PostgreSQL integrado no ambiente local, deixe `DATABASE_URL` sem configuração. Crie uma organização, configure um agente compatível com seu ambiente e atribua a primeira tarefa com um briefing.
+Mantenha a atualização do lockfile local fora dos commits. Abra [localhost:3100](http://localhost:3100). Para usar o PostgreSQL integrado no ambiente local, deixe `DATABASE_URL` sem configuração. Crie um workspace, configure um agente compatível com seu ambiente e atribua a primeira tarefa com um briefing.
 
+- [Guia de auto-hospedagem com Docker](docker/papermarketing/README.md)
+- [Escopo do primeiro incremento](doc/plans/2026-11-09-papermarketing-foundation.md)
+- [Integração visual e testes](doc/plans/2026-11-11-papermarketing-integration.md)
 - [Guia de desenvolvimento](doc/DEVELOPING.md)
 - [Adaptadores de agentes](https://docs.paperclip.ing/reference/adapters/overview/)
 - [Abrir um problema no Papermarketing](https://github.com/arthurbonora/papermarketing/issues)
