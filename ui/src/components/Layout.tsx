@@ -13,7 +13,7 @@ import { Sidebar } from "./Sidebar";
 import { MarketingSidebar } from "./MarketingSidebar";
 import { CompanySettingsSidebar } from "./CompanySettingsSidebar";
 import { CompanySettingsNav } from "./access/CompanySettingsNav";
-import { AppsSidebar } from "./AppsSidebar";
+import { AppsSidebar, MarketingAppsSidebar } from "./AppsSidebar";
 import { AppDetailSidebar } from "./AppConnectionSidebar";
 import { AgentContextualSidebar } from "./AgentContextualSidebar";
 import { RoutineContextualSidebar } from "./RoutineContextualSidebar";
@@ -199,7 +199,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
   ) : appDetailApplicationId ? (
     <AppDetailSidebar kind="application" applicationId={appDetailApplicationId} />
   ) : isAppsRoute || isToolsRoute ? (
-    <AppsSidebar />
+    marketingNavigation ? <MarketingAppsSidebar /> : <AppsSidebar />
   ) : routeSidebarSlot ? (
     streamlinedUiEnabled ? (
       <ContextualSidebarFrame
@@ -223,7 +223,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
     )
   ) : null;
   const secondarySidebar = isAgentChatRoute ? <AgentConversationsSidebar /> : shellRoute.builtInContextualSurface === "agent" && agentId ? (
-    <AgentContextualSidebar agentRef={agentId} />
+    <AgentContextualSidebar agentRef={agentId} marketingNavigation={marketingNavigation} />
   ) : streamlinedUiEnabled && shellRoute.builtInContextualSurface === "routine" && routineId ? (
     <SetupWizardSidebarOutlet><RoutineContextualSidebar routineId={routineId} /></SetupWizardSidebarOutlet>
   ) : sharedSecondarySidebar;

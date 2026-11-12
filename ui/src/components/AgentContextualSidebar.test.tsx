@@ -74,6 +74,25 @@ describe("AgentContextualSidebar", () => {
     expect(markup).toContain("Harness / Runtime");
     expect(markup).toContain("Permissions / Trust");
   });
+
+  it.each([
+    ["/PAP/agents/agent/overview", false],
+    ["/PAP/agents/agent/secrets", true],
+    ["/PAP/agents/agent/advanced", true],
+  ])("keeps technical settings available and expands them on their own routes (%s)", (pathname, expanded) => {
+    const client = new QueryClient();
+    const content = document.createElement("div");
+    content.innerHTML = renderToStaticMarkup(<QueryClientProvider client={client}><MemoryRouter initialEntries={[pathname]}>
+      <AgentContextualSidebar agentRef="agent" agentId="agent-1" agentName="Agent" marketingNavigation />
+    </MemoryRouter></QueryClientProvider>);
+    const technical = content.querySelector("details");
+    expect(technical?.open).toBe(expanded);
+    expect(technical?.querySelector('a[href="/agents/agent/secrets"]')).not.toBeNull();
+    expect(technical?.querySelector('a[href="/agents/agent/advanced"]')).not.toBeNull();
+    expect(technical?.querySelector('a[href="/agents/agent/permissions"]')).toBeNull();
+    expect(content.querySelector('a[href="/agents/agent/permissions"]')).not.toBeNull();
+    client.clear();
+  });
 });
 
 it.each(["computer", "local"])("offers environment-specific navigation only for the configured %s agent", environmentId => {

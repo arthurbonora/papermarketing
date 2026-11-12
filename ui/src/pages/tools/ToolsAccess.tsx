@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Wrench } from "lucide-react";
 import { Link, Navigate, useParams } from "@/lib/router";
-import { cn } from "@/lib/utils";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { ProfilesIndex } from "./profiles/ProfilesIndex";
@@ -9,7 +8,6 @@ import { GatewaysTab } from "./GatewaysTab";
 import { PasteConfigTab } from "./PasteConfigTab";
 import { SmokeLabTab } from "./SmokeLabTab";
 import {
-  ADVANCED_TABS,
   TOOL_TABS,
   advancedTabHref,
   isAdvancedSetupTab,
@@ -80,51 +78,25 @@ export function ToolsAccess() {
   }
 
   if (advanced) {
-    // M8a/M8b chrome (PAP-10839 wires): Advanced badge, plain-words subtitle,
-    // and a focused setup tab. The developer surface stays behind a quiet link.
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-foreground">Advanced setup</h1>
-            <span className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 text-(length:--text-micro) font-bold text-background">
-              Advanced
-            </span>
-          </div>
+          <h1 className="text-xl font-bold text-foreground">Advanced setup</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            For tools that aren't in the gallery. You'll need details from the tool's documentation.
-            Most people never need this — if the app you want is in the gallery,{" "}
+            Use the tool's documentation to connect a custom tool, or{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              connect it there instead
+              choose a connector from the catalog
             </Link>
             .
           </p>
         </header>
 
-        <nav className="flex items-center gap-6 border-b border-border">
-          {ADVANCED_TABS.map((tab) => (
-            <Link
-              key={tab.key}
-              to={advancedTabHref(tab.key)}
-              className={cn(
-                "-mb-px border-b-2 pb-2 text-sm transition-colors",
-                tab.key === activeTab
-                  ? "border-foreground font-bold text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-
         <div className="min-h-(--sz-300px)">{renderTab(activeTab, selectedCompanyId)}</div>
 
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Wrench className="h-3.5 w-3.5" />
-          Looking for the developer surface?{" "}
           <Link to={advancedTabHref("profiles")} className="font-medium text-primary hover:underline">
-            Open developer tools
+            Manage access profiles
           </Link>
         </p>
       </div>

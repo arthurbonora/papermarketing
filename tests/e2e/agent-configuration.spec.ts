@@ -172,7 +172,11 @@ test("Advanced YAML persists settings and commands through their real resource A
     name: "YAML tools", transport: "mcp_remote", config: { url: toolProvider.url }, status: "draft", enabled: false,
   } }));
   await page.goto(`${url}/overview`);
-  await page.getByRole("link", { name: "Advanced", exact: true }).click();
+  const advanced = page.getByRole("link", { name: "Advanced", exact: true });
+  await expect(advanced).toBeHidden();
+  await page.getByText("Configuração técnica", { exact: true }).click();
+  await advanced.click();
+  await expect(advanced).toBeVisible();
   await edit(page, value => {
     value.spec.title = "Saved YAML engineer";
     value.spec.budgetMonthlyCents = 12300;

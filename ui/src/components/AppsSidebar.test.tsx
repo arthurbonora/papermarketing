@@ -4,9 +4,10 @@ import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AppsSidebar } from "./AppsSidebar";
+import { AppsSidebar, MarketingAppsSidebar } from "./AppsSidebar";
 import { AppsSidebar as ProductionAppsSidebar } from "./AppsSidebar.production";
 import { contextualSidebarStyles } from "./contextual-sidebar-styles";
+import { queryKeys } from "@/lib/queryKeys";
 
 const sidebarNavItemMock = vi.hoisted(() => vi.fn());
 const route = vi.hoisted(() => ({ pathname: "/SLA/apps" }));
@@ -52,6 +53,7 @@ vi.mock("@/api/tools", () => ({
 }));
 
 vi.mock("./SidebarNavItem", () => ({
+  SidebarNavExpandedProvider: ({ children }: { children: React.ReactNode }) => children,
   SidebarNavItem: (props: {
     to: string;
     label: string;
@@ -223,5 +225,29 @@ describe("AppsSidebar", () => {
     await act(async () => {
       root.unmount();
     });
+  });
+
+  it.each([
+    ["/SLA/apps", false, true],
+    ["/SLA/apps/review", false, false],
+    ["/SLA/apps/advanced/profiles/profile-1", true, false],
+    ["/SLA/apps/gateways/gateway-1/overview", true, true],
+  ])("shows technical navigation only on technical connector routes (%s)", async (pathname, technical, smokeLabEnabled) => {
+    route.pathname = pathname;
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    client.setQueryData(queryKeys.instance.experimentalSettings, { enableSmokeLab: smokeLabEnabled });
+    const root = createRoot(container);
+    await act(() => root.render(<QueryClientProvider client={client}><MarketingAppsSidebar /></QueryClientProvider>));
+    await flushReact();
+    expect(container.querySelector('[data-to="/apps"]')).not.toBeNull();
+    expect(container.querySelector('[data-to="/apps/review"]')).not.toBeNull();
+    expect(container.querySelector('[data-to="/apps/connections"]')).toBeNull();
+    expect(Boolean(container.querySelector('[data-to="/apps/advanced/paste-config"]'))).toBe(technical);
+    expect(Boolean(container.querySelector('[data-to="/apps/advanced/profiles"]'))).toBe(technical);
+    expect(Boolean(container.querySelector('[data-to="/apps/advanced/gateways"]'))).toBe(technical);
+    expect(Boolean(container.querySelector('[data-to="/apps/advanced/smoke-lab"]'))).toBe(technical && smokeLabEnabled);
+    expect(container.textContent?.includes("Configuração técnica")).toBe(technical);
+    await act(() => root.unmount());
+    client.clear();
   });
 });

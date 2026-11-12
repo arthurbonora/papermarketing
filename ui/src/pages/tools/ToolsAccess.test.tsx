@@ -95,19 +95,19 @@ describe("ToolsAccess", () => {
     expect(navigateMock).toHaveBeenCalledWith(expect.objectContaining({ to: target, replace: true }));
   });
 
-  it("uses Paste a config as the only advanced setup page", async () => {
+  it("shows the paste form without a redundant link to itself", async () => {
     await render();
 
     expect(container.textContent).toContain("Paste tab");
     expect(container.textContent).not.toContain("Run your own");
-    expect(container.querySelector('a[href="/apps/advanced/paste-config"]')).toBeTruthy();
+    expect(container.querySelector('a[href="/apps/advanced/paste-config"]')).toBeNull();
   });
 
-  it("uses Profiles as the developer entry point without a second page shell", async () => {
+  it("links directly to access profiles without adding a second page shell", async () => {
     await render();
 
     expect(container.querySelector('a[href="/apps/advanced/profiles"]')?.textContent).toContain(
-      "Open developer tools",
+      "Manage access profiles",
     );
 
     mockParams.tab = "profiles";

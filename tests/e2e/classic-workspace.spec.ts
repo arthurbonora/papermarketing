@@ -33,6 +33,10 @@ test("Classic changes the task presentation while preserving workspace navigatio
     await page.goto(f.route);
     await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Projetos" })).toBeVisible();
     await expectPapermarketingAccountMenu(page);
+    await page.goto(`/${f.company.issuePrefix}/apps`);
+    const connectors = page.getByRole("navigation", { name: "Connectors", exact: true });
+    await expect(connectors.getByRole("link", { name: "Review", exact: true })).toHaveAttribute("href", `/${f.company.issuePrefix}/apps/review`);
+    await expect(connectors.getByRole("link")).toHaveCount(2);
     await page.goto(settingsUrl);
     await page.reload();
     await expect(classic).toBeChecked();
