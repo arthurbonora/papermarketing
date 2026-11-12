@@ -19,7 +19,9 @@ async function health() {
   return data;
 }
 await health();
-assert.match(await (await fetch(base)).text(), /papermarketing/);
+const page = await fetch(base);
+assert.equal(page.status, 200);
+assert.equal((await page.text()).match(/<title>([^<]*)<\/title>/i)?.[1].trim(), "Papermarketing");
 for (const route of ["/api/companies", "/api/instance/settings/experimental"]) {
   const response = await fetch(`${base}${route}`);
   assert.ok([401, 403].includes(response.status), `Anonymous request must be denied: ${route} (${response.status})`);
