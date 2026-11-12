@@ -91,7 +91,7 @@ export async function runAntigravityJourneyFlow(input: AntigravityJourneyFlowInp
   await input.phase("agent_navigation");
   await page.goto(`${api.origin}${dashboard}`);
   await page.waitForURL(url => url.origin === api.origin && url.pathname === dashboard);
-  await page.getByRole("link", { name: "Agents", exact: true }).click();
+  await page.getByRole("link", { name: /^(Equipe|Agents)$/ }).click();
   const newAgent = page.getByRole("toolbar", { name: "Agents controls", exact: true }).getByRole("button", { name: "New Agent", exact: true });
   await expect(newAgent).toHaveCount(1);
   await newAgent.click();

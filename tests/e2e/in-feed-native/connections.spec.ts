@@ -66,6 +66,7 @@ for (const journey of ['connect', 'decline', 'restart'] as const) test(`fresh na
     expect(nativeAgent.adapterConfig.env).toEqual(agent.adapterConfig.env);
     const holder = await api(`/companies/${company.id}/agents`, 'POST', { name: 'Archive holder', role: 'qa', adapterType: 'process', adapterConfig: { command: process.execPath, args: ['-e', 'process.exit(0)'] } });
     await page.goto(base + prefix + '/apps');
+    await page.getByRole('radio', { name: 'All', exact: true }).click();
     const custom = page.getByRole('list', { name: 'Connector list' }).getByRole('listitem').filter({ hasText: 'Connect your own tool' });
     await custom.getByRole('button', { name: 'Connect', exact: true }).click();
     await custom.getByRole('button', { name: 'Connect your own MCP server' }).click();
@@ -82,7 +83,7 @@ for (const journey of ['connect', 'decline', 'restart'] as const) test(`fresh na
     const installs = (await api(`/tool-connections/${connection.id}/installs`)).installs;
     expect(installs).toEqual([expect.objectContaining({ targetId: holder.id })]);
     await page.getByRole('link', { name: 'Tasks', exact: true }).click();
-    await page.getByRole('button', { name: 'New Task', exact: true }).last().click();
+    await page.getByRole('button', { name: 'Nova tarefa', exact: true }).last().click();
     await page.getByPlaceholder('Task title').fill('Find the heliotrope launch notes and summarize the decisions with a source link');
     await page.getByRole('button', { name: 'Assignee', exact: true }).click();
     await page.getByRole('button', { name: 'CEO', exact: true }).click();

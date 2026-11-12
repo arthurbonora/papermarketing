@@ -16,13 +16,8 @@ export async function enterGenericMcpThroughCatalog(
   page: Page,
   prefix: string,
 ) {
-  // The Coordinator sidebar keeps Connectors under its More flyout; the
-  // classic sidebar lists it directly. Use whichever the person sees.
-  const direct = page.getByRole("link", { name: "Connectors", exact: true });
-  if (!(await direct.first().isVisible())) {
-    await page.getByRole("button", { name: "More workspace pages", exact: true }).click();
-  }
-  await direct.first().click();
+  await page.getByRole("link", { name: "Conexões", exact: true }).click();
+  await page.getByRole("radio", { name: "All", exact: true }).click();
   const card = page
     .getByRole("listitem")
     .filter({

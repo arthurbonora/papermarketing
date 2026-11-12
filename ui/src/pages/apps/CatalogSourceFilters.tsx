@@ -1,9 +1,14 @@
 import { TabFilters } from "@/components/TabBar";
 
 export const CATALOG_SOURCES = ["paperclip", "composio", "arcade", "installed", "all"] as const;
-export type CatalogSource = typeof CATALOG_SOURCES[number];
-export const CATALOG_SOURCE_NAMES = { paperclip: "Paperclip", composio: "Composio", arcade: "Arcade", executor: "Executor", installed: "Installed", all: "All" };
+export type CatalogSource = typeof CATALOG_SOURCES[number] | "marketing";
+export const CATALOG_SOURCE_NAMES = { marketing: "Marketing", paperclip: "Paperclip", composio: "Composio", arcade: "Arcade", executor: "Executor", installed: "Installed", all: "All" };
 
-export function CatalogSourceFilters({ source, onChange }: { source: CatalogSource; onChange: (source: CatalogSource) => void }) {
-  return <TabFilters label="App filters" size="standard" items={CATALOG_SOURCES.map(value => ({ value, label: CATALOG_SOURCE_NAMES[value] }))} value={source} onValueChange={onChange} />;
+const MARKETING_SOURCES = ["marketing", "installed", "composio", "arcade", "all"] as const;
+
+export function CatalogSourceFilters({ source, onChange, marketingCatalog = false }: {
+  source: CatalogSource; onChange: (source: CatalogSource) => void; marketingCatalog?: boolean;
+}) {
+  const sources = marketingCatalog ? MARKETING_SOURCES : CATALOG_SOURCES;
+  return <TabFilters label="App filters" size="standard" items={sources.map(value => ({ value, label: CATALOG_SOURCE_NAMES[value] }))} value={source} onValueChange={onChange} />;
 }

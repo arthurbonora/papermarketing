@@ -6,15 +6,13 @@ import {
 } from "./external-mcp-failure.js";
 import { scopedSessionFailureDiagnostic } from "./external-gateway-client.js";
 import type { ExternalObservation } from "./external-support.js";
-function pageFixture(missing?: string, connectorsInFlyout = false) {
+function pageFixture(missing?: string) {
   const actions: string[] = [];
   const page = {
     getByRole: (role: string, options?: { name?: string }) => {
       const name = options?.name ?? "";
       const locator = {
         filter: () => locator,
-        first: () => locator,
-        isVisible: async () => !(connectorsInFlyout && name === "Connectors" && !actions.includes("More workspace pages")),
         getByRole: (_r: string, o: { name: string }) => ({
           click: async () => {
             if (o.name === missing) throw new Error("Missing real control");
@@ -44,18 +42,8 @@ describe("finite held external diagnostics and visible entry correction", () => 
     const { page, actions } = pageFixture();
     await enterGenericMcpThroughCatalog(page, "RUN");
     expect(actions).toEqual([
-      "Connectors",
-      "Connect",
-      "Connect your own MCP server",
-      "actual /RUN/apps/byo",
-    ]);
-  });
-  it("opens the Coordinator sidebar's More flyout when Connectors is not listed directly", async () => {
-    const { page, actions } = pageFixture(undefined, true);
-    await enterGenericMcpThroughCatalog(page, "RUN");
-    expect(actions).toEqual([
-      "More workspace pages",
-      "Connectors",
+      "Conexões",
+      "All",
       "Connect",
       "Connect your own MCP server",
       "actual /RUN/apps/byo",
@@ -63,7 +51,8 @@ describe("finite held external diagnostics and visible entry correction", () => 
   });
   it("does not rescue a missing catalog entry with direct navigation", async () => {
     for (const name of [
-      "Connectors",
+      "Conexões",
+      "All",
       "Connect",
       "Connect your own MCP server",
     ]) {

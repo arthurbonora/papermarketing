@@ -18,9 +18,11 @@ import { useInboxBadge } from "../hooks/useInboxBadge";
 import { useAgentChatEnabled } from "@/hooks/useAgentChatEnabled";
 import { useCombinedInboxTasksEnabled } from "@/hooks/useCombinedInboxTasksEnabled";
 import { Badge } from "@/components/ui/badge";
+import { MARKETING_DESTINATIONS } from "./MarketingSidebar";
 
 interface MobileBottomNavProps {
   visible: boolean;
+  marketingNavigation?: boolean;
 }
 
 interface MobileNavLinkItem {
@@ -40,12 +42,13 @@ interface MobileNavActionItem {
 
 type MobileNavItem = MobileNavLinkItem | MobileNavActionItem;
 
-export function MobileBottomNav({ visible }: MobileBottomNavProps) {
+export function MobileBottomNav({ visible, marketingNavigation = false }: MobileBottomNavProps) {
   const location = useLocation();
   const { selectedCompanyId } = useCompany();
   const { openNewIssue } = useDialogActions();
   const { enabled: agentChatEnabled } = useAgentChatEnabled();
-  const { enabled: coordinatorWorkspaceEnabled } = useCoordinatorWorkspaceEnabled();
+  const { enabled: coordinatorEnabled } = useCoordinatorWorkspaceEnabled();
+  const coordinatorWorkspaceEnabled = !marketingNavigation && coordinatorEnabled;
   const inboxBadge = useInboxBadge(coordinatorWorkspaceEnabled ? null : selectedCompanyId);
   const { enabled: combinedInboxTasksEnabled } = useCombinedInboxTasksEnabled();
   const attentionCount = useCoordinatorAttentionCount(selectedCompanyId, coordinatorWorkspaceEnabled);
@@ -56,7 +59,13 @@ export function MobileBottomNav({ visible }: MobileBottomNavProps) {
   // it is a view inside Tasks, so its unread badge rides on Tasks. The grid
   // tracks the live count, so the bar stays evenly divided in every mix.
   const items = useMemo<MobileNavItem[]>(
-    () => coordinatorWorkspaceEnabled ? [
+    () => marketingNavigation ? [
+      { type: "link", ...MARKETING_DESTINATIONS.overview },
+      { type: "link", ...MARKETING_DESTINATIONS.projects },
+      { type: "action", label: "Nova tarefa", icon: SquarePen, onClick: () => openNewIssue() },
+      { type: "link", ...MARKETING_DESTINATIONS.tasks, badge: combinedInboxTasksEnabled ? inboxBadge.inbox : undefined },
+      { type: "link", ...MARKETING_DESTINATIONS.team },
+    ] : coordinatorWorkspaceEnabled ? [
       { type: "link", to: "/chats", label: "Chat", icon: MessageCircle },
       { type: "link", to: "/issues", label: "Tasks", icon: CircleCheck },
       { type: "link", to: "/decisions", label: "Inbox", icon: Inbox, badge: attentionCount },
@@ -91,7 +100,7 @@ export function MobileBottomNav({ visible }: MobileBottomNavProps) {
         ? [{ type: "link", to: "/inbox", label: "Inbox", icon: Inbox, badge: inboxBadge.inbox } as MobileNavItem]
         : []),
     ],
-    [openNewIssue, inboxBadge.inbox, agentChatEnabled, combinedInboxTasksEnabled, coordinatorWorkspaceEnabled, attentionCount],
+    [openNewIssue, inboxBadge.inbox, agentChatEnabled, combinedInboxTasksEnabled, coordinatorWorkspaceEnabled, attentionCount, marketingNavigation],
   );
 
   return (

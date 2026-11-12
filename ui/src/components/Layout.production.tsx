@@ -31,6 +31,7 @@ import { CommandPalette } from "./CommandPalette";
 import { KeyboardShortcutsCheatsheet } from "./KeyboardShortcutsCheatsheet";
 import { ToastViewport } from "./ToastViewport";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { MarketingSidebar } from "./MarketingSidebar";
 import { WorktreeBanner } from "./WorktreeBanner";
 import { DevRestartBanner } from "./DevRestartBanner";
 import { StandaloneBrowserControls } from "./StandaloneBrowserControls";
@@ -115,7 +116,8 @@ function isSkillsStoreRoute(
   );
 }
 
-export function Layout() {
+export function Layout({ marketingNavigation = false }: { marketingNavigation?: boolean }) {
+  const PrimarySidebar = marketingNavigation ? MarketingSidebar : Sidebar;
   const designSandbox = useDesignSandbox();
   const {
     sidebarOpen,
@@ -634,7 +636,7 @@ export function Layout() {
             >
               <div className="flex flex-1 min-h-0 overflow-hidden">
                 <div className="w-60 shrink-0 overflow-hidden">
-                  {hasSecondarySidebar ? secondarySidebar : <Sidebar />}
+                  {hasSecondarySidebar ? secondarySidebar : <PrimarySidebar />}
                 </div>
               </div>
               <SidebarAccountMenu deploymentMode={health?.deploymentMode} />
@@ -653,7 +655,7 @@ export function Layout() {
             >
               {designSandbox ? <DesignSandboxSidebar /> : <>
                 <div className="flex flex-1 min-h-0">
-                  <Sidebar />
+                  <PrimarySidebar />
                 </div>
                 <SidebarAccountMenu deploymentMode={health?.deploymentMode} />
               </>}
@@ -739,7 +741,7 @@ export function Layout() {
             </div>
           </div>
         </div>
-        {isMobile && <MobileBottomNav visible={mobileNavVisible} />}
+        {isMobile && <MobileBottomNav visible={mobileNavVisible} marketingNavigation={marketingNavigation} />}
         <CommandPalette />
         <BoardDialogs />
         <KeyboardShortcutsCheatsheet

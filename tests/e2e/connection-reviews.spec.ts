@@ -139,6 +139,7 @@ for (const journey of [
       const seed = await newCompany(request);
       const agent = await createAgent(request, seed.companyId, "Page reader");
       await page.goto(`/${seed.prefix}/apps`);
+      await page.getByRole("radio", { name: "All", exact: true }).click();
       const connector = page
         .getByRole("list", { name: "Connector list" })
         .getByRole("listitem")

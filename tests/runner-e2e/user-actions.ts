@@ -55,7 +55,7 @@ export async function createTaskThroughUi(input: {
     : `/${encodeURIComponent(input.issuePrefix)}/issues`;
   const newTask = input.requireExplicitTitle
     ? input.page.getByRole("button", { name: "Create task from this query", exact: true })
-    : input.page.getByRole("button", { name: /^New task$/i }).first();
+    : input.page.getByRole("button", { name: /^(Nova tarefa|New task)$/i }).first();
   let bootstrapError: unknown;
   for (let bootstrapAttempt = 1; bootstrapAttempt <= 3; bootstrapAttempt += 1) {
     try {

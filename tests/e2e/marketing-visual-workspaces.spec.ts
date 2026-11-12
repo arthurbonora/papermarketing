@@ -21,6 +21,10 @@ test("graph notes and dashboard layouts persist in their workspace", async ({ pa
     }
     const [a, b] = workspaces;
     await page.goto(`/${a.issuePrefix}/agents/all`);
+    const navigation = page.getByRole("navigation", { name: "Workspace navigation" });
+    await expect(navigation.getByRole("link", { name: "Projetos" })).toHaveAttribute("href", `/${a.issuePrefix}/projects`);
+    await expect(navigation.getByRole("link", { name: "Aprovações" })).toHaveAttribute("href", `/${a.issuePrefix}/approvals/pending`);
+    await expect(navigation.getByRole("link", { name: "Workspaces", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Org chart view", exact: true }).click();
     await expect(page.getByTestId("agent-graph-node")).toHaveCount(1);
     await page.getByRole("button", { name: "Add note", exact: true }).click();
@@ -33,6 +37,7 @@ test("graph notes and dashboard layouts persist in their workspace", async ({ pa
     await page.getByRole("button", { name: "Org chart view", exact: true }).click();
     await expect(page.getByLabel("Note text")).toHaveValue("Brief exclusivo do workspace A");
     await page.goto(`/${b.issuePrefix}/agents/all`);
+    await expect(navigation.getByRole("link", { name: "Projetos" })).toHaveAttribute("href", `/${b.issuePrefix}/projects`);
     const orgView = page.getByRole("button", { name: "Org chart view", exact: true });
     if (await orgView.getAttribute("aria-pressed") !== "true") await orgView.click();
     await expect(page.getByTestId("agent-graph-node")).toHaveCount(1);

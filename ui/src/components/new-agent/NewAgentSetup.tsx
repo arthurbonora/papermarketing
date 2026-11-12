@@ -1,6 +1,5 @@
 import { ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS } from "@/lib/native-model-catalog";
 import { PAPERCLIP_RUNNER_ACPX_PROFILES } from "@paperclipai/adapter-utils";
-import { ExternalAgentInviteDialog } from "./ExternalAgentInviteDialog";
 import { useConnectionModels } from "../ai-connections/useConnectionModels";
 import { AgentCharacter } from "../AgentCharacter";
 import { useAgentAppearanceDraft } from "../../hooks/useAgentAppearanceDraft";
@@ -30,7 +29,7 @@ import type {
   EnvBinding,
 } from "@paperclipai/shared";
 import { ADAPTER_AUTH_MISSING_CHECK_CODE, isAgentStatusInvokable, paperclipRunnerCreationLifecycle, paperclipRunnerProfileForHarness } from "@paperclipai/shared";
-import { useNavigate, useSearchParams } from "@/lib/router";
+import { Navigate, useNavigate, useSearchParams } from "@/lib/router";
 import { agentsApi } from "@/api/agents";
 import { ApiError } from "@/api/client";
 import { adaptersApi } from "@/api/adapters";
@@ -89,14 +88,16 @@ const blocking = (result: AdapterEnvironmentTestResult) =>
 export function NewAgentSetup() {
   const { selectedCompanyId } = useCompany();
   const [params] = useSearchParams();
-  const navigate = useNavigate();
   if (!selectedCompanyId)
     return (
       <p className="text-sm text-muted-foreground">
         Selecione um workspace para criar um agente.
       </p>
     );
-  if (params.get("adapterType") === "muse" || params.get("runnerProvider") === "muse") return <ExternalAgentInviteDialog companyId={selectedCompanyId} initialPreset="muse" initialMuseName={params.get("name") ?? ""} onClose={() => navigate("/agents/all")} onBack={() => navigate("/agents/all")} />;
+  if (params.get("adapterType") === "muse" || params.get("runnerProvider") === "muse") {
+    const invitation = new URLSearchParams({ provider: "muse", name: params.get("name") ?? "" });
+    return <Navigate to={`/company/settings/agent-invitations?${invitation}`} replace />;
+  }
   return (
     <Setup
       key={`${selectedCompanyId}:${params.get("name")}:${params.get("adapterType")}:${params.get("runnerProvider") ?? "codex"}:${params.get("runner") ?? "auto"}`}

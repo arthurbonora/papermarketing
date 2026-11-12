@@ -35,7 +35,7 @@ function shot(name: string) {
 
 async function openWizard(page: import("@playwright/test").Page) {
   await page.goto("/onboarding");
-  const startBtn = page.getByRole("button", { name: /Start Onboarding|New Organization|Add Agent/ });
+  const startBtn = page.getByRole("button", { name: /Criar workspace|Criar agente/ });
   if (await startBtn.count()) {
     await startBtn.first().click();
   }

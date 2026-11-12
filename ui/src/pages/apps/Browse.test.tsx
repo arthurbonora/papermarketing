@@ -252,7 +252,7 @@ describe("Connectors landing page", () => {
     vi.clearAllMocks();
   });
 
-  async function renderBrowse(allCatalog = true, options: { cloud?: boolean } = {}) {
+  async function renderBrowse(allCatalog = true, options: { cloud?: boolean; marketingCatalog?: boolean } = {}) {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -261,7 +261,7 @@ describe("Connectors landing page", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={client}>
-          <TooltipProvider><Browse /></TooltipProvider>
+          <TooltipProvider><Browse marketingCatalog={options.marketingCatalog} /></TooltipProvider>
         </QueryClientProvider>,
       );
     });
@@ -271,6 +271,35 @@ describe("Connectors landing page", () => {
     }
     return client;
   }
+
+  it("curates available connectors for marketing and retains existing and advanced connections", async () => {
+    listGalleryMock.mockResolvedValue({ apps: ["notion", "openrouter", "bedrock", "local"].map(slug => getAppStoreDefinition(slug)) });
+    listApplicationsMock.mockResolvedValue({ applications: [
+      application({ id: "existing", name: "Bedrock", applicationKey: "app-gallery:bedrock", metadata: { sourceTemplateKey: "bedrock" } }),
+      application({ id: "unfinished", name: "Unfinished connector", applicationKey: "unfinished", metadata: {} }),
+    ] });
+    listConnectionsMock.mockResolvedValue({ connections: [
+      connection({ applicationId: "existing", name: "Existing account", config: { sourceTemplateKey: "bedrock" } }),
+    ] });
+    await renderBrowse(false, { marketingCatalog: true });
+    const row = (slug: string) => container.querySelector(`[data-app-slug="${slug}"]`);
+    expect(container.querySelector('[aria-checked="true"]')?.textContent).toBe("Marketing");
+    expect(row("notion")).not.toBeNull();
+    expect(row("bedrock")).not.toBeNull();
+    expect(container.textContent).toContain("Unfinished connector");
+    expect(row("local")).toBeNull();
+    const category = container.querySelector<HTMLSelectElement>('[aria-label="Categoria de marketing"]')!;
+    await act(async () => {
+      category.value = "Modelos de IA";
+      category.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(row("openrouter")).not.toBeNull();
+    expect(row("notion")).toBeNull();
+    await clickButton("Installed", container);
+    expect(row("bedrock")).not.toBeNull();
+    await clickButton("All", container);
+    expect(row("local")).not.toBeNull();
+  });
 
   it("shows provider catalog rows and splits legacy gateway accounts by API format", async () => {
     const slugs = ["notion", "openrouter", "bedrock", "google", "responses-api", "messages-api", "chat-completions-api", "local"];
