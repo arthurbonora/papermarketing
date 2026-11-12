@@ -18,7 +18,7 @@ import { useInboxBadge } from "../hooks/useInboxBadge";
 import { useAgentChatEnabled } from "@/hooks/useAgentChatEnabled";
 import { useCombinedInboxTasksEnabled } from "@/hooks/useCombinedInboxTasksEnabled";
 import { Badge } from "@/components/ui/badge";
-import { MARKETING_DESTINATIONS } from "./MarketingSidebar";
+import { MARKETING_DESTINATIONS } from "@/lib/marketing-navigation";
 
 interface MobileBottomNavProps {
   visible: boolean;

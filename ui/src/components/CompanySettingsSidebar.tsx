@@ -12,13 +12,14 @@ import {
   SlidersHorizontal,
   Upload,
   UserRoundPen,
+  UserRoundPlus,
   Users,
 } from "lucide-react";
 import type { PluginRecord } from "@paperclipai/shared";
 import { sidebarBadgesApi } from "@/api/sidebarBadges";
 import { pluginsApi } from "@/api/plugins";
 import { ApiError } from "@/api/client";
-import { NavLink } from "@/lib/router";
+import { NavLink, useLocation } from "@/lib/router";
 import { INSTANCE_SETTINGS_PATH_PREFIX } from "@/lib/instance-settings";
 import { SIDEBAR_SCROLL_RESET_STATE } from "@/lib/navigation-scroll";
 import { queryKeys } from "@/lib/queryKeys";
@@ -29,6 +30,7 @@ import { usePluginSlots } from "@/plugins/slots";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { ContextualSidebarFrame } from "./ContextualSidebarFrame";
 import { primarySidebarStyles } from "./primary-sidebar-styles";
+import { getCompanySettingsTab, isMarketingSettingsPrimary } from "./access/CompanySettingsNav";
 
 /**
  * Sandbox-provider-only plugins (e.g. E2B, exe.dev, Modal) have no per-plugin
@@ -42,7 +44,8 @@ function isSandboxProviderOnly(plugin: PluginRecord): boolean {
   return drivers.every((d) => d.kind === "sandbox_provider");
 }
 
-export function CompanySettingsSidebar() {
+export function CompanySettingsSidebar({ marketingNavigation = false }: { marketingNavigation?: boolean } = {}) {
+  const { pathname } = useLocation();
   const { selectedCompanyId } = useCompany();
   const { hidden: hiddenSettings } = useHiddenSettings();
   const showPage = (pageKey: string) => !hiddenSettings.has(pageKey);
@@ -80,6 +83,67 @@ export function CompanySettingsSidebar() {
     enabled: showPlugins,
   });
   const sidebarPlugins = (plugins ?? []).filter((plugin) => !isSandboxProviderOnly(plugin));
+  const pluginPages = companySettingsPluginSlots.filter(slot => slot.routePath);
+  const advancedActive = !isMarketingSettingsPrimary(getCompanySettingsTab(pathname)) ||
+    pluginPages.some(slot => pathname.includes(`/company/settings/${slot.routePath}`));
+  const advancedLinks = (
+    <>
+      {pluginPages.map((slot) => (
+        <SidebarNavItem
+          key={`${slot.pluginKey}:${slot.id}`}
+          to={`/company/settings/${slot.routePath}`}
+          label={slot.displayName}
+          icon={Puzzle}
+          end
+        />
+      ))}
+      {showPage("company.secrets") && (
+        <SidebarNavItem to="/company/settings/secrets" label="Secrets" icon={KeyRound} end />
+      )}
+      {showPage("instance.environments") && (
+        <SidebarNavItem to={`${INSTANCE_SETTINGS_PATH_PREFIX}/environments`} label="Environments" icon={MonitorCog} end />
+      )}
+      {showPage("instance.access") && (
+        <SidebarNavItem to={`${INSTANCE_SETTINGS_PATH_PREFIX}/access`} label="Access" icon={Shield} end />
+      )}
+      {showPage("company.export") && (
+        <SidebarNavItem to="/company/export" label="Export" icon={Download} />
+      )}
+      {!isCloud && showPage("company.import") && (
+        <SidebarNavItem to="/company/import" label="Import" icon={Upload} end />
+      )}
+      {showPage("instance.experimental") && (
+        <SidebarNavItem to={`${INSTANCE_SETTINGS_PATH_PREFIX}/experimental`} label="Experimental" icon={FlaskConical} />
+      )}
+      {showPlugins && (
+        <SidebarNavItem to={`${INSTANCE_SETTINGS_PATH_PREFIX}/plugins`} label="Plugins" icon={Puzzle} />
+      )}
+      {showPlugins && sidebarPlugins.length > 0 ? (
+        <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-border/70 pl-3">
+          {sidebarPlugins.map((plugin) => (
+            <NavLink
+              key={plugin.id}
+              to={`${INSTANCE_SETTINGS_PATH_PREFIX}/plugins/${plugin.id}`}
+              state={SIDEBAR_SCROLL_RESET_STATE}
+              className={({ isActive }) =>
+                [
+                  "rounded-md px-2 py-1.5 text-xs transition-colors",
+                  isActive
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                ].join(" ")
+              }
+            >
+              {plugin.manifestJson.displayName ?? plugin.packageName}
+            </NavLink>
+          ))}
+        </div>
+      ) : null}
+      {showPage("instance.adapters") && (
+        <SidebarNavItem to={`${INSTANCE_SETTINGS_PATH_PREFIX}/adapters`} label="Adapters" icon={Cpu} />
+      )}
+    </>
+  );
 
   return (
     <ContextualSidebarFrame
@@ -102,11 +166,11 @@ export function CompanySettingsSidebar() {
         className={primarySidebarStyles.nav}
       >
         <div data-slot="contextual-sidebar-group" className={primarySidebarStyles.group}>
-          <SidebarNavItem to="/company/settings" label="General" icon={SlidersHorizontal} end />
+          <SidebarNavItem to="/company/settings" label={marketingNavigation ? "Geral" : "General"} icon={SlidersHorizontal} end />
           {showPage("instance.profile") && (
             <SidebarNavItem
               to={`${INSTANCE_SETTINGS_PATH_PREFIX}/profile`}
-              label="Profile"
+              label={marketingNavigation ? "Perfil" : "Profile"}
               icon={UserRoundPen}
               end
             />
@@ -114,91 +178,24 @@ export function CompanySettingsSidebar() {
           {showPage("company.members") && (
             <SidebarNavItem
               to="/company/settings/members"
-              label="Members"
+              label={marketingNavigation ? "Membros" : "Members"}
               icon={Users}
               badge={badges?.joinRequests ?? 0}
               end
             />
           )}
-          {companySettingsPluginSlots
-            .filter((slot) => slot.routePath)
-            .map((slot) => (
-              <SidebarNavItem
-                key={`${slot.pluginKey}:${slot.id}`}
-                to={`/company/settings/${slot.routePath}`}
-                label={slot.displayName}
-                icon={Puzzle}
-                end
-              />
-            ))}
-          {showPage("company.secrets") && (
-            <SidebarNavItem to="/company/settings/secrets" label="Secrets" icon={KeyRound} end />
-          )}
-          {showPage("instance.environments") && (
-            <SidebarNavItem
-              to={`${INSTANCE_SETTINGS_PATH_PREFIX}/environments`}
-              label="Environments"
-              icon={MonitorCog}
-              end
-            />
-          )}
-          <SidebarNavItem to="/company/settings/connections" label="Connections" icon={Link2} end />
-          {showPage("instance.access") && (
-            <SidebarNavItem
-              to={`${INSTANCE_SETTINGS_PATH_PREFIX}/access`}
-              label="Access"
-              icon={Shield}
-              end
-            />
-          )}
-          {showPage("company.export") && (
-            <SidebarNavItem to="/company/export" label="Export" icon={Download} />
-          )}
-          {!isCloud && showPage("company.import") && (
-            <SidebarNavItem to="/company/import" label="Import" icon={Upload} end />
-          )}
-          {showPage("instance.experimental") && (
-            <SidebarNavItem
-              to={`${INSTANCE_SETTINGS_PATH_PREFIX}/experimental`}
-              label="Experimental"
-              icon={FlaskConical}
-            />
-          )}
-          {showPlugins && (
-            <SidebarNavItem
-              to={`${INSTANCE_SETTINGS_PATH_PREFIX}/plugins`}
-              label="Plugins"
-              icon={Puzzle}
-            />
-          )}
-          {showPlugins && sidebarPlugins.length > 0 ? (
-            <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-border/70 pl-3">
-              {sidebarPlugins.map((plugin) => (
-                <NavLink
-                  key={plugin.id}
-                  to={`${INSTANCE_SETTINGS_PATH_PREFIX}/plugins/${plugin.id}`}
-                  state={SIDEBAR_SCROLL_RESET_STATE}
-                  className={({ isActive }) =>
-                    [
-                      "rounded-md px-2 py-1.5 text-xs transition-colors",
-                      isActive
-                        ? "bg-accent text-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                    ].join(" ")
-                  }
-                >
-                  {plugin.manifestJson.displayName ?? plugin.packageName}
-                </NavLink>
-              ))}
-            </div>
-          ) : null}
-          {showPage("instance.adapters") && (
-            <SidebarNavItem
-              to={`${INSTANCE_SETTINGS_PATH_PREFIX}/adapters`}
-              label="Adapters"
-              icon={Cpu}
-            />
-          )}
+          <SidebarNavItem to="/company/settings/connections" label={marketingNavigation ? "Conexões" : "Connections"} icon={Link2} end />
+          {marketingNavigation ? (
+            <>
+              <SidebarNavItem to="/company/settings/agent-invitations" label="Agentes externos" icon={UserRoundPlus} end />
+              <details key={pathname} open={advancedActive || undefined}>
+                <summary className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  Avançado
+                </summary>
+                <div className={primarySidebarStyles.group}>{advancedLinks}</div>
+              </details>
+            </>
+          ) : advancedLinks}
         </div>
       </nav>
     </ContextualSidebarFrame>

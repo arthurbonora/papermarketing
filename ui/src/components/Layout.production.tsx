@@ -22,6 +22,7 @@ import {
 } from "@/lib/router";
 import { Sidebar } from "./Sidebar.production";
 import { CompanySettingsSidebar } from "./CompanySettingsSidebar.production";
+import { CompanySettingsSidebar as MarketingSettingsSidebar } from "./CompanySettingsSidebar";
 import { CompanySettingsNav } from "./access/CompanySettingsNav";
 import { AppsSidebar } from "./AppsSidebar.production";
 import { AppDetailSidebar } from "./AppConnectionSidebar.production";
@@ -226,7 +227,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
   // the contextual sidebar in a second pane (PAP-10695). One resolver drives
   // both desktop (SecondarySidebar) and mobile (off-canvas drawer).
   const secondarySidebar = isCompanySettingsRoute ? (
-    <CompanySettingsSidebar />
+    marketingNavigation ? <MarketingSettingsSidebar marketingNavigation /> : <CompanySettingsSidebar />
   ) : appDetailConnectionId ? (
     <AppDetailSidebar kind="connection" connectionId={appDetailConnectionId} />
   ) : appDetailApplicationId ? (
@@ -683,7 +684,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
               <BreadcrumbBar />
               {isMobile && isCompanySettingsRoute ? (
                 <div className="border-b border-border px-4 pb-3">
-                  <CompanySettingsNav />
+                  <CompanySettingsNav marketingNavigation={marketingNavigation} />
                 </div>
               ) : null}
             </div>
@@ -742,8 +743,8 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
           </div>
         </div>
         {isMobile && <MobileBottomNav visible={mobileNavVisible} marketingNavigation={marketingNavigation} />}
-        <CommandPalette />
-        <BoardDialogs />
+        <CommandPalette marketingNavigation={marketingNavigation} />
+        <BoardDialogs marketingNavigation={marketingNavigation} />
         <KeyboardShortcutsCheatsheet
           open={shortcutsOpen}
           onOpenChange={setShortcutsOpen}

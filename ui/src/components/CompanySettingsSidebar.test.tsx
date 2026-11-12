@@ -18,6 +18,7 @@ const mockPluginsApi = vi.hoisted(() => ({
 const mockUsePluginSlots = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/router", () => ({
+  useLocation: () => ({ pathname: "/PAP/company/settings" }),
   useNavigate: () => vi.fn(),
   Link: ({
     children,

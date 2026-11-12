@@ -1,8 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CircleCheck, ClipboardCheck, DollarSign, FolderOpen, History, Inbox, LayoutDashboard,
-  MessageCircle, Package, Repeat, Search, Settings, SquarePen, Unplug, Users,
+  DollarSign, History, Inbox, MessageCircle, Repeat, Search, Settings, SquarePen, Users,
 } from "lucide-react";
 import { useAgentChatNavigation } from "@/hooks/useAgentChatNavigation";
 import { useCompany } from "@/context/CompanyContext";
@@ -20,14 +19,7 @@ import { SidebarRecentTasks } from "./SidebarRecentTasks";
 import { SidebarStarredProjects } from "./SidebarStarredProjects";
 import { primarySidebarStyles } from "./primary-sidebar-styles";
 import { cn, SIDEBAR_RAIL_HIDDEN_LABEL } from "@/lib/utils";
-
-export const MARKETING_DESTINATIONS = {
-  overview: { to: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
-  projects: { to: "/projects", label: "Projetos", icon: FolderOpen },
-  tasks: { to: "/issues", label: "Tarefas", icon: CircleCheck },
-  team: { to: "/agents/all", label: "Equipe", icon: Users },
-  connectors: { to: "/apps", label: "Conexões", icon: Unplug },
-} as const;
+import { MARKETING_DESTINATIONS } from "@/lib/marketing-navigation";
 
 export function MarketingSidebar({ children }: { children?: ReactNode }) {
   const { selectedCompanyId, selectedCompany } = useCompany();
@@ -70,8 +62,8 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
           <SidebarNavItem {...MARKETING_DESTINATIONS.projects} />
           <SidebarStarredProjects />
           <SidebarNavItem {...MARKETING_DESTINATIONS.tasks} />
-          <SidebarNavItem to="/artifacts" label="Entregas" icon={Package} />
-          <SidebarNavItem to="/approvals/pending" label="Aprovações" icon={ClipboardCheck} />
+          <SidebarNavItem {...MARKETING_DESTINATIONS.deliverables} />
+          <SidebarNavItem {...MARKETING_DESTINATIONS.approvals} />
           <SidebarNavItem {...MARKETING_DESTINATIONS.team} />
           <SidebarNavItem {...MARKETING_DESTINATIONS.connectors} />
         </div>

@@ -10,7 +10,8 @@ test("project creation and repository configuration persist on a short mobile vi
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("textbox", { name: "Project name" })).toBeFocused();
   await dialog.getByRole("textbox", { name: "Project name" }).fill("Repository acceptance");
-  await expect(dialog.getByText("Source repos", { exact: true })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Repositórios GitHub" })).toHaveAttribute("aria-expanded", "false");
+  await expect(dialog.getByText("Source repos", { exact: true })).toBeHidden();
   await expect(dialog.getByText("Goal", { exact: true })).toHaveCount(0);
   await expect(dialog.getByPlaceholder("https://github.com/org/repo")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Create project", exact: true }).click();
@@ -71,12 +72,18 @@ test("a short new-project dialog keeps actions visible and rejects unavailable s
   await page.getByRole("button", { name: "Create project", exact: true }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox", { name: "Project name" }).fill("Rejected draft");
+  await dialog.getByRole("button", { name: "Repositórios GitHub" }).click();
   await dialog.getByRole("button", { name: "Add GitHub repo", exact: true }).click();
   await page.getByPlaceholder("Search GitHub repos…").fill("org/repo-80");
   await page.getByRole("option").filter({ hasText: "org/repo-80" }).click();
   await dialog.getByRole("button", { name: "Add another repo", exact: true }).click();
   await page.getByPlaceholder("Search GitHub repos…").fill("org/repo-79");
   await page.getByRole("option").filter({ hasText: "org/repo-79" }).click();
+  const repositories = dialog.getByRole("button", { name: "Repositórios GitHub (2)" });
+  await repositories.click();
+  await expect(dialog.getByText("org/repo-80", { exact: true })).toBeHidden();
+  await repositories.click();
+  await expect(dialog.getByText("org/repo-80", { exact: true })).toBeVisible();
   const submit = dialog.getByRole("button", { name: "Create project", exact: true });
   const bounds = await submit.boundingBox();
   expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(420);

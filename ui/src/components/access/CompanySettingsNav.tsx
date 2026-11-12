@@ -1,4 +1,5 @@
 import { PageTabBar } from "@/components/PageTabBar";
+import { NativeSelect } from "@/components/ui/select";
 import { Tabs } from "@/components/ui/tabs";
 import { useCloudInstance } from "@/hooks/useCloudInstance";
 import { useHiddenSettings } from "@/hooks/useHiddenSettings";
@@ -14,6 +15,7 @@ const items = [
   { value: "instance-profile", label: "Profile", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/profile` },
   { value: "instance-environments", label: "Environments", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/environments` },
   { value: "connections", label: "Connections", href: "/company/settings/connections" },
+  { value: "agent-invitations", label: "Agentes externos", href: "/company/settings/agent-invitations" },
   { value: "instance-access", label: "Access", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/access` },
   { value: "instance-experimental", label: "Experimental", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/experimental` },
   { value: "instance-plugins", label: "Plugins", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/plugins` },
@@ -21,6 +23,18 @@ const items = [
 ] as const;
 
 type CompanySettingsTab = (typeof items)[number]["value"];
+
+const marketingPrimaryLabels: Partial<Record<CompanySettingsTab, string>> = {
+  general: "Geral",
+  members: "Membros",
+  "instance-profile": "Perfil",
+  connections: "Conexões",
+  "agent-invitations": "Agentes externos",
+};
+
+export function isMarketingSettingsPrimary(tab: CompanySettingsTab): boolean {
+  return marketingPrimaryLabels[tab] !== undefined;
+}
 
 /** Tab values suppressed when their page is operator-hidden. */
 const hiddenSettingKeyByTab: Partial<Record<CompanySettingsTab, string>> = {
@@ -37,6 +51,10 @@ const hiddenSettingKeyByTab: Partial<Record<CompanySettingsTab, string>> = {
 };
 
 export function getCompanySettingsTab(pathname: string): CompanySettingsTab {
+  if (pathname.includes("/company/settings/agent-invitations")) {
+    return "agent-invitations";
+  }
+
   if (pathname.includes("/company/settings/connections")) {
     return "connections";
   }
@@ -97,7 +115,7 @@ export function getCompanySettingsTab(pathname: string): CompanySettingsTab {
   return "general";
 }
 
-export function CompanySettingsNav() {
+export function CompanySettingsNav({ marketingNavigation = false }: { marketingNavigation?: boolean } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { hidden: hiddenSettings } = useHiddenSettings();
@@ -106,6 +124,7 @@ export function CompanySettingsNav() {
   const isCloud = Boolean(useCloudInstance());
   const activeTab = getCompanySettingsTab(location.pathname);
   const visibleItems = items.filter((item) => {
+    if (item.value === "agent-invitations" && !marketingNavigation) return false;
     if (item.value === "import" && isCloud) return false;
     const hiddenKey = hiddenSettingKeyByTab[item.value];
     return !hiddenKey || !hiddenSettings.has(hiddenKey);
@@ -115,6 +134,27 @@ export function CompanySettingsNav() {
     const nextTab = visibleItems.find((item) => item.value === value);
     if (!nextTab || nextTab.value === activeTab) return;
     navigate(nextTab.href);
+  }
+
+  if (marketingNavigation) {
+    const primary = visibleItems.filter(item => isMarketingSettingsPrimary(item.value));
+    const advanced = visibleItems.filter(item => !isMarketingSettingsPrimary(item.value));
+    return (
+      <NativeSelect
+        aria-label="Configurações"
+        className="text-base"
+        value={visibleItems.some(item => item.value === activeTab) ? activeTab : ""}
+        onChange={event => handleTabChange(event.target.value)}
+      >
+        <option value="" disabled>Configurações</option>
+        {primary.map(item => <option key={item.value} value={item.value}>{marketingPrimaryLabels[item.value]}</option>)}
+        {advanced.length > 0 && (
+          <optgroup label="Avançado">
+            {advanced.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </optgroup>
+        )}
+      </NativeSelect>
+    );
   }
 
   return (

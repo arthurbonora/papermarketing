@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PROJECT_COLORS, type ProjectRepository } from "@paperclipai/shared";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useDialog } from "../context/DialogContext";
 import { useCompany } from "../context/CompanyContext";
 import { projectsApi } from "../api/projects";
@@ -13,22 +13,28 @@ import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { QueryErrorState, useQueryView } from "./QueryView";
 import { NativeSelect } from "./ui/select";
 import { Button } from "./ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import { ProjectRepositoryInput, repositoryOptionsKey } from "./ProjectRepositoryInput";
 import { ConnectionSetupFlow } from "@/features/connections/ConnectionSetupFlow";
 
-export function NewProjectDialog() {
+export function NewProjectDialog({ marketingNavigation = false }: { marketingNavigation?: boolean } = {}) {
   const { newProjectOpen, closeNewProject } = useDialog();
   const { selectedCompanyId } = useCompany();
   return selectedCompanyId && newProjectOpen
-    ? <NewProjectForm key={selectedCompanyId} companyId={selectedCompanyId} onClose={closeNewProject} /> : null;
+    ? <NewProjectForm key={selectedCompanyId} companyId={selectedCompanyId} onClose={closeNewProject} marketingNavigation={marketingNavigation} /> : null;
 }
 
-export function NewProjectForm({ companyId, onClose }: { companyId: string; onClose: () => void }) {
+export function NewProjectForm({ companyId, onClose, marketingNavigation = false }: {
+  companyId: string;
+  onClose: () => void;
+  marketingNavigation?: boolean;
+}) {
   const client = useQueryClient();
   const [name, setName] = useState("");
   const [color] = useState(() => PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)]!);
   const [repos, setRepos] = useState<ProjectRepository[]>([]);
   const [connecting, setConnecting] = useState(false);
+  const [repositoriesOpen, setRepositoriesOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
   const environments = useQuery({ queryKey: queryKeys.projects.environments(companyId), queryFn: () => projectsApi.environmentOptions(companyId), gcTime: 0 });
@@ -46,6 +52,13 @@ export function NewProjectForm({ companyId, onClose }: { companyId: string; onCl
       onClose();
     },
   });
+  const repositoryInput = <ProjectRepositoryInput
+    companyId={companyId}
+    selected={repos}
+    onChange={setRepos}
+    onConnect={() => setConnecting(true)}
+    disabled={create.isPending}
+  />;
   return <Dialog open onOpenChange={(open) => { if (!open && !create.isPending) onClose(); }}>
     <DialogContent showCloseButton={false} aria-describedby={undefined}
       className="flex max-h-(--sz-calc-18) flex-col gap-0 overflow-hidden p-0 shadow-sm sm:max-w-lg"
@@ -68,7 +81,7 @@ export function NewProjectForm({ companyId, onClose }: { companyId: string; onCl
               className="h-10 w-full min-w-0 border-0 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm" />
           </div>
         </div>
-        <div role="region" aria-label="Source repositories" tabIndex={0} className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-1 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring">
+        <div role="region" aria-label={marketingNavigation ? "Opções do projeto" : "Source repositories"} tabIndex={0} className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-1 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring">
           {options && (options.groups.length > 1 || (options.error && options.groups.length > 0)) && <div className="mb-4 space-y-2">
             <label htmlFor="project-environment" className="text-sm font-medium">Available in</label>
             <NativeSelect id="project-environment" value={selectedGroup?.environments[0].id ?? ""} disabled={create.isPending}
@@ -84,7 +97,17 @@ export function NewProjectForm({ companyId, onClose }: { companyId: string; onCl
           {environmentView.kind === "error" && <QueryErrorState error={environmentView.error} size="inline" action="load project environments"
             className="mb-3" onRetry={environmentView.retry} retrying={environmentView.isFetching} />}
           {options?.error && !selectedGroup && <p role="alert" className="mb-3 text-sm text-destructive">{options.error}</p>}
-          <ProjectRepositoryInput companyId={companyId} selected={repos} onChange={setRepos} onConnect={() => setConnecting(true)} disabled={create.isPending} />
+          {marketingNavigation ? (
+            <Collapsible open={repositoriesOpen} onOpenChange={setRepositoriesOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" type="button" className="group" disabled={create.isPending}>
+                  Repositórios GitHub{repos.length > 0 ? ` (${repos.length})` : ""}
+                  <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>{repositoryInput}</CollapsibleContent>
+            </Collapsible>
+          ) : repositoryInput}
         </div>
         {create.status === "error" && <p role="alert" className="px-5 pt-3 text-sm text-destructive">{describeError(create.error).body}</p>}
         <div className="flex shrink-0 justify-between gap-2 px-5 py-5">
