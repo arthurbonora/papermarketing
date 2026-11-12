@@ -300,6 +300,10 @@ function isInstalled(row: ConnectorRowModel) {
   return row.connections.length > 0 || row.chatEndpoints.length > 0 || Boolean(row.upstreamApps?.some(app => app.accounts.length > 0));
 }
 
+function belongsToWorkspace(row: ConnectorRowModel) {
+  return row.applications.length > 0 || isInstalled(row);
+}
+
 function connectorAction(
   row: ConnectorRowModel,
   chatConnectorsEnabled: boolean,
@@ -926,7 +930,7 @@ export function Browse({
       if (source === "installed") return isInstalled(row);
       if (source === "marketing") {
         const category = MARKETING_CATEGORY_BY_SLUG.get(row.slug);
-        return marketingCategory ? category === marketingCategory : Boolean(category) || isInstalled(row);
+        return marketingCategory ? category === marketingCategory : Boolean(category) || belongsToWorkspace(row);
       }
       if (source === "paperclip") return !row.aggregatorApp || isInstalled(row);
       return isAppAggregator(source) && (
@@ -945,12 +949,13 @@ export function Browse({
       return terms.every((term) => text.includes(term));
     });
   }, [rows, trimmed, source, marketingCategory]);
-  const installedRows = visibleRows.filter(isInstalled);
-  const catalogRows = visibleRows.filter(row => !isInstalled(row));
+  const showBeforeCatalog = source === "marketing" ? belongsToWorkspace : isInstalled;
+  const workspaceRows = visibleRows.filter(showBeforeCatalog);
+  const catalogRows = visibleRows.filter(row => !showBeforeCatalog(row));
   const pageCount = Math.max(1, Math.ceil(catalogRows.length / CATALOG_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pageStart = (currentPage - 1) * CATALOG_PAGE_SIZE;
-  const paginatedRows = [...installedRows, ...catalogRows.slice(pageStart, pageStart + CATALOG_PAGE_SIZE)];
+  const paginatedRows = [...workspaceRows, ...catalogRows.slice(pageStart, pageStart + CATALOG_PAGE_SIZE)];
   const accountLoadErrors = aggregatorGateways.flatMap((connection, index) => aggregatorAccountsKinds[index] === "error" || aggregatorSyncKinds[index] === "error" ? [AGGREGATOR_NAMES[appConnectionSourceSlug(connection) as keyof typeof AGGREGATOR_NAMES]] : []);
   const refreshAggregator = useMutation({ mutationFn: async (connectionId: string) => {
     await toolsApi.refreshCatalog(connectionId);

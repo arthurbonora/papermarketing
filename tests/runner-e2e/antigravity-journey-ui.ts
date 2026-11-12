@@ -5,7 +5,7 @@ import { ConnectionFailure } from "./connection-config.js";
 /** Recent sidebar entries are bounded; the searchable roster contains every
  * agent. Scope the exact visible name to the main roster, not sidebar recency. */
 export async function openAntigravityAgentFromRoster(page: Page, agentName: string, timeout = 30_000) {
-  const navigation = page.locator("aside").getByRole("link", { name: "Agents", exact: true });
+  const navigation = page.locator("aside").getByRole("link", { name: /^(Equipe|Agents)$/ });
   await expect(navigation).toHaveCount(1, { timeout });
   await navigation.click({ timeout });
   const toolbar = page.getByRole("toolbar", { name: "Agents controls", exact: true });

@@ -276,6 +276,7 @@ describe("Connectors landing page", () => {
     listGalleryMock.mockResolvedValue({ apps: ["notion", "openrouter", "bedrock", "local"].map(slug => getAppStoreDefinition(slug)) });
     listApplicationsMock.mockResolvedValue({ applications: [
       application({ id: "existing", name: "Bedrock", applicationKey: "app-gallery:bedrock", metadata: { sourceTemplateKey: "bedrock" } }),
+      application({ id: "unfinished", name: "Unfinished connector", applicationKey: "unfinished", metadata: {} }),
     ] });
     listConnectionsMock.mockResolvedValue({ connections: [
       connection({ applicationId: "existing", name: "Existing account", config: { sourceTemplateKey: "bedrock" } }),
@@ -285,6 +286,7 @@ describe("Connectors landing page", () => {
     expect(container.querySelector('[aria-checked="true"]')?.textContent).toBe("Marketing");
     expect(row("notion")).not.toBeNull();
     expect(row("bedrock")).not.toBeNull();
+    expect(container.textContent).toContain("Unfinished connector");
     expect(row("local")).toBeNull();
     const category = container.querySelector<HTMLSelectElement>('[aria-label="Categoria de marketing"]')!;
     await act(async () => {

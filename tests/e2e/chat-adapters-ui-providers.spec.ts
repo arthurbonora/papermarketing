@@ -1017,7 +1017,8 @@ test.describe("iMessage Photon setup and management", () => {
   test("connects Pro shared DMs without presenting a fake owned number or enabling groups", async ({page}) => {
     await installChatControlPlaneMock(page, photon, seed, { enableChatConnectors: true, photonShared: true });
     await page.goto(`/${seed.prefix}/apps`);
-    await page.getByRole("button", {name:"Connect iMessage Photon",exact:true}).click();
+    const connector = await findConnectorBySearch(page, photon.name, photon.slug);
+    await connector.getByRole("button", {name:"Connect iMessage Photon",exact:true}).click();
     await selectMaya(page);
     await page.getByLabel("Project ID").fill("project-e2e");
     await page.getByLabel("Project secret").fill("photon-test-secret");

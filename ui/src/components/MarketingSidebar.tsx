@@ -85,7 +85,7 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
             badgeLabel="não lidas"
             badgeTone={inbox.failedRuns > 0 ? "danger" : "default"}
           />
-          {agentChatEnabled && <SidebarNavItem to="/chats" label="Conversas" icon={MessageCircle} badge={chats.data?.filter(chat => chat.isUnreadForMe).length} badgeLabel="não lidas" />}
+          {agentChatEnabled && <SidebarNavItem to="/chats" label="Conversas" icon={MessageCircle} badge={chats.data?.filter(chat => chat.isUnreadForMe).length} badgeLabel="conversas não lidas" />}
           <SidebarNavItem to="/routines" label="Rotinas" icon={Repeat} />
         </SidebarSection>
         <SidebarSection label="Administração">
