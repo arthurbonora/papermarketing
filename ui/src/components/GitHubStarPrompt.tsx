@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCompany } from "@/context/CompanyContext";
 import { useDialogState } from "@/context/DialogContext";
+import { PAPERMARKETING_GITHUB_URL } from "@/lib/papermarketing-links";
 import { useLocation } from "@/lib/router";
 import { queryKeys } from "@/lib/queryKeys";
 import { MODAL_SELECTOR, useModalOpen, useOnboardingInProgress } from "./AnnouncementWell";
@@ -14,7 +15,6 @@ import { PapermarketingMark } from "./PapermarketingLockup";
 
 export const STAR_PROMPT_COMPLETED_TASKS = 5;
 export const STAR_PROMPT_SEEN_KEY = "paperclip.github-star-prompt.seen";
-export const PAPERMARKETING_GITHUB_URL = "https://github.com/arthurbonora/papermarketing";
 export const TASK_ATTENTION_SELECTOR = '[data-testid="task-execution-retry"], [role="status"][aria-label="Task status"]';
 const TASK_LIST_VIEWS = new Set(["all", "active", "backlog", "done", "recent"]);
 

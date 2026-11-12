@@ -127,7 +127,11 @@ async function openProject(ctx: ChatCatalogContext, o: RepositoryObservation) {
   else await ctx.input.page.goto(new URL(`/${ctx.input.fixtures.company.issuePrefix}/projects/${p.urlKey ?? p.id}`, o.origin).href, { waitUntil: "domcontentloaded" });
   await expect(ctx.input.page.getByRole("heading", { name: p.name!, exact: true }).first()).toBeVisible();
   await ctx.input.page.getByText("Configuration", { exact: true }).last().click();
-  const section = ctx.input.page.getByRole("region", { name: "Repositories", exact: true }); await expect(section).toBeVisible();
+  const section = ctx.input.page.getByRole("region", { name: "Repositories", exact: true });
+  const technicalSettings = ctx.input.page.getByText("Configuração técnica", { exact: true });
+  await expect(section.or(technicalSettings).first()).toBeVisible();
+  if (await technicalSettings.isVisible() && !(await section.isVisible())) await technicalSettings.click();
+  await expect(section).toBeVisible();
   return section;
 }
 function repositoryCase(scenarioId: string): ChatCatalogCase {

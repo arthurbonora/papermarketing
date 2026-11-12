@@ -15,6 +15,7 @@ import { applyEmptyWorktreeSigningSecrets } from "./dev-runner-worktree.js";
 import {
   AUTH_BASE_URL_MODES,
   BIND_MODES,
+  DEFAULT_ANNOUNCEMENT_FEED_URL,
   DEPLOYMENT_EXPOSURES,
   SECRET_PROVIDERS,
   type BindMode,
@@ -370,6 +371,8 @@ export function loadConfig(override?: PaperclipConfig | null): Config {
   if (resolvedBind.errors.length > 0) {
     throw new Error(resolvedBind.errors[0]);
   }
+  const announcementFeedOverride = process.env.PAPERCLIP_ANNOUNCEMENTS_FEED_URL?.trim();
+  const announcementSetting = process.env.PAPERCLIP_ANNOUNCEMENTS_ENABLED?.trim();
 
   return {
     deploymentMode,
@@ -443,8 +446,8 @@ export function loadConfig(override?: PaperclipConfig | null): Config {
     heartbeatSchedulerIntervalMs: Math.max(10000, Number(process.env.HEARTBEAT_SCHEDULER_INTERVAL_MS) || 30000),
     companyDeletionEnabled,
     telemetryEnabled: fileConfig?.telemetry?.enabled ?? true,
-    announcementsEnabled: process.env.PAPERCLIP_ANNOUNCEMENTS_ENABLED !== "false",
-    announcementsFeedUrl: process.env.PAPERCLIP_ANNOUNCEMENTS_FEED_URL?.trim() || "https://pages.paperclip.ing/announcements/v1/current.json",
+    announcementsEnabled: announcementSetting === "true" || (announcementSetting !== "false" && Boolean(announcementFeedOverride)),
+    announcementsFeedUrl: announcementFeedOverride || DEFAULT_ANNOUNCEMENT_FEED_URL,
   };
 }
 

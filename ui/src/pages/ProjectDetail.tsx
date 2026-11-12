@@ -866,7 +866,7 @@ export function ProjectDetail() {
             { value: "list", label: "Tasks" },
 
             ...(project.managedByPlugin ? [{ value: "plugin-operations", label: "Plugin operations" }] : []),
-            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Workspaces" }] : []),
+            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Ambientes de execução" }] : []),
             { value: "configuration", label: "Configuration" },
             { value: "budget", label: "Budget" },
             ...pluginTabItems.map((item) => ({
@@ -919,7 +919,9 @@ export function ProjectDetail() {
       {activeTab === "configuration" && (
         <div className="max-w-4xl">
           <ProjectProperties
+            key={project.id}
             project={project}
+            compactTechnicalSettings
             onUpdate={(data) => updateProject.mutate(data)}
             onFieldUpdate={updateProjectField}
             getFieldSaveState={(field) => fieldSaveStates[field] ?? "idle"}

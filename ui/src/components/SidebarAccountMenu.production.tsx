@@ -18,6 +18,7 @@ import { useHiddenSettings } from "@/hooks/useHiddenSettings";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useStagingCommit } from "@/hooks/useStagingCommit";
 import { userProfilePath } from "@/lib/userProfileLinks";
+import { PAPERMARKETING_DOCS_URL, PAPERMARKETING_GITHUB_URL } from "@/lib/papermarketing-links";
 import { useSidebar } from "../context/SidebarContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -32,6 +33,7 @@ const FEEDBACK_URL = "https://paperclip.ing/feedback";
 
 interface SidebarAccountMenuProps {
   deploymentMode?: DeploymentMode;
+  marketingNavigation?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -117,6 +119,7 @@ function MenuAction({
 
 export function SidebarAccountMenu({
   deploymentMode,
+  marketingNavigation = false,
   open: controlledOpen,
   onOpenChange,
 }: SidebarAccountMenuProps) {
@@ -216,7 +219,7 @@ export function SidebarAccountMenu({
                 {stagingCommit ? (
                   <a
                     className="pointer-events-auto block truncate font-mono text-(length:--text-micro) leading-(--profile-popover-meta-line-height) text-muted-foreground hover:underline focus-visible:underline"
-                    href={`https://github.com/paperclipai/paperclip/commit/${stagingCommit}`}
+                    href={`${marketingNavigation ? PAPERMARKETING_GITHUB_URL : "https://github.com/paperclipai/paperclip"}/commit/${stagingCommit}`}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={`View commit ${stagingCommit} on GitHub`}
@@ -240,10 +243,10 @@ export function SidebarAccountMenu({
                 />
               ) : null}
               <MenuAction
-                label="Documentation"
-                description="Open Paperclip docs in a new tab."
+                label={marketingNavigation ? "Documentação" : "Documentation"}
+                description={marketingNavigation ? "Abra o guia do Papermarketing." : "Open Paperclip docs in a new tab."}
                 icon={BookOpen}
-                href={DOCS_URL}
+                href={marketingNavigation ? PAPERMARKETING_DOCS_URL : DOCS_URL}
                 external
                 onClick={() => setOpen(false)}
               />
@@ -276,7 +279,7 @@ export function SidebarAccountMenu({
           </div>
         </PopoverContent>
         </Popover>
-        {!rail && !isCloud ? (
+        {!marketingNavigation && !rail && !isCloud ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <a

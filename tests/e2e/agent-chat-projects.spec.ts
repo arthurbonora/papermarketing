@@ -109,6 +109,7 @@ for (const direct of [false, true])
       await page
         .getByRole("tab", { name: "Configuration", exact: true })
         .click();
+      await page.getByText("Configuração técnica", { exact: true }).click();
       await expect(
         page.getByRole("region", { name: "Repositories" }),
       ).toContainText("octocat/Hello-World");

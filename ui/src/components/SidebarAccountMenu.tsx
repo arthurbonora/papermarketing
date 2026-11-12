@@ -19,6 +19,7 @@ import { useHiddenSettings } from "@/hooks/useHiddenSettings";
 import { useSignOut } from "@/hooks/useSignOut";
 import { useStagingCommit } from "@/hooks/useStagingCommit";
 import { userProfilePath } from "@/lib/userProfileLinks";
+import { PAPERMARKETING_DOCS_URL, PAPERMARKETING_GITHUB_URL } from "@/lib/papermarketing-links";
 import { useSidebar } from "../context/SidebarContext";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { FlyoutContent, FlyoutHeader, FlyoutOptions } from "@/components/ui/flyout";
@@ -35,6 +36,7 @@ const FEEDBACK_URL = "https://paperclip.ing/feedback";
 
 interface SidebarAccountMenuProps {
   deploymentMode?: DeploymentMode;
+  marketingNavigation?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /** Contextual navigation occupies a full sidebar even if the saved global nav mode is collapsed. */
@@ -119,6 +121,7 @@ function MenuAction({
 
 export function SidebarAccountMenu({
   deploymentMode,
+  marketingNavigation = false,
   open: controlledOpen,
   onOpenChange,
   forceExpanded = false,
@@ -222,7 +225,7 @@ export function SidebarAccountMenu({
                 {stagingCommit ? (
                   <a
                     className="pointer-events-auto block truncate font-mono text-(length:--text-micro) leading-(--profile-popover-meta-line-height) text-muted-foreground hover:underline focus-visible:underline"
-                    href={`https://github.com/paperclipai/paperclip/commit/${stagingCommit}`}
+                    href={`${marketingNavigation ? PAPERMARKETING_GITHUB_URL : "https://github.com/paperclipai/paperclip"}/commit/${stagingCommit}`}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={`View commit ${stagingCommit} on GitHub`}
@@ -251,9 +254,9 @@ export function SidebarAccountMenu({
                 />
               ) : null}
               <MenuAction
-                label="Documentation"
+                label={marketingNavigation ? "Documentação" : "Documentation"}
                 icon={BookOpen}
-                href={DOCS_URL}
+                href={marketingNavigation ? PAPERMARKETING_DOCS_URL : DOCS_URL}
                 external
                 onClick={() => setOpen(false)}
               />
@@ -280,7 +283,7 @@ export function SidebarAccountMenu({
             </FlyoutOptions>
           </FlyoutContent>
         </Popover>
-        {!rail && !isCloud ? (
+        {!marketingNavigation && !rail && !isCloud ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <a
