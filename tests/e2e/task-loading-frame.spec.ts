@@ -1,5 +1,8 @@
 import { expect, test, type APIRequestContext, type APIResponse } from "@playwright/test";
 
+// Network fault injection must reach Playwright instead of the asset service worker.
+test.use({ serviceWorkers: "block" });
+
 async function json(response: APIResponse) {
   expect(response.ok(), `${response.status()} ${await response.text()}`).toBe(true);
   return response.json();
@@ -132,14 +135,17 @@ test("a stalled web font does not hide an otherwise prepared conversation indefi
   const fixture = await createTask(request);
   let release!: () => void;
   const fontReady = new Promise<void>(resolve => { release = resolve; });
+  let fontRequestBlocked = false;
   try {
     await page.route("**/api/workspace-preferences/me", async route => {
       const response = await route.fetch();
       await route.fulfill({ json: { ...await response.json(), coordinatorWorkspaceEnabled: true } });
     });
-    await page.route("**/*.woff2", async route => { await fontReady; await route.abort(); });
+    await page.route("**/*.woff2", async route => { fontRequestBlocked = true; await fontReady; await route.abort(); });
     await page.goto(fixture.route, { waitUntil: "domcontentloaded" });
-    await expect(page.getByTestId("task-chat-loading-frame")).toBeVisible();
+    // The fallback may finish before Playwright observes the transient loading frame.
+    // Prove that a font is still blocked while the real conversation becomes usable.
+    await expect.poll(() => fontRequestBlocked).toBe(true);
     await expect(page.getByTestId("task-chat-thread").locator(':scope > [aria-busy="false"]')).toBeVisible({ timeout: 5000 });
     await expect(page.getByTestId("task-chat-composer-stack").locator('[contenteditable="true"]')).toBeEditable();
   } finally {
