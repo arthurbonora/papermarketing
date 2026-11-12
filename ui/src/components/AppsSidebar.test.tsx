@@ -242,6 +242,7 @@ describe("AppsSidebar", () => {
     expect(container.querySelector('[data-to="/apps"]')).not.toBeNull();
     expect(container.querySelector('[data-to="/apps/review"]')).not.toBeNull();
     expect(container.querySelector('[data-to="/apps/connections"]')).toBeNull();
+    expect(Boolean(container.querySelector('[data-to="/apps/advanced/paste-config"]'))).toBe(technical);
     expect(Boolean(container.querySelector('[data-to="/apps/advanced/profiles"]'))).toBe(technical);
     expect(Boolean(container.querySelector('[data-to="/apps/advanced/gateways"]'))).toBe(technical);
     expect(Boolean(container.querySelector('[data-to="/apps/advanced/smoke-lab"]'))).toBe(technical && smokeLabEnabled);

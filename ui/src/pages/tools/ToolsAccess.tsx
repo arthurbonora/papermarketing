@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Wrench } from "lucide-react";
 import { Link, Navigate, useParams } from "@/lib/router";
-import { cn } from "@/lib/utils";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { useCompany } from "@/context/CompanyContext";
 import { ProfilesIndex } from "./profiles/ProfilesIndex";
@@ -9,7 +8,6 @@ import { GatewaysTab } from "./GatewaysTab";
 import { PasteConfigTab } from "./PasteConfigTab";
 import { SmokeLabTab } from "./SmokeLabTab";
 import {
-  ADVANCED_TABS,
   TOOL_TABS,
   advancedTabHref,
   isAdvancedSetupTab,
@@ -80,8 +78,6 @@ export function ToolsAccess() {
   }
 
   if (advanced) {
-    // M8a/M8b chrome (PAP-10839 wires): Advanced badge, plain-words subtitle,
-    // and a focused setup tab. The developer surface stays behind a quiet link.
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
@@ -94,23 +90,6 @@ export function ToolsAccess() {
             .
           </p>
         </header>
-
-        <nav className="flex items-center gap-6 border-b border-border">
-          {ADVANCED_TABS.map((tab) => (
-            <Link
-              key={tab.key}
-              to={advancedTabHref(tab.key)}
-              className={cn(
-                "-mb-px border-b-2 pb-2 text-sm transition-colors",
-                tab.key === activeTab
-                  ? "border-foreground font-bold text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className="min-h-(--sz-300px)">{renderTab(activeTab, selectedCompanyId)}</div>
 

@@ -151,8 +151,7 @@ test.describe.serial("dark-mode Apps surfaces", () => {
     await expect(page.getByRole("link", { name: "Conexões" })).toBeVisible();
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-03-advanced-run-dark.png`, fullPage: true });
 
-    // Sidebar and tab switcher both link Paste a config — either lands on /paste-config.
-    await page.getByRole("link", { name: "Paste a config" }).first().click();
+    await page.getByRole("link", { name: "Paste a config" }).click();
     await expect(page).toHaveURL(/\/apps\/advanced\/paste-config$/);
     await expect(page.getByText(/Paste the MCP config snippet/i).first()).toBeVisible({ timeout: 20_000 });
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-04-advanced-paste-dark.png`, fullPage: true });
