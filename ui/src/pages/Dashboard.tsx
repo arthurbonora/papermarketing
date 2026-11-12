@@ -2,11 +2,7 @@ import { companyProjectsQuery } from "@/lib/company-projects-query";
 import { AgentIdentity } from "../components/AgentIdentity";
 import { TaskSummaryList } from "../components/TaskSummaryList";
 import { useDesignSandbox } from "../context/DesignSandboxContext";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "@/lib/router";
-import { shouldRouteAgentlessCompanyToOnboarding } from "../lib/onboarding-route";
-import { claimOnboardingOffer, dashboardOnboardingOptions } from "../lib/onboarding-auto-open";
-import { onboardingDraftStorage } from "../lib/onboarding-state";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardApi } from "../api/dashboard";
@@ -37,10 +33,13 @@ import { QueryErrorState, useQueryView } from "../components/QueryView";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InlineBanner } from "../components/InlineBanner";
-import type { Agent, Issue } from "@paperclipai/shared";
+import type { Agent, DashboardSummary, Issue } from "@paperclipai/shared";
 import { PluginSlotOutlet } from "@/plugins/slots";
 import { SmokeLabDashboardCard } from "../components/SmokeLabDashboardCard";
 import { taskStatusIconProps } from "@/lib/task-status-presentation";
+import { useExperimentalFlag } from "../hooks/useExperimentalFlag";
+
+const DashboardGrid = lazy(() => import("../features/dashboard-grid/DashboardGrid").then((module) => ({ default: module.DashboardGrid })));
 
 const DASHBOARD_ACTIVITY_LIMIT = 10;
 
@@ -73,11 +72,33 @@ export function derivePausedAgentBanner(agents: Agent[] | undefined): PausedAgen
   return null;
 }
 
+function DashboardBudgetIncidentBanner({ budgets }: { budgets: DashboardSummary["budgets"] }) {
+  if (budgets.activeIncidents <= 0) return null;
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-red-500/20 bg-(image:--gradient-extract-1) px-4 py-3">
+      <div className="flex items-start gap-2.5">
+        <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-300" />
+        <div>
+          <p className="text-sm font-medium text-red-950 dark:text-red-50">
+            {budgets.activeIncidents} active budget incident{budgets.activeIncidents === 1 ? "" : "s"}
+          </p>
+          <p className="text-xs text-red-900/70 dark:text-red-100/70">
+            {budgets.pausedAgents} agents paused · {budgets.pausedProjects} projects paused · {budgets.pendingApprovals} pending budget approvals
+          </p>
+        </div>
+      </div>
+      <Link to="/costs" className="text-sm underline underline-offset-2 text-red-900 dark:text-red-100">
+        Open budgets
+      </Link>
+    </div>
+  );
+}
+
 export function Dashboard() {
   const designSandbox = useDesignSandbox();
+  const customizableDashboard = useExperimentalFlag("enableCustomizableDashboard");
   const { selectedCompanyId, companies } = useCompany();
   const { openOnboarding } = useDialogActions();
-  const location = useLocation();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [animatedActivityIds, setAnimatedActivityIds] = useState<Set<string>>(new Set());
   const seenActivityIdsRef = useRef<Set<string>>(new Set());
@@ -118,48 +139,8 @@ export function Dashboard() {
     },
   });
 
-  // A company with no agent cannot do anything — no runs, no tasks, nothing
-  // to show. The banner below already says so and offers a link; this takes
-  // the customer there instead of asking them to notice.
-  //
-  // It also closes the gap a Cloud-provisioned stack falls into. Cloud creates
-  // the company before the tenant boots, so the companyless redirect never
-  // fires and a seeded customer lands here, on an empty dashboard, straight
-  // out of signup.
-  //
-  // Opened as the dialog rather than navigated to: the wizard is already
-  // mounted globally, so there is no route to race and no redirect to loop.
-  // Placed with the other hooks — the early returns below mean anything
-  // further down would be called conditionally.
-  //
-  // The company and the step are both passed. Opening with empty options would
-  // start the wizard at the front door with no company, and the new-company
-  // path there would create a *second* company instead of giving this one an
-  // agent.
-  // A saved agent that is still in setup is unfinished onboarding after reload.
-  // Only the matching browser draft may resume it; other setup records stay put.
-  const onboardingOptions = selectedCompanyId
-    ? dashboardOnboardingOptions(selectedCompanyId, agents, onboardingDraftStorage.read())
-    : null;
-  const onboardingInitialStep = onboardingOptions?.initialStep;
-  const shouldOpenOnboarding = shouldRouteAgentlessCompanyToOnboarding({
-    pathname: location.pathname,
-    agentsLoaded: agents !== undefined,
-    agentsRefreshing,
-    agentCount: onboardingOptions ? 0 : agents?.length ?? 0,
-  });
-  // Auto-open once per company. Every input to the effect sits behind a query,
-  // so a refetch re-runs it, and the customer can also navigate away and come
-  // back — both would otherwise call `openOnboarding` again and reopen a
-  // wizard that was deliberately closed. `claimOnboardingOffer` holds the
-  // companies already offered; see it for why that outlives this component.
-  useEffect(() => {
-    if (!shouldOpenOnboarding || !selectedCompanyId || !onboardingInitialStep) return;
-    if (!claimOnboardingOffer(selectedCompanyId)) return;
-    openOnboarding({ companyId: selectedCompanyId, initialStep: onboardingInitialStep });
-    // No mission lookup to wait on any more: the step this opens is the same
-    // whatever the goals say, so waiting only delayed the open.
-  }, [shouldOpenOnboarding, selectedCompanyId, onboardingInitialStep, openOnboarding]);
+  // A marketing workspace is useful before agents are configured. Keep its
+  // dashboard accessible; the empty-state action starts setup on request.
 
   useEffect(() => {
     setBreadcrumbs([{ label: "Dashboard" }]);
@@ -333,7 +314,7 @@ export function Dashboard() {
     );
   }
 
-  // Same rule as the auto-offer above: a list still being refreshed may be the
+  // A list still being refreshed may be the
   // empty one cached before the first hire, and the banner's "Create one here"
   // opens the same agent step the offer does.
   const hasNoAgents = agents !== undefined && !agentsRefreshing && agents.length === 0;
@@ -393,28 +374,28 @@ export function Dashboard() {
         </div>
       )}
 
-      <ActiveAgentsPanel companyId={selectedCompanyId!} dedupeLinkedTasks />
+      {!customizableDashboard.enabled && <ActiveAgentsPanel companyId={selectedCompanyId!} dedupeLinkedTasks />}
 
-      {data && (
+      {data && customizableDashboard.enabled && (
         <>
-          {data.budgets.activeIncidents > 0 ? (
-            <div className="flex items-start justify-between gap-3 rounded-xl border border-red-500/20 bg-(image:--gradient-extract-1) px-4 py-3">
-              <div className="flex items-start gap-2.5">
-                <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-300" />
-                <div>
-                  <p className="text-sm font-medium text-red-950 dark:text-red-50">
-                    {data.budgets.activeIncidents} active budget incident{data.budgets.activeIncidents === 1 ? "" : "s"}
-                  </p>
-                  <p className="text-xs text-red-900/70 dark:text-red-100/70">
-                    {data.budgets.pausedAgents} agents paused · {data.budgets.pausedProjects} projects paused · {data.budgets.pendingApprovals} pending budget approvals
-                  </p>
-                </div>
-              </div>
-              <Link to="/costs" className="text-sm underline underline-offset-2 text-red-900 dark:text-red-100">
-                Open budgets
-              </Link>
-            </div>
-          ) : null}
+          <DashboardBudgetIncidentBanner budgets={data.budgets} />
+          <SmokeLabDashboardCard companyId={selectedCompanyId!} />
+          <Suspense fallback={<PageSkeleton variant="dashboard" />}>
+            <DashboardGrid key={selectedCompanyId} companyId={selectedCompanyId!} />
+          </Suspense>
+          <PluginSlotOutlet
+            slotTypes={["dashboardWidget"]}
+            context={{ companyId: selectedCompanyId }}
+            className="grid gap-4 md:grid-cols-2"
+            // design-allow(card-pattern): class-string prop consumed by the plugin outlet; a component can't be passed here (C5a Run 3)
+            itemClassName="rounded-lg border bg-card p-4 shadow-sm"
+          />
+        </>
+      )}
+
+      {data && !customizableDashboard.enabled && (
+        <>
+          <DashboardBudgetIncidentBanner budgets={data.budgets} />
 
           <div className={cn("grid grid-cols-2 xl:grid-cols-4", designSandbox ? "gap-4" : "gap-1 sm:gap-2")}>
             <MetricCard

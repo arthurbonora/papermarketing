@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
-import { copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, utimes, writeFile } from "node:fs/promises";
+import { appendFile, copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, utimes, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -85,8 +85,8 @@ test("release metadata rejects incompatible native, harness and protocol contrac
 
 async function withOwnedChildren(root, action) {
   const owned = [];
-  const start = (command, args) => {
-    const child = spawn(command, args, { env: { PATH: "/usr/bin:/bin" }, stdio: "ignore" });
+  const start = (command, args, argv0) => {
+    const child = spawn(command, args, { argv0, env: { PATH: "/usr/bin:/bin" }, stdio: "ignore" });
     // close follows both exit and spawn error. A failed second spawn must not
     // interrupt retirement of the first still-running executable.
     const closed = new Promise(resolve => child.once("close", resolve));
@@ -112,18 +112,20 @@ test("atomically publishes while the previous executable is running", { skip: pr
   const root = await mkdtemp(path.join(tmpdir(), "runnerd-stage-test-"));
   const destination = path.join(root, "paperclip-runnerd");
   await withOwnedChildren(root, async start => {
-    await stageRunnerBinary("/bin/sleep", destination);
+    // A renamed coreutils multicall binary need not retain sleep's dispatch.
+    // Node remains a real mapped native executable under the staged filename.
+    await stageRunnerBinary(process.execPath, destination);
     const previous = await stat(destination);
-    const old = start(destination, ["30"]);
+    const old = start(destination, ["-e", "setInterval(() => {}, 1000)"]);
     await old.spawned;
-    await stageRunnerBinary("/bin/sleep", destination);
+    await stageRunnerBinary(process.execPath, destination);
     const published = await stat(destination);
     assert.notEqual(published.ino, previous.ino);
     assert.equal(published.mode & 0o777, 0o755);
     assert.equal(old.child.exitCode, null);
     assert.equal(old.child.signalCode, null);
     assert.deepEqual(await readdir(root), ["paperclip-runnerd"]);
-    const next = start(destination, ["0"]);
+    const next = start(destination, ["-e", "process.exit(0)"]);
     await next.spawned; await next.closed;
     assert.equal(next.child.exitCode, 0);
   });
@@ -149,9 +151,18 @@ test("a source rebuild selects fresh dev bytes while preserving release binaries
     await mkdir(path.dirname(source), { recursive: true });
     await writeFile(source, "fn main() {}\n");
     await mkdir(path.dirname(built), { recursive: true });
-    await copyHostFixture("/bin/echo", built);
+    // Some Linux distributions ship echo and sleep as the same multicall binary.
+    // Node provides distinct executable bytes, independent of that packaging.
+    await copyHostFixture(process.execPath, built);
     const previousBuild = path.join(root, "previous-build");
-    await copyHostFixture("/bin/sleep", previousBuild);
+    if (process.platform === "linux") {
+      await copyHostFixture(process.execPath, previousBuild);
+      // ELF ignores a trailer outside its loadable segments. This gives the
+      // previous build distinct bytes while keeping a portable native fixture.
+      await appendFile(previousBuild, "\nprevious runner fixture\n");
+    } else {
+      await copyHostFixture("/bin/sleep", previousBuild);
+    }
     await stageRunnerBinary(previousBuild, hostTarget);
     await stageRunnerBinary(built, path.join(binaryRoot, "paperclip-runnerd"));
     const platforms = {}, releaseBytes = new Map();
@@ -177,7 +188,9 @@ test("a source rebuild selects fresh dev bytes while preserving release binaries
     const manifestPath = path.join(binaryRoot, "release-manifest.json");
     const manifest = JSON.stringify({ schema: "paperclip.runner.release-binaries.v1", sourceRevision: "a".repeat(40), platforms });
     await writeFile(manifestPath, manifest);
-    const old = start(hostTarget, ["30"]);
+    const old = process.platform === "linux"
+      ? start(hostTarget, ["-e", "setInterval(() => {}, 1000)"])
+      : start(hostTarget, ["30"], "sleep");
     await old.spawned;
     const requirement = { repoRoot: root, nativeRunnerRequired: true };
     assert.equal(paperclipRunnerBinaryNeedsBuild(requirement), true);
@@ -188,7 +201,8 @@ test("a source rebuild selects fresh dev bytes while preserving release binaries
     assert.deepEqual(selected, { binary: path.join(binaryRoot, "paperclip-runnerd"), sourceBuild: true });
     const published = await stat(selected.binary);
     assert.equal(published.mode & 0o777, 0o755);
-    assert.notDeepEqual(await readFile(selected.binary), oldArtifact);
+    assert.notEqual(createHash("sha256").update(await readFile(selected.binary)).digest("hex"),
+      createHash("sha256").update(oldArtifact).digest("hex"));
     assert.equal((await stat(hostTarget)).ino, oldIdentity.ino);
     assert.deepEqual(await readFile(hostTarget), oldArtifact);
     assert.equal(await readFile(manifestPath, "utf8"), manifest);
@@ -197,7 +211,7 @@ test("a source rebuild selects fresh dev bytes while preserving release binaries
     assert.equal(paperclipRunnerBinaryNeedsBuild(requirement), false);
     assert.equal(old.child.exitCode, null);
     assert.equal(old.child.signalCode, null);
-    const next = start(selected.binary, ["rebuilt"]);
+    const next = start(selected.binary, ["-e", 'process.stdout.write("rebuilt")']);
     await next.spawned; await next.closed;
     assert.equal(next.child.exitCode, 0);
   });
