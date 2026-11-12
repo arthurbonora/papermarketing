@@ -103,20 +103,20 @@ describe("BreadcrumbContext", () => {
     expect(renderCounts).toHaveLength(3);
   });
 
-  it("builds page titles with the selected company name before papermarketing", () => {
+  it("builds page titles with the selected company name before Papermarketing", () => {
     expect(buildDocumentTitle([{ label: "Inbox" }], "Anachronist Wiki")).toBe(
-      "Inbox • Anachronist Wiki • papermarketing",
+      "Inbox • Anachronist Wiki • Papermarketing",
     );
     expect(
       buildDocumentTitle(
         [{ label: "Issues", href: "/issues" }, { label: "PAP-3515" }],
         "Anachronist Wiki",
       ),
-    ).toBe("PAP-3515 • Issues • Anachronist Wiki • papermarketing");
+    ).toBe("PAP-3515 • Issues • Anachronist Wiki • Papermarketing");
   });
 
   it("omits blank company names from page titles", () => {
-    expect(buildDocumentTitle([{ label: "Inbox" }], "  ")).toBe("Inbox • papermarketing");
-    expect(buildDocumentTitle([], null)).toBe("papermarketing");
+    expect(buildDocumentTitle([{ label: "Inbox" }], "  ")).toBe("Inbox • Papermarketing");
+    expect(buildDocumentTitle([], null)).toBe("Papermarketing");
   });
 });

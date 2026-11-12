@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <style>
-    path { stroke: #18181b; }
-    @media (prefers-color-scheme: dark) {
-      path { stroke: #e4e4e7; }
-    }
-  </style>
-  <path stroke-width="2" d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="222" height="222" viewBox="0 0 222 222">
+  <g fill="#141413"><rect width="222" height="222" rx="48"/></g>
+  <g transform="translate(0 47)"><g fill="none" stroke="#FAFAFA" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 15 111 V 30 C 15 22 21 16 29 16 H 58 C 76 16 89 29 89 46 C 89 63 76 76 58 76 H 15"/>
+    <path d="M 33 35 H 58 C 65 35 70 40 70 46 C 70 52 65 57 58 57 H 33"/>
+    <path d="M 110 111 V 28 C 110 17 121 13 127 22 L 153 55 C 156 59 160 59 163 55 L 189 22 C 196 13 207 18 207 29 V 99 C 207 116 187 116 187 99 V 54 L 166 82 C 161 89 155 89 150 82 L 130 56 V 101"/>
+  </g></g>
 </svg>

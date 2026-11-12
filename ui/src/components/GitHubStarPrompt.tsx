@@ -10,11 +10,11 @@ import { useDialogState } from "@/context/DialogContext";
 import { useLocation } from "@/lib/router";
 import { queryKeys } from "@/lib/queryKeys";
 import { MODAL_SELECTOR, useModalOpen, useOnboardingInProgress } from "./AnnouncementWell";
-import { PaperclipMark } from "./PaperclipLockup";
+import { PapermarketingMark } from "./PapermarketingLockup";
 
 export const STAR_PROMPT_COMPLETED_TASKS = 5;
 export const STAR_PROMPT_SEEN_KEY = "paperclip.github-star-prompt.seen";
-export const PAPERCLIP_GITHUB_URL = "https://github.com/paperclipai/paperclip";
+export const PAPERMARKETING_GITHUB_URL = "https://github.com/arthurbonora/papermarketing";
 export const TASK_ATTENTION_SELECTOR = '[data-testid="task-execution-retry"], [role="status"][aria-label="Task status"]';
 const TASK_LIST_VIEWS = new Set(["all", "active", "backlog", "done", "recent"]);
 
@@ -35,7 +35,7 @@ function markSeen() {
 
 /**
  * Asks self-hosted users to star the repository once they have finished
- * enough tasks to know whether Paperclip helps them. It shows at most once
+ * enough tasks to know whether Papermarketing helps them. It shows at most once
  * per browser: showing it counts as seen, so a reload or another open tab
  * never repeats it. It waits for any other dialog to close. Cloud instances,
  * unfinished onboarding and unknown state (loading or a failed read) keep it
@@ -89,16 +89,16 @@ export function GitHubStarPrompt() {
       <DialogContent className="sm:max-w-md" data-testid="github-star-prompt">
         <DialogHeader className="items-center text-center sm:text-center">
           <div className="mb-2 flex size-14 items-center justify-center rounded-full border border-border bg-muted">
-            <PaperclipMark decorative className="size-7" />
+            <PapermarketingMark className="w-8" />
           </div>
           <DialogTitle>You completed {STAR_PROMPT_COMPLETED_TASKS} tasks!</DialogTitle>
           <DialogDescription className="max-w-xs">
-            If you're enjoying Paperclip, consider giving us a star on GitHub!
+            If you're enjoying Papermarketing, consider giving us a star on GitHub!
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">
           <Button asChild className="w-full">
-            <a href={PAPERCLIP_GITHUB_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+            <a href={PAPERMARKETING_GITHUB_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
               <Star className="size-4 fill-current" aria-hidden />
               Star on GitHub
             </a>

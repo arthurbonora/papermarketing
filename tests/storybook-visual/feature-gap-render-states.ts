@@ -42,7 +42,7 @@ const states: Record<string, Record<string, State>> = {
     },
   },
   "feature-sign-in": {
-    "signed-out": { text: "Sign in to Paperclip" },
+    "signed-out": { text: "Sign in to Papermarketing" },
     loading: { text: "Loading…" },
     "session-failed": {
       text: "Unable to check sign-in. Refresh and try again.",
