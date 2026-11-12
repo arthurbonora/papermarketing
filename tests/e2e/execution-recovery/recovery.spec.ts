@@ -308,6 +308,7 @@ for (const journey of [
       const connections: Record<string, { id: string; name: string }> = {};
       for (const service of ["notion", "gmail"]) {
         await page.goto(base + prefix + "/apps");
+        await page.getByRole("radio", { name: "All", exact: true }).click();
         const custom = page
           .getByRole("list", { name: "Connector list" })
           .getByRole("listitem")
