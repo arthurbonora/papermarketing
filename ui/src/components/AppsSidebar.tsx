@@ -2,29 +2,38 @@ import { useLocation } from "@/lib/router";
 import { ChatDetailSidebar } from "./chat/ChatDetailSidebar";
 import { ChatSetupSidebar } from "./chat/ChatSetupNavigation";
 import { Store, ShieldQuestion } from "lucide-react";
-import { DEVELOPER_TABS, advancedTabHref, isExperimentalToolTab } from "@/pages/tools/tool-tabs";
+import { ADVANCED_TABS, DEVELOPER_TABS, advancedTabHref, isExperimentalToolTab } from "@/pages/tools/tool-tabs";
 import { useSmokeLabEnabled } from "@/hooks/useSmokeLabEnabled";
 import { useReviewCount } from "@/pages/apps/useReviewCount";
-import { SidebarNavItem } from "./SidebarNavItem";
+import { SidebarNavExpandedProvider, SidebarNavItem } from "./SidebarNavItem";
 import { contextualSidebarStyles } from "./contextual-sidebar-styles";
 
 /**
  * Secondary sidebar for the Apps area.
  *
  * Connectors combines discovery, account management, and connection health.
- * Review keeps governed actions waiting on the user's approval. Advanced
- * developer surfaces remain hidden unless one is explicitly enabled.
+ * Review keeps governed actions waiting on the user's approval. The marketing
+ * sidebar displays technical links on the routes that use them.
  */
-export function AppsSidebar() {
+export function MarketingAppsSidebar() {
+  return <SidebarNavExpandedProvider><AppsSidebar marketingNavigation /></SidebarNavExpandedProvider>;
+}
+
+export function AppsSidebar({ marketingNavigation = false }: { marketingNavigation?: boolean } = {}) {
   const { pathname } = useLocation();
   const reviewCount = useReviewCount();
   const { enabled: smokeLabEnabled } = useSmokeLabEnabled();
   const developerTabs = DEVELOPER_TABS.filter((tab) => {
+    if (isExperimentalToolTab(tab.key)) return smokeLabEnabled;
+    if (marketingNavigation) return true;
     // Temporarily hide Gateways and Profiles until they are ready to ship.
     // Keep their tab definitions and routes intact so we can bring them back later.
     if (tab.key === "gateways" || tab.key === "profiles") return false;
-    return !isExperimentalToolTab(tab.key) || smokeLabEnabled;
+    return true;
   });
+  const inTechnicalArea = /\/apps\/(?:advanced|gateways)(?:\/|$)/i.test(pathname);
+  const showTechnical = !marketingNavigation || inTechnicalArea;
+  const technicalTabs = marketingNavigation ? [...ADVANCED_TABS, ...developerTabs] : developerTabs;
 
   if (pathname.endsWith("/apps/chat/connect")) return <ChatSetupSidebar />;
   const chatDetail = pathname.match(/\/apps\/chat\/([^/]+)(?:\/(?:settings|access|conversations|activity)|\/reviews(?:\/[^/]+)?)?\/?$/);
@@ -48,22 +57,24 @@ export function AppsSidebar() {
             badgeLabel="waiting for your OK"
           />
         </div>
-        {developerTabs.length > 0 ? (
+        {showTechnical && technicalTabs.length > 0 ? (
           <div data-slot="contextual-sidebar-section" className={contextualSidebarStyles.section}>
             <div
               data-slot="contextual-sidebar-section-label"
               className={contextualSidebarStyles.sectionLabel}
             >
-              Developer
+              {marketingNavigation ? "Configuração técnica" : "Developer"}
             </div>
-            <p
-              data-slot="contextual-sidebar-section-description"
-              className={contextualSidebarStyles.sectionDescription}
-            >
-              Advanced setup for developers.
-            </p>
+            {!marketingNavigation && (
+              <p
+                data-slot="contextual-sidebar-section-description"
+                className={contextualSidebarStyles.sectionDescription}
+              >
+                Advanced setup for developers.
+              </p>
+            )}
             <div data-slot="contextual-sidebar-group" className={contextualSidebarStyles.group}>
-              {developerTabs.map((tab) => (
+              {technicalTabs.map((tab) => (
                 <SidebarNavItem
                   key={tab.key}
                   to={advancedTabHref(tab.key)}

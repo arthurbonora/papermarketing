@@ -103,11 +103,11 @@ describe("ToolsAccess", () => {
     expect(container.querySelector('a[href="/apps/advanced/paste-config"]')).toBeTruthy();
   });
 
-  it("uses Profiles as the developer entry point without a second page shell", async () => {
+  it("links directly to access profiles without adding a second page shell", async () => {
     await render();
 
     expect(container.querySelector('a[href="/apps/advanced/profiles"]')?.textContent).toContain(
-      "Open developer tools",
+      "Manage access profiles",
     );
 
     mockParams.tab = "profiles";

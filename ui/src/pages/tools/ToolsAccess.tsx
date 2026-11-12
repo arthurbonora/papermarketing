@@ -85,17 +85,11 @@ export function ToolsAccess() {
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 p-4 sm:p-6">
         <header>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-foreground">Advanced setup</h1>
-            <span className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 text-(length:--text-micro) font-bold text-background">
-              Advanced
-            </span>
-          </div>
+          <h1 className="text-xl font-bold text-foreground">Advanced setup</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            For tools that aren't in the gallery. You'll need details from the tool's documentation.
-            Most people never need this — if the app you want is in the gallery,{" "}
+            Use the tool's documentation to connect a custom tool, or{" "}
             <Link to="/apps" className="font-medium text-primary hover:underline">
-              connect it there instead
+              choose a connector from the catalog
             </Link>
             .
           </p>
@@ -122,9 +116,8 @@ export function ToolsAccess() {
 
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Wrench className="h-3.5 w-3.5" />
-          Looking for the developer surface?{" "}
           <Link to={advancedTabHref("profiles")} className="font-medium text-primary hover:underline">
-            Open developer tools
+            Manage access profiles
           </Link>
         </p>
       </div>

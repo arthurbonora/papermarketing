@@ -128,6 +128,10 @@ test.describe.serial("dark-mode Apps surfaces", () => {
     await page.goto(`/${seed.prefix}/apps/connections`);
     await expect(page.getByRole("heading", { name: "Connectors" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/needs attention/i).first()).toBeVisible({ timeout: 30_000 });
+    const navigation = page.getByRole("navigation", { name: "Connectors", exact: true });
+    await expect(navigation.getByRole("link", { name: "Browse", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "Review", exact: true })).toBeVisible();
+    await expect(navigation.getByText("Configuração técnica", { exact: true })).toHaveCount(0);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-01-apps-dark.png`, fullPage: true });
   });
 
@@ -154,12 +158,14 @@ test.describe.serial("dark-mode Apps surfaces", () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-04-advanced-paste-dark.png`, fullPage: true });
   });
 
-  test("developer routes share the merged Apps sidebar without hidden tabs", async ({ page }) => {
+  test("technical routes expose setup links within the current workspace", async ({ page }) => {
     await forceDark(page);
     await page.goto(`/${seed.prefix}/apps/advanced/profiles`);
     await expect(page.getByRole("heading", { name: "Access profiles" })).toBeVisible({ timeout: 30_000 });
-    await expect(page.locator('a[href$="/apps/advanced/gateways"]', { hasText: "Gateways" })).toHaveCount(0);
-    await expect(page.locator('a[href$="/apps/advanced/profiles"]', { hasText: "Profiles" })).toHaveCount(0);
+    const navigation = page.getByRole("navigation", { name: "Connectors", exact: true });
+    await expect(navigation.getByRole("link", { name: "Gateways", exact: true })).toHaveAttribute("href", `/${seed.prefix}/apps/advanced/gateways`);
+    await expect(navigation.getByRole("link", { name: "Profiles", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(navigation.getByRole("link", { name: "Browse", exact: true })).toHaveAttribute("href", `/${seed.prefix}/apps`);
     await expect(page.locator('a[href$="/apps/advanced/audit"]', { hasText: "Activity" })).toHaveCount(0);
     await expect(page.locator('a[href$="/activity"]', { hasText: "Auditoria" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);

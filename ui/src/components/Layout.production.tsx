@@ -25,6 +25,7 @@ import { CompanySettingsSidebar } from "./CompanySettingsSidebar.production";
 import { CompanySettingsSidebar as MarketingSettingsSidebar } from "./CompanySettingsSidebar";
 import { CompanySettingsNav } from "./access/CompanySettingsNav";
 import { AppsSidebar } from "./AppsSidebar.production";
+import { MarketingAppsSidebar } from "./AppsSidebar";
 import { AppDetailSidebar } from "./AppConnectionSidebar.production";
 import { BreadcrumbBar } from "./BreadcrumbBar.production";
 import { PropertiesPanel } from "./PropertiesPanel";
@@ -236,7 +237,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
       applicationId={appDetailApplicationId}
     />
   ) : isAppsRoute || isToolsRoute ? (
-    <AppsSidebar />
+    marketingNavigation ? <MarketingAppsSidebar /> : <AppsSidebar />
   ) : routeSidebarSlot ? (
     <PluginSlotMount
       slot={routeSidebarSlot}

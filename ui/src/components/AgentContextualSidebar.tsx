@@ -20,12 +20,14 @@ import { usePluginSlots } from "@/plugins/slots";
 import { agentsApi } from "@/api/agents";
 import { useCompany } from "@/context/CompanyContext";
 import { queryKeys } from "@/lib/queryKeys";
+import { useLocation } from "@/lib/router";
 import { ContextualSidebarFrame } from "./ContextualSidebarFrame";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { contextualSidebarStyles } from "./contextual-sidebar-styles";
 import {
   AGENT_DETAIL_NAVIGATION,
   agentDetailHref,
+  parseAgentDetailView,
   type AgentLocalDetailView,
 } from "@/pages/agent-detail-navigation";
 
@@ -47,17 +49,24 @@ const localIcons = {
   budgets: Gauge,
 } satisfies Record<AgentLocalDetailView, typeof Sparkles>;
 
+const technicalViews = new Set<AgentLocalDetailView>(["secrets", "advanced"]);
+const technicalItems = AGENT_DETAIL_NAVIGATION.flatMap(section =>
+  section.items.filter(item => technicalViews.has(item.value)));
+
 export function AgentContextualSidebar({
   agentRef,
   agentId,
   agentName,
   labels,
+  marketingNavigation = false,
 }: {
   agentRef: string;
   agentId?: string;
   agentName?: string;
   labels?: Partial<Record<AgentLocalDetailView, string>>;
+  marketingNavigation?: boolean;
 }) {
+  const { pathname } = useLocation();
   const { selectedCompanyId } = useCompany();
   const shouldResolveAgent = !agentId || !agentName;
   const { data: resolvedAgent } = useQuery({
@@ -69,6 +78,16 @@ export function AgentContextualSidebar({
   const { slots: declaredTabs } = usePluginSlots({ slotTypes: ["detailTab"], entityType: "agent", companyId: resolvedAgent?.companyId ?? selectedCompanyId, enabled: Boolean(resolvedId) });
   const { slots: pluginTabs } = useAgentEnvironmentSlots(declaredTabs, resolvedId, resolvedAgent?.companyId ?? selectedCompanyId);
   const resolvedName = agentName ?? resolvedAgent?.name ?? "Agent";
+  const currentView = parseAgentDetailView(pathname.match(/\/agents\/[^/]+\/([^/]+)\/?$/i)?.[1] ?? null);
+
+  function renderItem({ value, label }: { value: AgentLocalDetailView; label: string }) {
+    return <SidebarNavItem
+      key={value}
+      to={agentDetailHref(agentRef, value)}
+      label={labels?.[value] ?? label}
+      icon={localIcons[value]}
+    />;
+  }
 
   return (
     <ContextualSidebarFrame
@@ -98,16 +117,17 @@ export function AgentContextualSidebar({
                 {section.label}
               </p>
               <div data-slot="contextual-sidebar-group" className={contextualSidebarStyles.group}>
-                {section.items.map((item) => (
-                  <SidebarNavItem
-                    key={item.value}
-                    to={agentDetailHref(agentRef, item.value)}
-                    label={labels?.[item.value] ?? item.label}
-                    icon={localIcons[item.value]}
-                  />
-                ))}
+                {section.items.filter(item => !marketingNavigation || !technicalViews.has(item.value)).map(renderItem)}
               </div>
             </div>
+            {marketingNavigation && section.label === "Agent" ? (
+              <details key={pathname} open={technicalViews.has(currentView) || undefined} className="mt-2">
+                <summary className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  Configuração técnica
+                </summary>
+                <div className={contextualSidebarStyles.group}>{technicalItems.map(renderItem)}</div>
+              </details>
+            ) : null}
           </div>
         ))}
       </nav>

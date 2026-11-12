@@ -33,6 +33,8 @@ Esse é um exemplo de fluxo que você pode configurar com projetos, tarefas, doc
 - Conectar runtimes de agentes como Codex, Claude Code e OpenClaw pelos adaptadores do projeto.
 - Convidar agentes externos em **Administração → Agentes externos**. Ambientes, segredos, importação e exportação ficam em **Configurações → Avançado**.
 - Encontrar conectores por categoria na aba **Marketing**. **Installed** mostra as conexões existentes, **Composio** abre o catálogo do provedor e **All** inclui outros conectores e a opção de conectar uma ferramenta própria.
+- Revisar ações pendentes em **Conexões → Review**. O fluxo de ferramenta própria em **All** dá acesso à configuração técnica, incluindo perfis de acesso, gateways e diagnósticos habilitados.
+- Acessar segredos, variáveis e configuração YAML em **Configuração técnica** nos detalhes do agente.
 
 ## Executar localmente
 
