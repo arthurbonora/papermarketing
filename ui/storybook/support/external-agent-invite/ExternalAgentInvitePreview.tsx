@@ -3,7 +3,6 @@ import { Route, Routes } from "@/lib/router";
 import { Layout } from "@/components/Layout";
 import { Agents } from "@/pages/Agents";
 import { PluginLauncherProvider } from "@/plugins/launchers";
-import { AgentBasicsDialog } from "@/components/new-agent/AgentBasicsDialog";
 import { ExternalAgentInviteContent, type DotConnectionState, type ExternalAgentPreset, type MuseConnectionState } from "@/components/new-agent/ExternalAgentInviteContent";
 import { Dialog } from "@/components/ui/dialog";
 import { AnimatedDialogContent } from "@/components/AnimatedDialogContent";
@@ -13,7 +12,7 @@ import type { MuseInvitationDraft } from "@/lib/muse-invitation-draft";
 import { dotInvitePrompt, externalInvitePrompt } from "./fixtures";
 
 export interface ExternalAgentInvitePreviewProps {
-  initialScreen?: "entry" | "picker" | "setup";
+  initialScreen?: "picker" | "setup";
   initialPreset?: ExternalAgentPreset;
   initialConnection?: DotConnectionState;
   initialMuseConnection?: MuseConnectionState;
@@ -38,12 +37,12 @@ export interface ExternalAgentInvitePreviewProps {
  * Public contact, authenticated background reply, and lifecycle readiness stay separate.
  */
 export function ExternalAgentInvitePreview({
-  initialScreen = "entry", initialPreset = "dot", initialConnection = { phase: "waiting" },
+  initialScreen = "picker", initialPreset = "dot", initialConnection = { phase: "waiting" },
   initialMuseConnection = { paired: false, receiverDetected: false, backgroundReplyVerified: false, ready: false },
   museDetails = false, museEnabled = false, pendingApproval = false,
   companyName = "Paperclip", simulate = true, failTest = false, stepDelayMs = 2000, beforeMuseSimulation, shell = true, preparing = false, invitationUnavailable = false, error,
 }: ExternalAgentInvitePreviewProps) {
-  const [screen, setScreen] = useState<"entry" | "picker" | "setup" | "closed">(initialScreen);
+  const [screen, setScreen] = useState<"picker" | "setup" | "closed">(initialScreen);
   const [preset, setPreset] = useState<ExternalAgentPreset>(initialPreset);
   const [connection, setConnection] = useState(initialConnection);
   const [museConnection, setMuseConnection] = useState(initialMuseConnection);
@@ -73,7 +72,6 @@ export function ExternalAgentInvitePreview({
     {shell ? <PluginLauncherProvider>
       <Routes><Route path="/:companyPrefix" element={<Layout />}><Route path="agents" element={<Agents />} /></Route></Routes>
     </PluginLauncherProvider> : <div className="p-6"><Button onClick={() => setScreen("picker")}>Invite an external agent</Button></div>}
-    <AgentBasicsDialog open={screen === "entry"} onClose={() => setScreen("closed")} onContinue={() => setScreen("closed")} onInvite={() => setScreen("picker")} />
     <Dialog open={screen === "picker" || screen === "setup"} onOpenChange={open => { if (!open) setScreen("closed"); }}>
       <AnimatedDialogContent className="flex max-h-(--sz-calc-18) flex-col gap-0 overflow-hidden p-0 sm:max-w-(--sz-560px)">
         <ExternalAgentInviteContent

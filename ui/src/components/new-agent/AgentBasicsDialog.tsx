@@ -54,7 +54,6 @@ export function AgentBasicsDialog({
   initialReportsTo,
   initialModel,
   setupAgentId,
-  onInvite,
 }: {
   open: boolean;
   onClose: () => void;
@@ -65,7 +64,6 @@ export function AgentBasicsDialog({
   initialReportsTo?: string | null;
   initialModel?: string | null;
   setupAgentId?: string;
-  onInvite?: () => void;
 }) {
   const id = useId();
   const { selectedCompanyId: companyId } = useCompany();
@@ -130,7 +128,7 @@ export function AgentBasicsDialog({
         nativeRunnerEnabled: experimental.data?.enableNativeRunner === true,
       }) &&
       (!cloud || adapter.type !== "cursor_cloud" || adapter.supportedRunners?.includes("paperclip")) &&
-      !["process", "http"].includes(adapter.type) &&
+      !["process", "http", "grok_bot", "muse", "openai_dot"].includes(adapter.type) &&
       !getAdapterDisplay(adapter.type).comingSoon,
   ), ...(copilotAvailable ? [{ ...nativeRunner!, type: "copilot_runtime" }] : []),
     ...(antigravityAvailable ? [{ ...nativeRunner!, type: "antigravity_runtime" }] : []),
@@ -287,16 +285,6 @@ export function AgentBasicsDialog({
                   onChange={(event) => setName(event.target.value)}
                   className="h-12 text-base"
                 />
-                {onInvite && (
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="px-0 text-muted-foreground"
-                    onClick={onInvite}
-                  >
-                    Invite an external agent
-                  </Button>
-                )}
               </div>
             ) : (
               <fieldset className="space-y-4">

@@ -116,6 +116,7 @@ async function gotoApps(page: Page, prefix: string) {
 async function gotoConnect(page: Page, prefix: string) {
   await page.goto(`/${prefix}/apps`);
   await expect(page.getByRole("heading", { name: "Connectors" })).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("radio", { name: "All", exact: true }).click();
   const customConnector = page
     .getByRole("list", { name: "Connector list" })
     .getByRole("listitem")

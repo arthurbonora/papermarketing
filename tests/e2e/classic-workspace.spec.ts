@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { json, setup } from "./agent-chat.shared";
 
-test("Coordinator is standard and Classic is an explicit personal experiment", async ({ page, request }) => {
+test("Classic changes the task presentation while preserving workspace navigation", async ({ page, request }) => {
   const original = await json(await request.get("/api/workspace-preferences/me"));
   const f = await setup(request);
   const settingsUrl = `/${f.company.issuePrefix}/company/settings/instance/experimental`;
@@ -20,7 +20,7 @@ test("Coordinator is standard and Classic is an explicit personal experiment", a
     await expect(classic).toBeChecked();
     await expect.poll(async () => (await json(await request.get("/api/workspace-preferences/me"))).coordinatorWorkspaceEnabled).toBe(false);
     await page.goto(f.route);
-    await expect(page.getByRole("navigation", { name: "Workspace navigation" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Projetos" })).toBeVisible();
     await page.goto(settingsUrl);
     await page.reload();
     await expect(classic).toBeChecked();

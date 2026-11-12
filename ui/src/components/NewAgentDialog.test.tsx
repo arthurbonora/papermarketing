@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NewAgentDialog } from "./NewAgentDialog";
+import { ExternalAgentInviteDialog } from "./new-agent/ExternalAgentInviteDialog";
 import { queryKeys } from "@/lib/queryKeys";
 vi.mock("@/api/instanceSettings", () => ({
   instanceSettingsApi: {
@@ -334,18 +335,27 @@ it.each(["gate off", "disabled adapter"])("hides experimental native creation wh
   expect(document.querySelectorAll('input[value="codex_local"]')).toHaveLength(1);
 });
 
-it("moves Dot out of the harness picker into experimental external invitations", async () => {
-  await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableNativeRunner: false, enableOpenAiDot: true, enablePublicMcp: true }));
+it("keeps the marketing role flow separate from external agent invitations", async () => {
+  await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableNativeRunner: true, enableOpenAiDot: true, enablePublicMcp: true }));
+  expect(document.body.textContent).not.toContain("Invite an external agent");
+  state.adapters.push({ type: "grok_bot", loaded: true }, { type: "openai_dot", loaded: true }, { type: "muse", loaded: true });
   await name();
-  expect(document.querySelector('input[value="openai_dot"]')).toBeNull();
-  await click("Back");
-  await click("Invite an external agent");
-  const dot = [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Dot"));
-  expect(dot?.disabled).toBe(false);
+  for (const type of ["grok_bot", "openai_dot", "muse"]) {
+    expect(document.querySelector(`input[value="${type}"]`)).toBeNull();
+  }
+  expect(document.querySelector('input[value="codex_local"]')).not.toBeNull();
 });
 
+async function openExternalInvitation() {
+  await act(async () => root.render(
+    <QueryClientProvider client={cache}>
+      <ExternalAgentInviteDialog companyId="company-1" onClose={state.close} onBack={state.close} />
+    </QueryClientProvider>,
+  ));
+}
+
 it.each(["Hermes", "Other"])("keeps the existing agent invitation for %s and reuses it after Back", async (kind) => {
-  await click("Invite an external agent");
+  await openExternalInvitation();
   const select = async () => act(async () => [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith(kind))!.click());
   await select();
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
@@ -360,7 +370,7 @@ it.each(["Hermes", "Other"])("keeps the existing agent invitation for %s and reu
 
 it("provides a readable prompt and copy retry when the clipboard fails", async () => {
   invites.copy.mockRejectedValueOnce(new Error("Clipboard unavailable"));
-  await click("Invite an external agent");
+  await openExternalInvitation();
   await act(async () => [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Other"))!.click());
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
   await click("Copy invitation prompt");
@@ -373,7 +383,7 @@ it("provides a readable prompt and copy retry when the clipboard fails", async (
 
 it.each([{ enableOpenAiDot: false, enablePublicMcp: true }, { enableOpenAiDot: true, enablePublicMcp: false }])("requires both Dot experimental prerequisites: %j", async flags => {
   await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, flags));
-  await click("Invite an external agent");
+  await openExternalInvitation();
   const dot = [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Dot"));
   expect(dot?.disabled).toBe(true);
   expect(document.body.textContent).toContain("Assistant connections (MCP)");
@@ -389,7 +399,7 @@ it("copies one scoped Dot prompt, resumes on Back, and trusts only server readin
     return { bindingId: "binding", pairingCode: "test-one-use-code", expiresAt: new Date(Date.now() + 900000).toISOString() };
   });
   await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableOpenAiDot: true, enablePublicMcp: true }));
-  await click("Invite an external agent");
+  await openExternalInvitation();
   const select = async () => act(async () => [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Dot"))!.click());
   await select();
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
@@ -427,7 +437,7 @@ it("waits for company approval before issuing a Dot capability", async () => {
   dotApi.create.mockResolvedValue({ agent: { id: "pending-dot", status: "pending_approval" }, approvalId: "approval-id", binding: null });
   dotApi.connection.mockResolvedValue({ enabled: true, resourceUrl: "https://paperclip.example/mcp/runner", agentStatus: "pending_approval", agentLifecycleState: "pending_approval", canConfigureConnection: false, binding: null });
   await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableOpenAiDot: true, enablePublicMcp: true }));
-  await click("Invite an external agent");
+  await openExternalInvitation();
   await act(async () => [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Dot"))!.click());
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
   expect(document.querySelector('a[href="/approvals/approval-id"]')?.textContent).toBe("Review approval");
@@ -439,7 +449,7 @@ it("allows the scoped Dot invitation on cloud when its prerequisites are enabled
     cache.setQueryData(queryKeys.instance.experimentalSettings, { enableOpenAiDot: true, enablePublicMcp: true });
     cache.setQueryData(queryKeys.health, { status: "ok", cloud: { managed: true } });
   });
-  await click("Invite an external agent");
+  await openExternalInvitation();
   const dot = [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Dot"))!;
   expect(dot.disabled).toBe(false);
   await act(async () => dot.click());
@@ -448,7 +458,7 @@ it("allows the scoped Dot invitation on cloud when its prerequisites are enabled
 
 async function openDotSetup() {
   await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableOpenAiDot: true, enablePublicMcp: true }));
-  await click("Invite an external agent");
+  await openExternalInvitation();
   await act(async () => [...document.querySelectorAll("button")].find(b => b.textContent?.startsWith("Dot"))!.click());
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
 }

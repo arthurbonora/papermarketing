@@ -227,8 +227,8 @@ for (const journey of [
           name: "Legacy executor", role: "engineer", adapterType: "process",
           adapterConfig: { command: process.execPath, args: ["-e", "console.error('Deterministic provider failure; no recoverable session contract'); process.exit(1)"] },
         });
-        await page.getByRole("link", { name: "Tasks", exact: true }).click();
-        await page.getByRole("button", { name: "New Task", exact: true }).last().click();
+        await page.getByRole("link", { name: "Tarefas", exact: true }).click();
+        await page.getByRole("button", { name: "Nova tarefa", exact: true }).last().click();
         await page.getByPlaceholder("Task title").fill("Read the legacy fixture report");
         await page.getByRole("button", { name: "Assignee", exact: true }).click();
         await page.getByRole("button", { name: agent.name, exact: true }).click();
@@ -349,9 +349,9 @@ for (const journey of [
           expect.objectContaining({ targetId: holder.id }),
         ]);
       }
-      await page.getByRole("link", { name: "Tasks", exact: true }).click();
+      await page.getByRole("link", { name: "Tarefas", exact: true }).click();
       await page
-        .getByRole("button", { name: "New Task", exact: true })
+        .getByRole("button", { name: "Nova tarefa", exact: true })
         .last()
         .click();
       await page

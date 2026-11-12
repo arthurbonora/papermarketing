@@ -324,7 +324,7 @@ describe("Skill Studio routes", () => {
 
 describe("Apps routes", () => {
   it("uses one connector landing page and redirects retired browse, connections, and audit URLs", () => {
-    expect(appSource).toContain('<Route path="apps" element={<Browse />} />');
+    expect(appSource).toContain('<Route path="apps" element={<Browse marketingCatalog />} />');
     expect(appSource).toContain('<Route path="apps/browse" element={<Navigate to="/apps" replace />} />');
     expect(appSource).toContain('<Route path="apps/connections" element={<Navigate to="/apps" replace />} />');
     expect(appSource).toContain('<Route path="apps/advanced/audit" element={<Navigate to="/apps" replace />} />');

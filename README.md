@@ -22,12 +22,14 @@ Esse é um exemplo de fluxo que você pode configurar com projetos, tarefas, doc
 ## O que você pode fazer
 
 - Criar workspaces com projetos e tarefas. Cada workspace novo começa sem agentes.
+- Navegar por projetos, tarefas, entregas, aprovações, equipe e conexões no menu do workspace.
 - Escolher entre 12 perfis de marketing e revisar responsabilidades antes de configurar runtime, conta e modelo. O agente permanece pausado até concluir a configuração.
 - Usar o grafo de agentes e o dashboard personalizável. As opções experimentais `enableAgentGraph` e `enableCustomizableDashboard` habilitam essas telas, com layouts por usuário e workspace.
 - Vincular tarefas e projetos a objetivos e acompanhar a execução no painel.
 - Revisar documentos, comentários e entregas no contexto da tarefa.
 - Acompanhar custos reportados e definir limites de orçamento.
 - Conectar runtimes de agentes como Codex, Claude Code e OpenClaw pelos adaptadores do projeto.
+- Encontrar conectores por categoria na aba **Marketing**. **Installed** mostra as conexões existentes, **Composio** abre o catálogo do provedor e **All** inclui outros conectores e a opção de conectar uma ferramenta própria.
 
 ## Executar localmente
 

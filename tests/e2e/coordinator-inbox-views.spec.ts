@@ -41,7 +41,7 @@ for (const mobile of [false, true]) test(`Mine retains Inbox behavior inside Tas
     await expect(unreadRow).toHaveAttribute("data-unread", "true");
     await expect(unreadRow.locator('[data-slot="task-row-title"]')).toHaveClass(/font-semibold/);
     await expect(readRow.locator('[data-slot="task-row-title"]')).not.toHaveClass(/font-semibold/);
-    await expect(page.getByRole("link", { name: /^Inbox(?:,|$)/ }).first()).toHaveAttribute("href", `/${company.issuePrefix}/decisions`);
+    if (!mobile) await expect(page.getByRole("link", { name: /^Caixa de entrada(?:,|$)/ })).toHaveAttribute("href", `/${company.issuePrefix}/inbox`);
 
     await page.getByRole("button", { name: "Columns", exact: true }).click();
     const creatorColumn = page.getByRole("menuitemcheckbox", { name: /^Kicked off by/ });
@@ -90,8 +90,9 @@ for (const mobile of [false, true]) test(`Mine retains Inbox behavior inside Tas
       await expect(unreadRow).toHaveCount(0);
       await page.keyboard.press("u");
       await expect(unreadRow).toBeVisible();
-      await page.getByRole("link", { name: "Inbox", exact: true }).click();
-      await expect(page.getByRole("region", { name: "Inbox", exact: true }).getByRole("heading", { name: "Inbox", exact: true })).toBeVisible();
+      await page.getByRole("link", { name: /^Caixa de entrada(?:,|$)/ }).click();
+      await expect(page).toHaveURL(/\/issues\?view=/);
+      await expect(mine).toBeVisible();
     }
   } finally {
     await request.put(preferencePath, { data: { coordinatorWorkspaceEnabled: preferences.coordinatorWorkspaceEnabled } });

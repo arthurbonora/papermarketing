@@ -1,6 +1,8 @@
 import { AGGREGATOR_NAMES, aggregatorManagementUrl, isAppAggregator, type AggregatorAppSnapshot, type AggregatorAppsResponse } from "@paperclipai/shared/aggregator-apps";
 import type { CatalogSource } from "./CatalogSourceFilters";
 import { ConnectorsToolbar } from "./ConnectorsToolbar";
+import { MARKETING_CATEGORY_BY_SLUG, MARKETING_CONNECTOR_CATEGORIES, type MarketingConnectorCategory } from "./marketing-connector-categories";
+import { NativeSelect } from "@/components/ui/select";
 import { ExecutorManagementSetup } from "./ExecutorManagementSetup";
 import { ArcadeDiscoverySetup } from "./ArcadeDiscoverySetup";
 import { AggregatorAppManager } from "./AggregatorAppManager";
@@ -380,7 +382,10 @@ function accountActionHref(
  * surface. Connected providers sort first and expand in place to show every
  * account; unconnected providers retain the same catalog setup flows.
  */
-export function Browse({ renderAccountDetails = (connection) => connection.connectionPurpose === "ai" && !aiConnectionRouterPluginKey(connection) ? <ManagedAiConnectionRow connection={connection} /> : null }: { renderAccountDetails?: (connection: ToolConnection) => ReactNode } = {}) {
+export function Browse({
+  renderAccountDetails = (connection) => connection.connectionPurpose === "ai" && !aiConnectionRouterPluginKey(connection) ? <ManagedAiConnectionRow connection={connection} /> : null,
+  marketingCatalog = false,
+}: { renderAccountDetails?: (connection: ToolConnection) => ReactNode; marketingCatalog?: boolean } = {}) {
   const navigate = useNavigate();
   const preselectedChatAgentId =
     typeof window === "undefined"
@@ -400,7 +405,9 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
   const { status: connectivityStatus } = useConnectivity();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [source, setSource] = useState<CatalogSource>("paperclip");
+  const defaultSource = marketingCatalog ? "marketing" : "paperclip";
+  const [source, setSource] = useState<CatalogSource>(defaultSource);
+  const [marketingCategory, setMarketingCategory] = useState<MarketingConnectorCategory | "">("");
   const [expandedSearch, setExpandedSearch] = useState(false);
   const [executorToConfigure, setExecutorToConfigure] = useState<ToolConnection | null>(null);
   const [arcadeToConfigure, setArcadeToConfigure] = useState<ToolConnection | null>(null);
@@ -416,7 +423,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
     return () => setBreadcrumbs([]);
   }, [setBreadcrumbs]);
 
-  useEffect(() => { setQuery(""); setPage(1); setSource("paperclip"); setExpandedSearch(false); setArcadeToConfigure(null); setAggregatorToConnect(null); setAggregatorToManage(null); setInitialAggregatorProvider(undefined); setConnectionToRemove(null); }, [selectedCompanyId]);
+  useEffect(() => { setQuery(""); setPage(1); setSource(defaultSource); setMarketingCategory(""); setExpandedSearch(false); setArcadeToConfigure(null); setAggregatorToConnect(null); setAggregatorToManage(null); setInitialAggregatorProvider(undefined); setConnectionToRemove(null); }, [selectedCompanyId, defaultSource]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("source") === "installed") setSource("installed");
@@ -909,10 +916,18 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
   ]);
 
   const trimmed = query.trim().toLocaleLowerCase();
+  const availableMarketingCategories = useMemo(() => new Set(rows.flatMap(row => {
+    const category = MARKETING_CATEGORY_BY_SLUG.get(row.slug);
+    return category ? [category] : [];
+  })), [rows]);
   const visibleRows = useMemo(() => {
     const scoped = rows.filter((row) => {
       if (source === "all") return true;
       if (source === "installed") return isInstalled(row);
+      if (source === "marketing") {
+        const category = MARKETING_CATEGORY_BY_SLUG.get(row.slug);
+        return marketingCategory ? category === marketingCategory : Boolean(category) || isInstalled(row);
+      }
       if (source === "paperclip") return !row.aggregatorApp || isInstalled(row);
       return isAppAggregator(source) && (
         row.slug === source && isInstalled(row)
@@ -929,7 +944,7 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         ...row.chatEndpoints.map((endpoint) => endpoint.assignedAgentName)].join(" "));
       return terms.every((term) => text.includes(term));
     });
-  }, [rows, trimmed, source]);
+  }, [rows, trimmed, source, marketingCategory]);
   const installedRows = visibleRows.filter(isInstalled);
   const catalogRows = visibleRows.filter(row => !isInstalled(row));
   const pageCount = Math.max(1, Math.ceil(catalogRows.length / CATALOG_PAGE_SIZE));
@@ -953,8 +968,8 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
     executor: aggregatorGateways.filter(connection => appConnectionSourceSlug(connection) === "executor"),
   }), [aggregatorGateways]);
   function changeQuery(value: string) {
-    if (source === "paperclip" && !query.trim() && value.trim()) { setSource("all"); setExpandedSearch(true); }
-    if (expandedSearch && !value.trim()) { setSource("paperclip"); setExpandedSearch(false); }
+    if (source === defaultSource && !marketingCategory && !query.trim() && value.trim()) { setSource("all"); setExpandedSearch(true); }
+    if (expandedSearch && !value.trim()) { setSource(defaultSource); setExpandedSearch(false); }
     setQuery(value); setPage(1);
   }
   function closeAggregatorSetup() {
@@ -1001,7 +1016,20 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
   return (
     <div ref={catalogTop} className="max-w-5xl space-y-5 pb-12">
       <ConnectorsToolbar query={query} onQueryChange={changeQuery} source={source}
-        onSourceChange={value => { setSource(value); setExpandedSearch(false); setPage(1); }} />
+        marketingCatalog={marketingCatalog}
+        onSourceChange={value => { setSource(value); setMarketingCategory(""); setExpandedSearch(false); setPage(1); }} />
+      {source === "marketing" && availableMarketingCategories.size > 0 && (
+        <NativeSelect
+          aria-label="Categoria de marketing"
+          value={marketingCategory}
+          onChange={event => { setMarketingCategory(event.target.value as MarketingConnectorCategory | ""); setPage(1); }}
+        >
+          <option value="">Todas as categorias</option>
+          {(Object.keys(MARKETING_CONNECTOR_CATEGORIES) as MarketingConnectorCategory[])
+            .filter(category => availableMarketingCategories.has(category))
+            .map(category => <option key={category} value={category}>{category}</option>)}
+        </NativeSelect>
+      )}
 
       {loadFailure ? (
         <QueryErrorState
@@ -1032,8 +1060,17 @@ export function Browse({ renderAccountDetails = (connection) => connection.conne
         </div>
       ) : nothingMatches ? (
         <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground">
-          <p className="flex items-center gap-2"><Link2 className="h-4 w-4" />No connectors match “{query.trim()}”.</p>
-          <Button variant="outline" size="sm" onClick={() => changeQuery("")}>Clear search</Button>
+          {source === "marketing" && !trimmed ? (
+            <>
+              <p>Nenhum conector disponível nesta seleção.</p>
+              <Button variant="outline" size="sm" onClick={() => { setSource("all"); setMarketingCategory(""); setPage(1); }}>Ver todos os conectores</Button>
+            </>
+          ) : (
+            <>
+              <p className="flex items-center gap-2"><Link2 className="h-4 w-4" />No connectors match “{query.trim()}”.</p>
+              <Button variant="outline" size="sm" onClick={() => changeQuery("")}>Clear search</Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3" role="list" aria-label="Connector list">
