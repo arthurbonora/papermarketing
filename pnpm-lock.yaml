@@ -22,7 +22,7 @@ patchedDependencies:
     hash: 2iynuypg76nxmydiylgtffhr7e
     path: patches/@agentclientprotocol__codex-acp@1.6.2.patch
   '@chat-adapter/discord@4.39.0':
-    hash: nywlhls7dd4npegrgax7jqdbxa
+    hash: jdsbpcwhvrxvlgw5xzacw3zdsi
     path: patches/@chat-adapter__discord@4.39.0.patch
   '@chat-adapter/github@4.39.0':
     hash: x25bk7vvljpm57viwan5qoaddi
@@ -925,7 +925,7 @@ importers:
         version: 3.1141.0
       '@chat-adapter/discord':
         specifier: 4.39.0
-        version: 4.39.0(patch_hash=nywlhls7dd4npegrgax7jqdbxa)(ai@7.0.130(zod@4.6.7))(zod@4.6.7)
+        version: 4.39.0(patch_hash=jdsbpcwhvrxvlgw5xzacw3zdsi)(ai@7.0.130(zod@4.6.7))(zod@4.6.7)
       '@chat-adapter/github':
         specifier: 4.39.0
         version: 4.39.0(patch_hash=x25bk7vvljpm57viwan5qoaddi)(ai@7.0.130(zod@4.6.7))(zod@4.6.7)
@@ -10070,7 +10070,7 @@ snapshots:
 
   '@bufbuild/protobuf@2.16.0': {}
 
-  '@chat-adapter/discord@4.39.0(patch_hash=nywlhls7dd4npegrgax7jqdbxa)(ai@7.0.130(zod@4.6.7))(zod@4.6.7)':
+  '@chat-adapter/discord@4.39.0(patch_hash=jdsbpcwhvrxvlgw5xzacw3zdsi)(ai@7.0.130(zod@4.6.7))(zod@4.6.7)':
     dependencies:
       '@chat-adapter/shared': 4.39.0(ai@7.0.130(zod@4.6.7))(zod@4.6.7)
       chat: 4.39.0(ai@7.0.130(zod@4.6.7))(zod@4.6.7)

@@ -14884,7 +14884,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     const [filtered] = await readChatDeliveriesByEndpointId(endpoint.id);
     expect(filtered).toMatchObject({
       state: "filtered",
-      redactedError: "External identity must be linked to a Paperclip account",
+      redactedError: "External identity must be linked to a PaperMarketing account",
       normalizedEvent: { deduplication: { duplicateCount: 1 } },
     });
 
@@ -14967,7 +14967,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       .then((rows) => rows[0]);
     expect(suspendedDelivery).toMatchObject({
       state: "filtered",
-      redactedError: "Linked Paperclip account is not currently permitted",
+      redactedError: "Linked PaperMarketing account is not currently permitted",
     });
   });
 
@@ -17003,7 +17003,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         status: "received",
         summary: "GitHub webhook received after recovery request",
         detail:
-          "Paperclip received this callback. Its normal access checks and processing still apply.",
+          "PaperMarketing received this callback. Its normal access checks and processing still apply.",
         replayable: false,
         resolutionActions: [],
       });
@@ -20600,9 +20600,9 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         commands: [
           {
             command: "task",
-            description: "Start or continue a Paperclip task",
+            description: "Start or continue a PaperMarketing task",
           },
-          { command: "status", description: "Show the active Paperclip task" },
+          { command: "status", description: "Show the active PaperMarketing task" },
           {
             command: "new",
             description: "Start a new task after the current one",
@@ -26402,8 +26402,8 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         state: "filtered",
         redactedError:
           authorizationChange === "viewer"
-            ? "Linked Paperclip account is not currently permitted"
-            : "External identity must be linked to a Paperclip account",
+            ? "Linked PaperMarketing account is not currently permitted"
+            : "External identity must be linked to a PaperMarketing account",
         normalizedEvent: {
           filtering: { contentRetained: false },
           message: { providerMessageId: messageId },
@@ -27179,7 +27179,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     const posts = runtime.endpoints.get(endpoint.id)?.posts ?? [];
     const channelAttachmentPost = posts.find((post) =>
       post.text.includes(
-        "File saved on the Paperclip task: channel-report.txt.",
+        "File saved on the PaperMarketing task: channel-report.txt.",
       ),
     );
     expect(channelAttachmentPost?.text).toContain(
@@ -27191,7 +27191,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(channelAttachmentPost?.files).toBeUndefined();
     const personalAttachmentPost = posts.find((post) =>
       post.text.includes(
-        "File saved on the Paperclip task: personal-report.txt.",
+        "File saved on the PaperMarketing task: personal-report.txt.",
       ),
     );
     expect(personalAttachmentPost?.text).toContain(
@@ -34100,7 +34100,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             method: "sendMessage",
             body: {
               chat_id: "-100123",
-              text: "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.",
+              text: "This PaperMarketing action is no longer available. Open the linked task or ask an operator to link this account.",
               ephemeral_message_parameters: {
                 receiver_user_id: 456,
                 callback_query_id: "native-private-callback-1",
@@ -34309,7 +34309,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             method: "sendMessage",
             body: {
               chat_id: "456",
-              text: "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.",
+              text: "This PaperMarketing action is no longer available. Open the linked task or ask an operator to link this account.",
             },
           },
         ]);
@@ -40672,7 +40672,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       });
       expect(gatewayInteraction.reply).toHaveBeenLastCalledWith({
         content:
-          "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+          "This action is no longer available. Open the linked PaperMarketing task or ask an operator to link this account.",
         flags: 64,
       });
     } finally {
@@ -41818,7 +41818,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           expect(callback.reply.mock.calls[0]![0].content).toBe(
             submittedText === winnerText
               ? "Your response was received."
-              : "This response was not accepted. Open the linked Paperclip task or reopen the question to try again.",
+              : "This response was not accepted. Open the linked PaperMarketing task or reopen the question to try again.",
           );
         }
         expect(answered).toMatchObject({
@@ -42446,7 +42446,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(providerRuntime.posts).toHaveLength(1);
     const delivered = providerRuntime.posts[0]!;
     expect(delivered.text).toBe(
-      "Paperclip attached the complete response because it exceeds Discord’s message limit.",
+      "PaperMarketing attached the complete response because it exceeds Discord’s message limit.",
     );
     expect(delivered.text).not.toContain("...");
     expect(delivered.files).toHaveLength(1);
@@ -42600,7 +42600,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       );
     expect(definiteFailureNotices).toHaveLength(1);
     const rejectedAttachmentNotice =
-      "Paperclip could not send the response attachment. The complete response remains on its Paperclip task for an operator to retry." +
+      "PaperMarketing could not send the response attachment. The complete response remains on its PaperMarketing task for an operator to retry." +
       ` Open task: https://paperclip.example/issues/${conversation.issueId}`;
     expect(definiteFailureNotices[0]).toMatchObject({
       commentId: null,
@@ -43173,7 +43173,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(completed).toMatchObject({ state: "published", attempts: 2 });
     expect(providerRuntime.posts).toHaveLength(1);
     expect(providerRuntime.posts[0]?.text).toBe(
-      "Paperclip attached the complete response to preserve its Markdown formatting.",
+      "PaperMarketing attached the complete response to preserve its Markdown formatting.",
     );
     const attachment = providerRuntime.posts[0]?.attachments?.[0] as {
       data: Buffer;
@@ -44226,7 +44226,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
     expect(channel.postEphemeral).toHaveBeenCalledWith(
       unlinkedAction.event.user.userId,
-      "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+      "This action is no longer available. Open the linked PaperMarketing task or ask an operator to link this account.",
       { fallbackToDM: false },
     );
     const deniedSlackActions = await db
@@ -44280,7 +44280,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
     await vi.waitFor(() =>
       expect(channel.post).toHaveBeenCalledWith(
-        "This Paperclip action is no longer available.",
+        "This PaperMarketing action is no longer available.",
       ),
     );
     expect(channel.postEphemeral).toHaveBeenCalledTimes(2);
@@ -44757,7 +44757,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       ([userId, text]) =>
         userId === externalUserId &&
         text ===
-          "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+          "This action is no longer available. Open the linked PaperMarketing task or ask an operator to link this account.",
     ).length;
     await callbacks.onAction(actionEvent());
     expect(
@@ -44765,7 +44765,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         ([userId, text]) =>
           userId === externalUserId &&
           text ===
-            "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+            "This action is no longer available. Open the linked PaperMarketing task or ask an operator to link this account.",
       ),
     ).toHaveLength(staleNoticeCount);
     expect(
@@ -45300,7 +45300,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         response_action: "errors",
         errors: {
           [select.block_id]:
-            "This form is no longer authorized. Close it and open the linked Paperclip task.",
+            "This form is no longer authorized. Close it and open the linked PaperMarketing task.",
         },
       });
       expect(await submissionState()).toEqual(before);
@@ -45701,7 +45701,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       await vi.waitFor(() =>
         expect(channel.postEphemeral).toHaveBeenCalledWith(
           modalUser.userId,
-          "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+          "This action is no longer available. Open the linked PaperMarketing task or ask an operator to link this account.",
           { fallbackToDM: false },
         ),
       );
@@ -45811,7 +45811,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await vi.waitFor(() =>
           expect(channel.postEphemeral).toHaveBeenCalledWith(
             modalUser.userId,
-            "Paperclip could not open this form. Try the action again or open the linked Paperclip task.",
+            "PaperMarketing could not open this form. Try the action again or open the linked PaperMarketing task.",
             { fallbackToDM: false },
           ),
         );
@@ -46022,7 +46022,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         action: "errors",
         errors: {
           [selectField.id]:
-            "This form is no longer authorized. Close it and open the linked Paperclip task.",
+            "This form is no longer authorized. Close it and open the linked PaperMarketing task.",
         },
       };
       await expect(
@@ -46946,7 +46946,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
                   type: "private",
                   first_name: "Telegram User",
                 },
-                text: "This Paperclip action is no longer available.",
+                text: "This PaperMarketing action is no longer available.",
               },
             }),
             { status: 200, headers: { "content-type": "application/json" } },
@@ -47085,7 +47085,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(notices).toHaveLength(1);
       expect(JSON.parse(notices[0]!.body)).toMatchObject({
         chat_id: "417200359",
-        text: "This Paperclip action is no longer available. Open the linked task or ask an operator to link this account.",
+        text: "This PaperMarketing action is no longer available. Open the linked task or ask an operator to link this account.",
       });
       expect(notices[0]!.body).not.toContain(actionId);
       expect(notices[0]!.body).not.toContain(callbackData);
@@ -49204,7 +49204,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             actions: [
               {
                 type: "link",
-                label: "Open in Paperclip",
+                label: "Open in PaperMarketing",
                 url: `https://paperclip.example/issues/${conversation!.issueId}`,
               },
             ],
@@ -49335,7 +49335,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           card: {
             actions: [
               expect.objectContaining({
-                label: "Open in Paperclip",
+                label: "Open in PaperMarketing",
                 type: "link",
               }),
             ],
@@ -49547,12 +49547,12 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       {
         publicBaseUrl: "https://board.paperclip.example",
         expectedFallback: (issueId: string) =>
-          `File saved on the Paperclip task: report.txt. This GitHub App connection cannot upload file bytes into comments. Download it: https://board.paperclip.example/issues/${issueId}`,
+          `File saved on the PaperMarketing task: report.txt. This GitHub App connection cannot upload file bytes into comments. Download it: https://board.paperclip.example/issues/${issueId}`,
       },
       {
         publicBaseUrl: "http://127.0.0.1:3103",
         expectedFallback: () =>
-          "File saved on the private Paperclip task: report.txt. This GitHub App connection cannot upload file bytes into comments.",
+          "File saved on the private PaperMarketing task: report.txt. This GitHub App connection cannot upload file bytes into comments.",
       },
     ]) {
       const fixture = await seedCompany();
@@ -49713,7 +49713,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     expect(failed).toMatchObject({ state: "failed" });
     const selectedAttachmentNotice =
-      "Paperclip could not send an attachment. The file remains on its Paperclip task for an operator to retry." +
+      "PaperMarketing could not send an attachment. The file remains on its PaperMarketing task for an operator to retry." +
       ` Open task: https://paperclip.example/issues/${conversation.issueId}`;
     const publications = await db
       .select()
@@ -58026,8 +58026,8 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           authorizationChange === "resource_disabled"
             ? "Destination is not enabled in PaperMarketing"
             : authorizationChange === "viewer"
-              ? "Linked Paperclip account is not currently permitted"
-              : "External identity must be linked to a Paperclip account",
+              ? "Linked PaperMarketing account is not currently permitted"
+              : "External identity must be linked to a PaperMarketing account",
         state: "filtered",
       });
       expect(JSON.stringify(delivery?.normalizedEvent)).not.toContain(
@@ -59389,7 +59389,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await vi.waitFor(() => expect(postEphemeral).toHaveBeenCalledTimes(3));
     for (const call of postEphemeral.mock.calls) {
       expect(call[1]).toBe(
-        "Use status, new, and close in a direct message with this agent. In a channel, open the Paperclip task from its Slack thread.",
+        "Use status, new, and close in a direct message with this agent. In a channel, open the PaperMarketing task from its Slack thread.",
       );
       expect(call[2]).toEqual({ fallbackToDM: false });
     }
@@ -60658,9 +60658,9 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     ).toEqual([
       expect.stringMatching(/— todo$/),
       expect.stringContaining(
-        "Open a new Telegram forum topic to start a new Paperclip task.",
+        "Open a new Telegram forum topic to start a new PaperMarketing task.",
       ),
-      "This chat conversation is closed. A later message here will continue the same Paperclip task.",
+      "This chat conversation is closed. A later message here will continue the same PaperMarketing task.",
     ]);
   });
 
@@ -60846,7 +60846,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await vi.waitFor(() =>
       expect(postEphemeral).toHaveBeenCalledWith(
         "U-COMMANDER",
-        "This channel or account is not allowed to start Paperclip work.",
+        "This channel or account is not allowed to start PaperMarketing work.",
         { fallbackToDM: false },
       ),
     );
@@ -75920,7 +75920,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       const [conversation] = await service.listConversations(endpoint.id);
       if (!conversation)
         throw new Error("Expected Telegram attachment failure conversation");
-      const visibleFailure = `Paperclip could not safely import the attached Telegram file. Please resend it as a supported file under ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} or include text describing the request.`;
+      const visibleFailure = `PaperMarketing could not safely import the attached Telegram file. Please resend it as a supported file under ${formatAttachmentSize(MAX_ATTACHMENT_BYTES)} or include text describing the request.`;
       await expect(
         db
           .select({ body: issueComments.body })

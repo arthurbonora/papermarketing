@@ -50,7 +50,7 @@ async function exerciseGitHubReviewSetup(page: Page, mock: ChatMock, seed: Seed,
   await page.getByRole("button", { name: "Select agent…", exact: true }).click();
   await page.getByRole("button", { name: "Select Maya", exact: true }).click();
   await expect(page.getByText("Maya is not configured for low-trust review")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Learn about low-trust agents" })).toHaveAttribute("href", /trust-and-low-trust-review/);
+  await expect(page.getByRole("link", { name: "Learn about low-trust agents" })).toHaveAttribute("href", "https://github.com/arthurbonora/papermarketing/blob/master/doc/connections/GITHUB-REVIEW-BOT.md");
   await testInfo.attach("Choose agent — inline low-trust warning", { body: await page.screenshot(), contentType: "image/png" });
   await page.getByRole("button", { name: "Change Maya to a low trust agent" }).click();
   await expect(page.getByText("Maya is not configured for low-trust review")).toHaveCount(0);
