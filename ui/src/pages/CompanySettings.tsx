@@ -202,7 +202,7 @@ export function CompanySettings() {
   if (!selectedCompany) {
     return (
       <div className="text-sm text-muted-foreground">
-        No workspace selected. Select an workspace from the switcher above.
+        No workspace selected. Select a workspace from the switcher above.
       </div>
     );
   }

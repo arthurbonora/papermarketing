@@ -20,6 +20,7 @@ import { createLifecycleDriver } from "../../../services/agent-lifecycle-driver.
 import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { agents, approvals, projects, issues, heartbeatRuns, nativeRunFinalizations, budgetPolicies, environmentLeases, environments, agentApiKeys, activityLog, agentConfigRevisions, userCompanyPreferences, companies, companyMemberships, principalPermissionGrants, plugins, pluginCompanySettings, applyPendingMigrations, closeRegisteredClients, createDb, type Db } from "@paperclipai/db";
+import { createMarketingAgentProfile } from "@paperclipai/shared";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } from "../../../__tests__/helpers/embedded-postgres.js";
 import { createAgentLifecycle, configureAgentLifecycle, startAgentLifecycle } from "../../../services/agent-lifecycle.js";
@@ -320,6 +321,56 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
     });
     expect(finished.status, JSON.stringify(finished.body)).toBe(201);
     expect((await current(setupId)).adapterConfig.env).toEqual({ SETUP_LABEL: { type: "plain", value: "saved-native-value" } });
+  });
+
+  it.each(["generated", "custom"] as const)("finishes a revised marketing setup with %s instructions", async (instructionsKind) => {
+    await db.update(companies).set({ requireBoardApprovalForNewAgents: true }).where(eq(companies.id, companyId));
+    await db.insert(companyMemberships).values({ companyId, principalType: "user", principalId: "board", membershipRole: "owner" });
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.actor = { type: "board", source: "local_implicit", userId: "board", companyIds: [companyId] };
+      next();
+    });
+    app.use("/api", agentRoutes(db));
+    app.use(errorHandler);
+
+    const setupId = randomUUID();
+    const profile = createMarketingAgentProfile("copywriter");
+    const adapter = { adapterType: "claude_local", runner: "legacy" };
+    const created = await request(app).post(`/api/companies/${companyId}/agents`).send({
+      ...adapter, setupId, name: "Marketing copywriter", metadata: { marketingAgent: profile },
+    });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    expect(created.body.adapterConfig).not.toHaveProperty("instructionsBundleMode");
+
+    const instructionsUrl = `/api/agents/${setupId}/instructions-bundle/file`;
+    const customInstructions = "Follow the board's custom brief.\n";
+    if (instructionsKind === "custom") {
+      await request(app).put(instructionsUrl).send({
+        path: "AGENTS.md", baseRevisionId: null, content: customInstructions,
+      }).expect(200);
+    }
+
+    const revisedProfile = { ...profile, workingLanguage: "pt-BR" };
+    await request(app).patch(`/api/agents/${setupId}`).send({ metadata: { marketingAgent: revisedProfile } }).expect(200);
+    const finished = await request(app).post(`/api/companies/${companyId}/agent-hires`).send({
+      ...adapter, setupAgentId: setupId, name: created.body.name,
+    });
+    expect(finished.status, JSON.stringify(finished.body)).toBe(201);
+    expect(finished.body.agent).toMatchObject({
+      id: setupId,
+      metadata: { marketingAgent: revisedProfile },
+      adapterConfig: { instructionsBundleMode: "managed", instructionsEntryFile: "AGENTS.md" },
+    });
+
+    const entry = await request(app).get(instructionsUrl).query({ path: "AGENTS.md" }).expect(200);
+    if (instructionsKind === "custom") {
+      expect(entry.body.content).toBe(customInstructions);
+    } else {
+      expect(entry.body.content).toContain('Use "Portuguese (Brazil)"');
+      expect(entry.body.content).not.toContain('Use "English (United States)"');
+    }
   });
 
   it("holds an incomplete Copilot setup but still requires a model at final hire", async () => {

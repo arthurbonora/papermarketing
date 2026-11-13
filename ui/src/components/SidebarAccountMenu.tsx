@@ -254,7 +254,7 @@ export function SidebarAccountMenu({
                 />
               ) : null}
               <MenuAction
-                label={marketingNavigation ? "Documentação" : "Documentation"}
+                label="Documentation"
                 icon={BookOpen}
                 href={marketingNavigation ? PAPERMARKETING_DOCS_URL : DOCS_URL}
                 external

@@ -71,16 +71,16 @@ test.describe("Contextual sidebar companion", () => {
     await expect(contextual).toHaveCount(1);
     await expect(page.locator("[data-secondary-sidebar]")).toHaveCount(1);
 
-    await expect(contextual.getByRole("link", { name: "Geral" })).toBeVisible();
-    await expect(contextual.getByRole("link", { name: "Agentes externos" })).toHaveAttribute("href", `/${prefix}/company/settings/agent-invitations`);
+    await expect(contextual.getByRole("link", { name: "General" })).toBeVisible();
+    await expect(contextual.getByRole("link", { name: "External agents" })).toHaveAttribute("href", `/${prefix}/company/settings/agent-invitations`);
     const envLabel = contextual.getByText("Environments", { exact: true });
     await expect(envLabel).toBeHidden();
-    await contextual.getByText("Avançado", { exact: true }).click();
+    await contextual.getByText("Advanced", { exact: true }).click();
     await expect(envLabel).toBeVisible();
     await expect(contextual.getByRole("link", { name: "Back to app" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Open account menu" })).toBeVisible();
 
-    await expect(page.getByRole("link", { name: "Visão geral" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Overview", exact: true })).toHaveCount(0);
     await expect(page.getByLabel(APP_SIDEBAR_EXPANDED_MARKER)).toHaveCount(0);
 
     const labelBox = await envLabel.boundingBox();
@@ -97,7 +97,7 @@ test.describe("Contextual sidebar companion", () => {
     await page.goto(`/${prefix}/dashboard`);
 
     await expect(page.locator("[data-contextual-sidebar]")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Visão geral" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Overview", exact: true })).toBeVisible();
     await expect(page.getByLabel(APP_SIDEBAR_EXPANDED_MARKER)).toHaveCount(0);
   });
 
@@ -107,15 +107,15 @@ test.describe("Contextual sidebar companion", () => {
 
     await expect(page).toHaveURL(new RegExp(`/${prefix}/dashboard$`));
     await expect(page.locator("[data-contextual-sidebar]")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Visão geral" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Overview", exact: true })).toBeVisible();
   });
 
   test("preserves workspace-scoped external invites and advanced settings on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 750 });
     await page.goto(`/${prefix}/company/settings`);
-    const settings = page.getByRole("combobox", { name: "Configurações" });
+    const settings = page.getByRole("combobox", { name: "Settings" });
     await expect(settings).toHaveValue("general");
-    await expect(settings.locator('optgroup[label="Avançado"] option[value="instance-environments"]')).toHaveCount(1);
+    await expect(settings.locator('optgroup[label="Advanced"] option[value="instance-environments"]')).toHaveCount(1);
     await settings.selectOption("agent-invitations");
     await expect(page).toHaveURL(`/${prefix}/company/settings/agent-invitations`);
     await expect(page.getByRole("dialog", { name: "Invite an external agent" })).toBeVisible();

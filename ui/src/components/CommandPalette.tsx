@@ -323,7 +323,7 @@ export function CommandPalette({ marketingNavigation = false }: { marketingNavig
             }}
           >
             <SquarePen className="mr-2 h-4 w-4" />
-            {marketingNavigation ? "Nova tarefa" : "Create new task"}
+            {marketingNavigation ? "New task" : "Create new task"}
             <span className="ml-auto text-xs text-muted-foreground">C</span>
           </CommandItem>
           {!marketingNavigation && onIssueDetail && fileViewerEnabled && (
@@ -345,7 +345,7 @@ export function CommandPalette({ marketingNavigation = false }: { marketingNavig
             }}
           >
             <Plus className="mr-2 h-4 w-4" />
-            {marketingNavigation ? "Criar agente" : "Create new agent"}
+            {marketingNavigation ? "Create agent" : "Create new agent"}
           </CommandItem>
           <CommandItem onSelect={() => {
             if (marketingNavigation) {
@@ -356,14 +356,14 @@ export function CommandPalette({ marketingNavigation = false }: { marketingNavig
             }
           }}>
             <Plus className="mr-2 h-4 w-4" />
-            {marketingNavigation ? "Criar projeto" : "Create new project"}
+            {marketingNavigation ? "Create project" : "Create new project"}
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
         {marketingNavigation ? (
-          <CommandGroup heading="Páginas">
+          <CommandGroup heading="Pages">
             {Object.values(MARKETING_DESTINATIONS).map(({ to, label, icon: Icon }) => (
               <CommandItem key={to} onSelect={() => go(to)}>
                 <Icon className="mr-2 size-4" />
@@ -372,7 +372,7 @@ export function CommandPalette({ marketingNavigation = false }: { marketingNavig
             ))}
             <CommandItem onSelect={() => go("/inbox")}>
               <Inbox className="mr-2 size-4" />
-              Caixa de entrada
+              Inbox
             </CommandItem>
           </CommandGroup>
         ) : <CommandGroup heading="Pages">

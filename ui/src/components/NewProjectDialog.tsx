@@ -81,7 +81,7 @@ export function NewProjectForm({ companyId, onClose, marketingNavigation = false
               className="h-10 w-full min-w-0 border-0 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm" />
           </div>
         </div>
-        <div role="region" aria-label={marketingNavigation ? "Opções do projeto" : "Source repositories"} tabIndex={0} className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-1 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring">
+        <div role="region" aria-label={marketingNavigation ? "Project options" : "Source repositories"} tabIndex={0} className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-1 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring">
           {options && (options.groups.length > 1 || (options.error && options.groups.length > 0)) && <div className="mb-4 space-y-2">
             <label htmlFor="project-environment" className="text-sm font-medium">Available in</label>
             <NativeSelect id="project-environment" value={selectedGroup?.environments[0].id ?? ""} disabled={create.isPending}
@@ -101,7 +101,7 @@ export function NewProjectForm({ companyId, onClose, marketingNavigation = false
             <Collapsible open={repositoriesOpen} onOpenChange={setRepositoriesOpen}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" type="button" className="group" disabled={create.isPending}>
-                  Repositórios GitHub{repos.length > 0 ? ` (${repos.length})` : ""}
+                  GitHub repositories{repos.length > 0 ? ` (${repos.length})` : ""}
                   <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
                 </Button>
               </CollapsibleTrigger>

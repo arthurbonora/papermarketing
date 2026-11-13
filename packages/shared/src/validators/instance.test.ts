@@ -6,6 +6,15 @@ import {
 } from "./instance.js";
 
 describe("instance experimental settings validators", () => {
+  it("defaults the agent graph on without overriding explicit choices or filling patch fields", () => {
+    expect(instanceExperimentalSettingsSchema.parse({}).enableAgentGraph).toBe(true);
+    expect(patchInstanceExperimentalSettingsSchema.parse({})).not.toHaveProperty("enableAgentGraph");
+    for (const enabled of [true, false]) {
+      expect(instanceExperimentalSettingsSchema.parse({ enableAgentGraph: enabled }).enableAgentGraph).toBe(enabled);
+      expect(patchInstanceExperimentalSettingsSchema.parse({ enableAgentGraph: enabled })).toEqual({ enableAgentGraph: enabled });
+    }
+    expect(patchInstanceExperimentalSettingsSchema.safeParse({ enableAgentGraph: "true" }).success).toBe(false);
+  });
   it("defaults legacy composer submission off and accepts only explicit boolean patches", () => {
     expect(instanceExperimentalSettingsSchema.parse({}).enableLegacyComposerSubmit).toBe(false);
     expect(patchInstanceExperimentalSettingsSchema.parse({})).not.toHaveProperty("enableLegacyComposerSubmit");

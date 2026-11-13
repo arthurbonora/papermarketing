@@ -54,10 +54,10 @@ export function AgentProperties({ agent, runtimeState }: AgentPropertiesProps) {
             </span>
           </PropertyRow>
         )}
-        <PropertyRow label={marketingType ? "Tipo" : "Role"}>
+        <PropertyRow label={marketingType ? "Type" : "Role"}>
           <span className="text-sm">{marketingType?.label ?? roleLabels[agent.role] ?? agent.role}</span>
         </PropertyRow>
-        {marketingProfile?.specialization && <PropertyRow label="Especialização">
+        {marketingProfile?.specialization && <PropertyRow label="Specialization">
           <span className="text-sm">{marketingProfile.specialization}</span>
         </PropertyRow>}
         {agent.title && (

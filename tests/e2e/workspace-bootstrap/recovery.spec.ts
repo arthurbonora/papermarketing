@@ -20,8 +20,8 @@ for (const persistent of [false, true]) {
     await page.goto(`${base}/${fixture.prefix}/dashboard`);
     const announcement = page.getByRole("button", { name: "Dismiss announcement" });
     if (await announcement.isVisible()) await announcement.click();
-    await page.getByRole("link", { name: "Tarefas", exact: true }).click();
-    await page.getByRole("button", { name: "Nova tarefa", exact: true }).last().click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Tasks", exact: true }).click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
     await page.getByRole("textbox", { name: "editable markdown" }).fill(title);
     await page.getByRole("button", { name: "Select assignee", exact: true }).click();
     await page.getByRole("option").filter({ hasText: fixture.agentName }).click();

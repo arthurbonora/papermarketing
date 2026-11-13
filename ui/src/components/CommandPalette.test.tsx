@@ -234,11 +234,11 @@ describe("CommandPalette", () => {
     act(() => { open(); });
     expect(command("Goals")).toBeUndefined();
     expect(container.textContent).not.toContain("Open file in this issue");
-    expect(command("Entregas")).toBeDefined();
-    act(() => command("Conexões")!.click());
+    expect(command("Deliverables")).toBeDefined();
+    act(() => command("Connections")!.click());
     expect(navigateState.navigate).toHaveBeenCalledWith("/apps");
     act(() => { open(); });
-    act(() => command("Criar projeto")!.click());
+    act(() => command("Create project")!.click());
     expect(dialogState.openNewProject).toHaveBeenCalledOnce();
     act(() => root.unmount());
   });

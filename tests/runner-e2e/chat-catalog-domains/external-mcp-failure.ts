@@ -16,7 +16,7 @@ export async function enterGenericMcpThroughCatalog(
   page: Page,
   prefix: string,
 ) {
-  await page.getByRole("link", { name: "Conexões", exact: true }).click();
+  await page.getByRole("link", { name: "Connections", exact: true }).click();
   await page.getByRole("radio", { name: "All", exact: true }).click();
   const card = page
     .getByRole("listitem")

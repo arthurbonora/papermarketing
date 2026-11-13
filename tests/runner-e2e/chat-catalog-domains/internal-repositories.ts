@@ -128,7 +128,7 @@ async function openProject(ctx: ChatCatalogContext, o: RepositoryObservation) {
   await expect(ctx.input.page.getByRole("heading", { name: p.name!, exact: true }).first()).toBeVisible();
   await ctx.input.page.getByText("Configuration", { exact: true }).last().click();
   const section = ctx.input.page.getByRole("region", { name: "Repositories", exact: true });
-  const technicalSettings = ctx.input.page.getByText("Configuração técnica", { exact: true });
+  const technicalSettings = ctx.input.page.getByText("Technical settings", { exact: true });
   await expect(section.or(technicalSettings).first()).toBeVisible();
   if (await technicalSettings.isVisible() && !(await section.isVisible())) await technicalSettings.click();
   await expect(section).toBeVisible();

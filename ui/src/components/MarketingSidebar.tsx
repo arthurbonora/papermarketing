@@ -50,13 +50,13 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
         <div className={primarySidebarStyles.group}>
           <button
             type="button"
-            aria-label="Nova tarefa"
-            title="Nova tarefa"
+            aria-label="New task"
+            title="New task"
             onClick={() => openNewIssue()}
             className="mx-2 flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-(length:--text-compact) font-medium text-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <SquarePen className="size-4 shrink-0" />
-            <span className={rail ? SIDEBAR_RAIL_HIDDEN_LABEL : "truncate"}>Nova tarefa</span>
+            <span className={rail ? SIDEBAR_RAIL_HIDDEN_LABEL : "truncate"}>New task</span>
           </button>
           <SidebarNavItem {...MARKETING_DESTINATIONS.overview} liveCount={liveRuns?.length ?? 0} />
           <SidebarNavItem {...MARKETING_DESTINATIONS.projects} />
@@ -67,24 +67,24 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
           <SidebarNavItem {...MARKETING_DESTINATIONS.team} />
           <SidebarNavItem {...MARKETING_DESTINATIONS.connectors} />
         </div>
-        <SidebarSection label="Acompanhamento">
-          <SidebarNavItem to="/search" label="Buscar" icon={Search} />
+        <SidebarSection label="Updates">
+          <SidebarNavItem to="/search" label="Search" icon={Search} />
           <SidebarNavItem
             to="/inbox"
-            label="Caixa de entrada"
+            label="Inbox"
             icon={Inbox}
             badge={inbox.inbox}
-            badgeLabel="não lidas"
+            badgeLabel="unread"
             badgeTone={inbox.failedRuns > 0 ? "danger" : "default"}
           />
-          {agentChatEnabled && <SidebarNavItem to="/chats" label="Conversas" icon={MessageCircle} badge={chats.data?.filter(chat => chat.isUnreadForMe).length} badgeLabel="conversas não lidas" />}
-          <SidebarNavItem to="/routines" label="Rotinas" icon={Repeat} />
+          {agentChatEnabled && <SidebarNavItem to="/chats" label="Chats" icon={MessageCircle} badge={chats.data?.filter(chat => chat.isUnreadForMe).length} badgeLabel="unread chats" />}
+          <SidebarNavItem to="/routines" label="Routines" icon={Repeat} />
         </SidebarSection>
-        <SidebarSection label="Administração">
-          <SidebarNavItem to="/costs" label="Custos" icon={DollarSign} />
-          <SidebarNavItem to="/activity" label="Auditoria" icon={History} />
-          <SidebarNavItem to="/company/settings" label="Configurações" icon={Settings} />
-          <SidebarNavItem to="/company/settings/agent-invitations" label="Agentes externos" icon={Users} />
+        <SidebarSection label="Administration">
+          <SidebarNavItem to="/costs" label="Costs" icon={DollarSign} />
+          <SidebarNavItem to="/activity" label="Activity log" icon={History} />
+          <SidebarNavItem to="/company/settings" label="Settings" icon={Settings} />
+          <SidebarNavItem to="/company/settings/agent-invitations" label="External agents" icon={Users} />
           <PluginSlotOutlet slotTypes={["sidebar"]} context={pluginContext} missingBehavior="placeholder" />
           <PluginLauncherOutlet placementZones={["sidebar"]} context={pluginContext} />
         </SidebarSection>

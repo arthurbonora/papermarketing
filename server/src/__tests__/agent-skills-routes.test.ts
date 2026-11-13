@@ -1156,6 +1156,7 @@ describe("agent skill routes", () => {
   it.each(["agents", "agent-hires"])("materializes the reviewed marketing profile via %s", async (route) => {
     const profile = createMarketingAgentProfile("copywriter");
     profile.instructions = "Use the workspace's approved brand voice and cite research.";
+    profile.workingLanguage = "pt-BR";
     const res = await requestApp(await createApp(), (baseUrl) => request(baseUrl)
       .post(`/api/companies/company-1/${route}`)
       .send({
@@ -1171,6 +1172,7 @@ describe("agent skill routes", () => {
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     const returnedAgent = route === "agents" ? res.body : res.body.agent;
     expect(returnedAgent.metadata.marketingAgent).toEqual(profile);
+    expect(marketingAgentInstructions(profile)).toContain('Use "Portuguese (Brazil)"');
     expect(mockAgentInstructionsService.materializeManagedBundle).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: returnedAgent.id }),
       { "AGENTS.md": marketingAgentInstructions(profile) },

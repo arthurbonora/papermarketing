@@ -290,7 +290,7 @@ describe("Connectors landing page", () => {
     expect(row("local")).toBeNull();
     const category = container.querySelector<HTMLSelectElement>('[aria-label="Categoria de marketing"]')!;
     await act(async () => {
-      category.value = "Modelos de IA";
+      category.value = "AI models";
       category.dispatchEvent(new Event("change", { bubbles: true }));
     });
     expect(row("openrouter")).not.toBeNull();

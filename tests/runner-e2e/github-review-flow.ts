@@ -42,7 +42,7 @@ export async function runGitHubReviewFlow(input: {
   await enterGitHubJourneyCompany(page, api.origin, company);
   await input.checkpoint("agent", page);
   await input.phase("connector_navigation");
-  await page.getByRole("link", { name: "Conexões", exact: true }).click();
+  await page.getByRole("link", { name: "Connections", exact: true }).click();
   await page.getByRole("searchbox", { name: "Search connectors" }).fill("GitHub Code Review Bot");
   const botCard = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "GitHub Code Review Bot", exact: true }) });
   await botCard.getByRole("button", { name: /^(?:Connect|Add connection) GitHub Code Review Bot$/ }).click();

@@ -10,6 +10,30 @@ import {
 import type { ManagedInstanceConfig } from "../services/managed-config.js";
 
 describe("instance settings service", () => {
+  it("defaults the agent graph on while preserving explicit opt-outs through normalization and patches", () => {
+    for (const stored of [undefined, null, {}, { enableApps: true }, { enableAgentGraph: "invalid" }]) {
+      expect(normalizeExperimentalSettings(stored).enableAgentGraph).toBe(true);
+    }
+    const disabled = applyExperimentalSettingsPatch({}, { enableAgentGraph: false });
+    expect(normalizeExperimentalSettings(JSON.parse(JSON.stringify(disabled))).enableAgentGraph).toBe(false);
+    expect(normalizeExperimentalSettings({ enableAgentGraph: false, enableCases: "invalid" }).enableAgentGraph).toBe(false);
+    expect(applyExperimentalSettingsPatch(disabled, { enableCases: true }).enableAgentGraph).toBe(false);
+    expect(applyExperimentalSettingsPatch(disabled, { enableAgentGraph: true }).enableAgentGraph).toBe(true);
+  });
+  it.each([
+    { stored: {}, managed: undefined, expected: true },
+    { stored: { enableAgentGraph: false }, managed: undefined, expected: false },
+    { stored: {}, managed: false, expected: false },
+    { stored: { enableAgentGraph: false }, managed: true, expected: true },
+  ])("respects the graph default and explicit Cloud choices: $expected", ({ stored, managed, expected }) => {
+    const config: ManagedInstanceConfig = {
+      v: 1, mode: "cloud", catalogVersion: "test", plugins: { autoInstall: [] }, environments: [], pluginEnvironments: [],
+      features: managed === undefined ? {} : { enableAgentGraph: managed },
+    };
+    const normalized = normalizeExperimentalSettings(stored);
+    const result = applyManagedExperimentalOverlay(applyCloudCatalogDefaults(normalized, stored, config), config);
+    expect(result.experimental.enableAgentGraph).toBe(expected);
+  });
   it("retains the legacy composer preference through saved and unrelated settings updates", () => {
     expect(normalizeExperimentalSettings({}).enableLegacyComposerSubmit).toBe(false);
     const enabled = applyExperimentalSettingsPatch({}, { enableLegacyComposerSubmit: true });
@@ -148,7 +172,7 @@ describe("instance settings service", () => {
       enableCases: false,
       enableIssuePlanDecompositions: true,
       enableExperimentalFileViewer: true,
-      enableAgentGraph: false,
+      enableAgentGraph: true,
       enableCustomizableDashboard: false,
       enableBuiltInAgents: true,
       enableBetaSkills: false,

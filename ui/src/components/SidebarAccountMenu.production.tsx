@@ -243,8 +243,8 @@ export function SidebarAccountMenu({
                 />
               ) : null}
               <MenuAction
-                label={marketingNavigation ? "Documentação" : "Documentation"}
-                description={marketingNavigation ? "Abra o guia do Papermarketing." : "Open Paperclip docs in a new tab."}
+                label="Documentation"
+                description={marketingNavigation ? "Open the PaperMarketing guide." : "Open Paperclip docs in a new tab."}
                 icon={BookOpen}
                 href={marketingNavigation ? PAPERMARKETING_DOCS_URL : DOCS_URL}
                 external

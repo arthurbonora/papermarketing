@@ -15,7 +15,7 @@ const items = [
   { value: "instance-profile", label: "Profile", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/profile` },
   { value: "instance-environments", label: "Environments", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/environments` },
   { value: "connections", label: "Connections", href: "/company/settings/connections" },
-  { value: "agent-invitations", label: "Agentes externos", href: "/company/settings/agent-invitations" },
+  { value: "agent-invitations", label: "External agents", href: "/company/settings/agent-invitations" },
   { value: "instance-access", label: "Access", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/access` },
   { value: "instance-experimental", label: "Experimental", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/experimental` },
   { value: "instance-plugins", label: "Plugins", href: `${INSTANCE_SETTINGS_PATH_PREFIX}/plugins` },
@@ -25,11 +25,11 @@ const items = [
 type CompanySettingsTab = (typeof items)[number]["value"];
 
 const marketingPrimaryLabels: Partial<Record<CompanySettingsTab, string>> = {
-  general: "Geral",
-  members: "Membros",
-  "instance-profile": "Perfil",
-  connections: "Conexões",
-  "agent-invitations": "Agentes externos",
+  general: "General",
+  members: "Members",
+  "instance-profile": "Profile",
+  connections: "Connections",
+  "agent-invitations": "External agents",
 };
 
 export function isMarketingSettingsPrimary(tab: CompanySettingsTab): boolean {
@@ -141,15 +141,15 @@ export function CompanySettingsNav({ marketingNavigation = false }: { marketingN
     const advanced = visibleItems.filter(item => !isMarketingSettingsPrimary(item.value));
     return (
       <NativeSelect
-        aria-label="Configurações"
+        aria-label="Settings"
         className="text-base"
         value={visibleItems.some(item => item.value === activeTab) ? activeTab : ""}
         onChange={event => handleTabChange(event.target.value)}
       >
-        <option value="" disabled>Configurações</option>
+        <option value="" disabled>Settings</option>
         {primary.map(item => <option key={item.value} value={item.value}>{marketingPrimaryLabels[item.value]}</option>)}
         {advanced.length > 0 && (
-          <optgroup label="Avançado">
+          <optgroup label="Advanced">
             {advanced.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
           </optgroup>
         )}

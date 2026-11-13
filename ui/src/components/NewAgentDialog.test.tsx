@@ -91,10 +91,10 @@ afterEach(async () => {
 });
 async function name(value = "Ada & Co") {
   if (!document.querySelector('textarea')) {
-    await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Tipo de agente"]')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Agent type"]')!.click());
     await click("CMO");
   }
-  const input = document.querySelector('input[placeholder="Ex.: Sofia — Estratégia"]')!;
+  const input = document.querySelector('input[placeholder="e.g., Sofia — Strategy"]')!;
   await act(async () => {
     Object.getOwnPropertyDescriptor(
       HTMLInputElement.prototype,
@@ -106,7 +106,7 @@ async function name(value = "Ada & Co") {
 }
 it("requires a name and an enabled adapter before navigating", async () => {
   await click("Choose adapter");
-  expect(document.body.textContent).toContain("Nome do agente");
+  expect(document.body.textContent).toContain("Agent name");
   await name();
   expect(document.querySelector('input[value="claude_local"]')).toBeNull();
   await click("Configure agent");

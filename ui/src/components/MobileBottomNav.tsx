@@ -62,7 +62,7 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
     () => marketingNavigation ? [
       { type: "link", ...MARKETING_DESTINATIONS.overview },
       { type: "link", ...MARKETING_DESTINATIONS.projects },
-      { type: "action", label: "Nova tarefa", icon: SquarePen, onClick: () => openNewIssue() },
+      { type: "action", label: "New task", icon: SquarePen, onClick: () => openNewIssue() },
       { type: "link", ...MARKETING_DESTINATIONS.tasks, badge: combinedInboxTasksEnabled ? inboxBadge.inbox : undefined },
       { type: "link", ...MARKETING_DESTINATIONS.team },
     ] : coordinatorWorkspaceEnabled ? [

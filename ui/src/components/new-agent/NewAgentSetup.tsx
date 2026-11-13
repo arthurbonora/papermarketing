@@ -91,7 +91,7 @@ export function NewAgentSetup() {
   if (!selectedCompanyId)
     return (
       <p className="text-sm text-muted-foreground">
-        Selecione um workspace para criar um agente.
+        Select a workspace to create an agent.
       </p>
     );
   if (params.get("adapterType") === "muse" || params.get("runnerProvider") === "muse") {
@@ -861,8 +861,8 @@ function Setup({
       />
     );
   if (!created && connectionSettingsReady && !pendingAntigravity) return <div className="space-y-4">
-    <p role={error ? "alert" : "status"}>{error ?? "Carregando seu agente…"}</p>
-    {error && <Button onClick={() => void savedAgent.refetch()}>Tentar novamente</Button>}
+    <p role={error ? "alert" : "status"}>{error ?? "Loading your agent…"}</p>
+    {error && <Button onClick={() => void savedAgent.refetch()}>Try again</Button>}
   </div>;
   const steps = [
     ...(connectionAdapter ? ["connect" as const] : []),

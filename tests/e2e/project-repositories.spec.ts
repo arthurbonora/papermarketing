@@ -10,7 +10,7 @@ test("project creation and repository configuration persist on a short mobile vi
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("textbox", { name: "Project name" })).toBeFocused();
   await dialog.getByRole("textbox", { name: "Project name" }).fill("Repository acceptance");
-  await expect(dialog.getByRole("button", { name: "Repositórios GitHub" })).toHaveAttribute("aria-expanded", "false");
+  await expect(dialog.getByRole("button", { name: "GitHub repositories" })).toHaveAttribute("aria-expanded", "false");
   await expect(dialog.getByText("Source repos", { exact: true })).toBeHidden();
   await expect(dialog.getByText("Goal", { exact: true })).toHaveCount(0);
   await expect(dialog.getByPlaceholder("https://github.com/org/repo")).toHaveCount(0);
@@ -38,7 +38,7 @@ test("project creation and repository configuration persist on a short mobile vi
   await expect(page).toHaveURL((url) => url.pathname === `/${company.issuePrefix}/projects/${project.urlKey}/configuration`);
   await expect(page.getByRole("tab", { name: "Overview", exact: true })).toHaveCount(0);
   const section = page.getByRole("region", { name: "Repositories", exact: true });
-  const technicalSettings = page.getByText("Configuração técnica", { exact: true });
+  const technicalSettings = page.getByText("Technical settings", { exact: true });
   await expect(page.getByRole("switch", { name: "Private project" })).toBeVisible();
   await expect(section).toHaveCount(0);
   await technicalSettings.click();
@@ -81,14 +81,14 @@ test("a short new-project dialog keeps actions visible and rejects unavailable s
   await page.getByRole("button", { name: "Create project", exact: true }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox", { name: "Project name" }).fill("Rejected draft");
-  await dialog.getByRole("button", { name: "Repositórios GitHub" }).click();
+  await dialog.getByRole("button", { name: "GitHub repositories" }).click();
   await dialog.getByRole("button", { name: "Add GitHub repo", exact: true }).click();
   await page.getByPlaceholder("Search GitHub repos…").fill("org/repo-80");
   await page.getByRole("option").filter({ hasText: "org/repo-80" }).click();
   await dialog.getByRole("button", { name: "Add another repo", exact: true }).click();
   await page.getByPlaceholder("Search GitHub repos…").fill("org/repo-79");
   await page.getByRole("option").filter({ hasText: "org/repo-79" }).click();
-  const repositories = dialog.getByRole("button", { name: "Repositórios GitHub (2)" });
+  const repositories = dialog.getByRole("button", { name: "GitHub repositories (2)" });
   await repositories.click();
   await expect(dialog.getByText("org/repo-80", { exact: true })).toBeHidden();
   await repositories.click();

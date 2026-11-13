@@ -43,8 +43,8 @@ test("native transcript survives two views and reload through negotiated streami
     await expect.poll(async () => (await json(await request.get(`/api/agents/${agent.id}`))).lifecycleState,
       { timeout: 30_000 }).toBe("ready");
     await page.goto(`/${company.issuePrefix}/agents/${agent.id}/overview`);
-    await page.getByRole("link", { name: "Tarefas", exact: true }).click();
-    await page.getByRole("button", { name: "Nova tarefa", exact: true }).last().click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Tasks", exact: true }).click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("textbox", { name: "editable markdown" }).fill("Summarize the launch decisions and include the source link");
     await expect(dialog.getByRole("button", { name: "Select assignee" })).toContainText("CEO");
