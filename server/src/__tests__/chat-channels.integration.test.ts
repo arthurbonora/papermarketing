@@ -9692,7 +9692,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       assignedAgentName: "Maya",
       status: "draft",
       allowUnlinkedPeople: false,
-      setup: { command: "/maya", slackApp: { appName: "maya-paperclip", botName: "maya", command: "/maya" } },
+      setup: { command: "/maya", slackApp: { appName: "maya-papermarketing", botName: "maya", command: "/maya" } },
     });
     const createdCommand = createResponse.body.setup.command as string;
     const [connection] = await readToolConnectionsById(createResponse.body.connectionId);

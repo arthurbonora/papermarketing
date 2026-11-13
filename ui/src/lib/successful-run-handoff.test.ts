@@ -18,12 +18,12 @@ describe("successful run handoff UI helpers", () => {
     expect(isSuccessfulRunHandoffComment(SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY)).toBe(true);
     expect(
       isSuccessfulRunHandoffComment(
-        "PaperMarketing exhausted the bounded successful-run handoff correction for this issue, but it still has no clear next-step disposition.",
+        "Paperclip exhausted the bounded successful-run handoff correction for this issue, but it still has no clear next-step disposition.",
       ),
     ).toBe(true);
     expect(
       isSuccessfulRunHandoffEscalationComment(
-        "PaperMarketing exhausted the bounded successful-run handoff correction for this issue, but it still has no clear next-step disposition.",
+        "Paperclip exhausted the bounded successful-run handoff correction for this issue, but it still has no clear next-step disposition.",
       ),
     ).toBe(true);
     expect(isSuccessfulRunHandoffComment("Ordinary issue comment")).toBe(false);
@@ -33,5 +33,16 @@ describe("successful run handoff UI helpers", () => {
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_REQUIRED_ACTION).className).toContain("amber");
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_ESCALATED_ACTION).className).toContain("red");
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_RESOLVED_ACTION).className).toContain("border");
+  });
+
+  it("recognizes exact notices persisted before the rename", () => {
+    const required = "Paperclip needs a disposition before this issue can continue.";
+    const exhausted = "Paperclip could not resolve this issue's missing disposition automatically. The source assignment is unchanged and a board decision is required.";
+    expect(isSuccessfulRunHandoffComment(required)).toBe(true);
+    expect(isSuccessfulRunHandoffEscalationComment(required)).toBe(false);
+    expect(isSuccessfulRunHandoffComment(exhausted)).toBe(true);
+    expect(isSuccessfulRunHandoffEscalationComment(exhausted)).toBe(true);
+    expect(isSuccessfulRunHandoffComment(`${required} Additional text.`)).toBe(false);
+    expect(isSuccessfulRunHandoffEscalationComment(`${exhausted} Additional text.`)).toBe(false);
   });
 });

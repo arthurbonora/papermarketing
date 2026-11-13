@@ -69,7 +69,7 @@ describe("TrustPresetSection", () => {
     expect(view.text()).toContain("Containment active");
     expect(view.text()).toContain("Boundary type");
     expect(view.text()).toContain("PaperMarketing App");
-    expect(view.text()).toContain("Get PaperMarketing EE.");
+    expect(view.text()).toContain("CE saves one containment boundary at a time.");
     expect(view.text()).not.toContain("Managed by EE/API");
   });
 

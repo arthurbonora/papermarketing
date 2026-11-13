@@ -1577,7 +1577,7 @@ describe("MarkdownEditor", () => {
     expect(findMentionMatch("Ping @Paperclip App", "Ping @Paperclip App".length)).toEqual({
       trigger: "mention",
       marker: "@",
-      query: "PaperMarketing App",
+      query: "Paperclip App",
       atPos: 5,
       endPos: "Ping @Paperclip App".length,
     });
@@ -1816,7 +1816,7 @@ describe("MarkdownEditor", () => {
     });
 
     expect(handleChange).toHaveBeenCalledWith(
-      `[@Paperclip App](${buildProjectMentionHref("project-123", "#336699")}) `,
+      `[@PaperMarketing App](${buildProjectMentionHref("project-123", "#336699")}) `,
     );
 
     await act(async () => {
