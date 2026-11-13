@@ -6142,28 +6142,31 @@ rl.on("line", (line) => {
     bridge.mockRestore();
   });
 
-  it("fails closed for hosted public local stdio unless a trusted runtime host is configured", async () => {
+  it("fails closed for hosted public local stdio even with isolated provider login enabled unless a trusted runtime host is configured", async () => {
     const company = await createCompany(db);
     const agent = await createAgent(db, company.id);
     const { run } = await createIssueAndRun(db, company.id, agent.id);
     await allowToolsForAgent(db, company.id, agent.id, ["mcp-stdio-fixture:increment_counter"]);
-    const hostedGateway = createTestToolGatewayService(db, {
-      deploymentMode: "authenticated",
-      deploymentExposure: "public",
-      trustedLocalStdioRuntimeHost: null,
-    });
-    const session = await hostedGateway.createSession({ companyId: company.id, agentId: agent.id, runId: run.id });
-
-    await hostedGateway.executeTool({
-      sessionToken: session.token,
-      tool: "mcp-stdio-fixture:increment_counter",
-      parameters: {},
-    }).then(
-      () => {
-        throw new Error("Expected public hosted local stdio to fail closed");
-      },
-      (error) => expectGatewayError(error, 403, "local_stdio_unavailable_in_public_mode"),
-    );
+    const previousOptIn = process.env.PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN;
+    vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", "true");
+    try {
+      const hostedGateway = createTestToolGatewayService(db, {
+        deploymentMode: "authenticated",
+        deploymentExposure: "public",
+        trustedLocalStdioRuntimeHost: "",
+      });
+      const session = await hostedGateway.createSession({ companyId: company.id, agentId: agent.id, runId: run.id });
+      await hostedGateway.executeTool({
+        sessionToken: session.token,
+        tool: "mcp-stdio-fixture:increment_counter",
+        parameters: {},
+      }).then(
+        () => {
+          throw new Error("Expected public hosted local stdio to fail closed");
+        },
+        (error) => expectGatewayError(error, 403, "local_stdio_unavailable_in_public_mode"),
+      );
+    } finally { vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", previousOptIn); }
 
     const trustedGateway = createTestToolGatewayService(db, {
       deploymentMode: "authenticated",

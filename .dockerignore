@@ -4,6 +4,10 @@
 # Local self-hosting secrets and backups must never enter image layers.
 /docker/papermarketing/.env
 /docker/papermarketing/backups
+/cloud/state
+/cloud/*.pem
+/cloud/*.sqlite*
+/cloud/*.env
 .pnpm-store
 node_modules
 **/node_modules
