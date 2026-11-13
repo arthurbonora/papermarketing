@@ -3790,7 +3790,7 @@ describe("ACP activity diagnostics", () => {
     // The host only observes the request; ACPX's permission mode decides it.
     expect(permissionDecisions).toEqual([undefined]);
     expect(logs.join("")).toContain(
-      "[paperclip] A pending tool call (kind other) had no update for 6s; ending the turn. Its permission request did not reach Paperclip.",
+      "[paperclip] A pending tool call (kind other) had no update for 6s; ending the turn. Its permission request did not reach PaperMarketing.",
     );
     const diagnostics = Object.fromEntries(Object.entries(result.resultJson ?? {}).filter(([key]) => key.startsWith("acp")));
     expect(JSON.stringify(diagnostics)).not.toContain("private");

@@ -601,7 +601,7 @@ describe("adapter skill snapshots", () => {
       installedDetail: "Installed in the Cursor skills home.",
       missingDetail: "Configured but not linked.",
       externalConflictDetail: "Name occupied externally.",
-      externalDetail: "Installed outside Paperclip management.",
+      externalDetail: "Installed outside PaperMarketing management.",
     });
 
     expect(snapshot.mode).toBe("persistent");
@@ -618,7 +618,7 @@ describe("adapter skill snapshots", () => {
         key: optionalEntry.key,
         state: "external",
         managed: false,
-      detail: "Installed outside PaperMarketing management.",
+        detail: "Installed outside PaperMarketing management.",
       }),
     );
     expect(snapshot.entries).toContainEqual(
