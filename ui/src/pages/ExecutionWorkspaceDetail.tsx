@@ -700,7 +700,7 @@ function ExecutionWorkspaceRoutinesList({
       ]);
       pushToast({
         title: "Routine started",
-        body: "Paperclip created a run using this execution workspace.",
+        body: "PaperMarketing created a run using this execution workspace.",
         tone: "success",
       });
     },
@@ -1140,7 +1140,7 @@ export function ExecutionWorkspaceDetail() {
               <CardHeader>
                 <CardTitle>Workspace settings</CardTitle>
                 <CardDescription>
-                  Edit the concrete path, repo, branch, provisioning, teardown, and runtime overrides attached to this execution workspace. Saved changes affect future runs; Paperclip may refresh or replace a reused workspace when config changes.
+                  Edit the concrete path, repo, branch, provisioning, teardown, and runtime overrides attached to this execution workspace. Saved changes affect future runs; PaperMarketing may refresh or replace a reused workspace when config changes.
                 </CardDescription>
                 <CardAction>
                   <Button
@@ -1249,7 +1249,7 @@ export function ExecutionWorkspaceDetail() {
                   <>
                     <div className="space-y-4">
                       <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Lifecycle commands</div>
-                      <Field label="Provision command" hint="Runs when Paperclip prepares this execution workspace">
+                      <Field label="Provision command" hint="Runs when PaperMarketing prepares this execution workspace">
                         <Textarea
                           className="min-h-20 font-mono"
                           value={form.provisionCommand}
@@ -1409,7 +1409,7 @@ export function ExecutionWorkspaceDetail() {
                         </div>
                       ) : null}
                       <p className="text-sm text-muted-foreground">
-                        Paperclip checks fixed ports again when a service starts and rejects cross-workspace conflicts.
+                        PaperMarketing checks fixed ports again when a service starts and rejects cross-workspace conflicts.
                       </p>
                     </div>
                   ) : null}

@@ -159,7 +159,7 @@ describe("AuthPage", () => {
     healthMock.mockResolvedValue({ cloud: { managed: true, managedBy: "paperclip-cloud", cloudBaseUrl: "https://my.paperclip.app", stackSlug: "team" } });
     beginCloudSignInMock.mockReturnValue(false);
     const { root } = await mount();
-    await vi.waitFor(() => expect(container.textContent).toContain("Continue to Paperclip Cloud"));
+    await vi.waitFor(() => expect(container.textContent).toContain("Continue to Cloud"));
     expect(container.querySelector("form")).toBeNull();
     await act(() => root.unmount());
   });
@@ -388,7 +388,7 @@ describe("CliAuthPage rate-limit recovery", () => {
     expect(fetchCli).toHaveBeenCalledTimes(2);
     expect(cliClient!.getQueryState(challengeQueryKey)).toMatchObject({ status: "success", fetchStatus: "idle", data: { status: "pending" } });
     await advance(1);
-    expect(cliContainer.textContent).toContain("Approve Paperclip CLI access");
+    expect(cliContainer.textContent).toContain("Approve PaperMarketing CLI access");
     expect(fetchCli.mock.calls.map(([url, init]) => [String(url), init?.method]))
       .toEqual([[challengePath, "GET"], [challengePath, "GET"]]);
   });
@@ -425,7 +425,7 @@ describe("CliAuthPage rate-limit recovery", () => {
     fetchCli.mockResolvedValueOnce(response(pending(new Date(Date.now() + 1500).toISOString())))
       .mockImplementation(async () => response({ error: "Too many CLI auth requests", details: { retryAfterSeconds: 2 } }, 429));
     await mountCli();
-    expect(cliContainer.textContent).toContain("Approve Paperclip CLI access");
+    expect(cliContainer.textContent).toContain("Approve PaperMarketing CLI access");
     await reactAct(async () => { void cliClient!.invalidateQueries({ queryKey: challengeQueryKey }); });
     await advance(0);
     expect(fetchCli).toHaveBeenCalledTimes(2);

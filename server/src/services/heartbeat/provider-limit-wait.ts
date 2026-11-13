@@ -56,8 +56,8 @@ export function createProviderLimitWait(db: Db, deps: ProviderLimitWaitDependenc
     if (!cooldown) return false;
     const resetAt = cooldown.resetAt.toISOString();
     const message = `The provider usage limit for this agent is expected to reset at ${resetAt}${
-      cooldown.resetReported ? "" : " (no reset time was reported, so Paperclip waits one hour)"
-    }. Paperclip will start this work then.`;
+      cooldown.resetReported ? "" : " (no reset time was reported, so PaperMarketing waits one hour)"
+    }. PaperMarketing will start this work then.`;
     const cancelled = await setRunStatusIfRunning(run.id, "cancelled", {
       error: message, errorCode: "provider_limit_wait", finishedAt: now,
       resultJson: {

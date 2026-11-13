@@ -1927,7 +1927,7 @@ describeEmbeddedPostgres("heartbeat comment wake batching", () => {
           "Preserve the original request's exact-output constraints literally.",
         );
         expect(String(gateway.getAgentPayloads()[0]?.message ?? "")).toContain(
-          "Do not narrate Paperclip workflow, checkout, status, or completion bookkeeping.",
+          "Do not narrate PaperMarketing workflow, checkout, status, or completion bookkeeping.",
         );
         const continuationWake = await readGatewayWakePayload(
           gateway.getAgentPayloads()[0] ?? {},

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "packageName": "@paperclipai/skills-catalog",
   "packageVersion": "0.3.1",
-  "generatedAt": "2026-11-09T20:56:52.178Z",
+  "generatedAt": "2026-11-13T02:38:09.271Z",
   "skills": [
     {
       "id": "paperclipai:bundled:docs:doc-maintenance",
@@ -45,7 +45,7 @@
       "category": "paperclip-operations",
       "slug": "issue-triage",
       "name": "issue-triage",
-      "description": "Triage Paperclip inbox issues that are stale, blocked, in-review, or assigned-but-not-progressing, and decide a single next action per issue (resume, reassign, unblock, escalate, or close).",
+      "description": "Triage PaperMarketing inbox issues that are stale, blocked, in-review, or assigned-but-not-progressing, and decide a single next action per issue (resume, reassign, unblock, escalate, or close).",
       "path": "catalog/bundled/paperclip-operations/issue-triage",
       "entrypoint": "SKILL.md",
       "trustLevel": "markdown_only",
@@ -67,11 +67,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 4042,
-          "sha256": "df5bdc8bf5e017b7ba5f70a4b5323fad51d0c323278f386580f26cf43ad09160"
+          "sizeBytes": 4047,
+          "sha256": "5102714ef8390f7c3e6eaa5b84661dda5b61cea363aac6cc8e662c308ebc7e1b"
         }
       ],
-      "contentHash": "sha256:88dc13560371fb364963782cb4f6eeb4090fcde92ee3774479428ed6b90e11c1"
+      "contentHash": "sha256:d453bc0ddbea1ebf48d5dad7e88875d146785e527ff121ec30f9fb9d32232e01"
     },
     {
       "id": "paperclipai:bundled:paperclip-operations:reflection-coach",
@@ -102,11 +102,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 12028,
-          "sha256": "083d5fa8dc43c3ce7747e89c1afb6f6f42d0603a31808bffc5f8e56735f2d865"
+          "sizeBytes": 12033,
+          "sha256": "c19f7f699dfcc9762527a09fcbc03e49da9a18f76b58ede4acb4e8b00a97d9c2"
         }
       ],
-      "contentHash": "sha256:f2592d81f616628a3eba92636616424f2eed82ec22bb504240a58f6be115e407"
+      "contentHash": "sha256:1ae749cc51839cd56d4254e7e36131397b9a037f5eff56bba48a422d9d736a3d"
     },
     {
       "id": "paperclipai:bundled:paperclip-operations:status-card-query",
@@ -115,7 +115,7 @@
       "category": "paperclip-operations",
       "slug": "status-card-query",
       "name": "status-card-query",
-      "description": "Create and maintain agent-authored Paperclip status cards, or compile a prose interest prompt into bounded CompanySearchQuery objects and write the first summary from the assigned Summarizer run.",
+      "description": "Create and maintain agent-authored PaperMarketing status cards, or compile a prose interest prompt into bounded CompanySearchQuery objects and write the first summary from the assigned Summarizer run.",
       "path": "catalog/bundled/paperclip-operations/status-card-query",
       "entrypoint": "SKILL.md",
       "trustLevel": "markdown_only",
@@ -137,11 +137,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 6368,
-          "sha256": "0c6140f51d503cbadc98723ce54c0def48e7e31ea159b0935b8ad6369291498a"
+          "sizeBytes": 6378,
+          "sha256": "f2ea68451a2efc43312301651170af18571545f0bc1ec6debd509e95fccd0e85"
         }
       ],
-      "contentHash": "sha256:2b6e53bf8491f027afdbd6961ad84f677cfd385a0a6a73616ea84111ca8886ed"
+      "contentHash": "sha256:d5ba5518083c3827239e6fb04d9d147f3b7db7470337c21064334b6ca7dfb819"
     },
     {
       "id": "paperclipai:bundled:paperclip-operations:summarize-status",
@@ -150,7 +150,7 @@
       "category": "paperclip-operations",
       "slug": "summarize-status",
       "name": "summarize-status",
-      "description": "Write a short, colloquial summary for a Paperclip summary slot: open with the 1–3 specific, concrete actions the reader needs to take right now to unblock the work, then a brief plain-language status, streaming progress as it works.",
+      "description": "Write a short, colloquial summary for a PaperMarketing summary slot: open with the 1–3 specific, concrete actions the reader needs to take right now to unblock the work, then a brief plain-language status, streaming progress as it works.",
       "path": "catalog/bundled/paperclip-operations/summarize-status",
       "entrypoint": "SKILL.md",
       "trustLevel": "markdown_only",
@@ -172,11 +172,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 8877,
-          "sha256": "4cb3d177f5d16e3cc2052d2f80e7fb245ab95e79c1e947abdc84cd4ee3d8c61e"
+          "sizeBytes": 8897,
+          "sha256": "73467cdeb6f82295b46a4ff4aab1eb1ee41d12b1328c306cb0cb04d822022ae0"
         }
       ],
-      "contentHash": "sha256:3e49ee2b8d83d1371fb0f59197bb96c46b64f722540405f46d4a5a756fbe1b89"
+      "contentHash": "sha256:fce5f9f877560629297fab03cdc2d8030e521619016854f0b0c4221c6bfbfb6a"
     },
     {
       "id": "paperclipai:bundled:paperclip-operations:task-planning",
@@ -185,7 +185,7 @@
       "category": "paperclip-operations",
       "slug": "task-planning",
       "name": "task-planning",
-      "description": "Write or revise a useful Paperclip plan with a clear outcome and verification. Use when a plan is requested or uncertainty needs resolving before execution.",
+      "description": "Write or revise a useful PaperMarketing plan with a clear outcome and verification. Use when a plan is requested or uncertainty needs resolving before execution.",
       "path": "catalog/bundled/paperclip-operations/task-planning",
       "entrypoint": "SKILL.md",
       "trustLevel": "markdown_only",
@@ -207,11 +207,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 1517,
-          "sha256": "48d6501d6ef481d5b19d0e0cd1507436d1cee1acf155e5038e1f0b2f0230d9e1"
+          "sizeBytes": 1522,
+          "sha256": "977a7020cd4a5ecadad459b8633277fa1adb6664aa2420345097d52c5494c018"
         }
       ],
-      "contentHash": "sha256:a1724bde58be85c445590aeaa2f5f2f1de2bee24fe62f07fa3b579c6e4b28e6d"
+      "contentHash": "sha256:42bb9c2edd0f308a250aed7c23f2e386e506d9611f5b0ae447ca56e764794e06"
     },
     {
       "id": "paperclipai:bundled:product:paperclip-capsules",
@@ -479,11 +479,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 6945,
-          "sha256": "d745cca96350518fabae14f5c407d779e1df2c5d091b5b4a5c55bb888b569e5f"
+          "sizeBytes": 6970,
+          "sha256": "2933190bfa5c420af9649b7977f7b6b6b9e8cd74c6ee16a2309687833795bf9a"
         }
       ],
-      "contentHash": "sha256:efe8ea89b552df95222609867c9c75f1b40e16f457d34e7e4a124f54daa33efa"
+      "contentHash": "sha256:a6b55b31c64673f7e9c3e664a17db0be42989477b66850c2c4d0077cfb3b4b19"
     },
     {
       "id": "paperclipai:optional:content:simplified-english",
@@ -528,7 +528,7 @@
       "category": "finance",
       "slug": "ramp",
       "name": "ramp",
-      "description": "Fetch and follow Ramp's published agent playbooks inside Paperclip, with mandatory approval gates for spend, incorporation, cards, account setup, and other financial actions.",
+      "description": "Fetch and follow Ramp's published agent playbooks inside PaperMarketing, with mandatory approval gates for spend, incorporation, cards, account setup, and other financial actions.",
       "path": "catalog/optional/finance/ramp",
       "entrypoint": "SKILL.md",
       "trustLevel": "markdown_only",
@@ -552,11 +552,11 @@
         {
           "path": "SKILL.md",
           "kind": "skill",
-          "sizeBytes": 7016,
-          "sha256": "698cd69ebf2f2481ed83c8e9477b56ae78288cc4c751d7d35f649ff2483802a3"
+          "sizeBytes": 7101,
+          "sha256": "339e247741fb93712c0f9224ec8a677014e7223a8c4a616dd5c43d9185cdde16"
         }
       ],
-      "contentHash": "sha256:276d85e98a4732f278204e26438aa95fde158dd2d15c1e427c4c7c7d492e769d"
+      "contentHash": "sha256:426352a59593044723a069a4c817fe1e773f76e0bd1d7bc5cb63b995b9155784"
     },
     {
       "id": "paperclipai:optional:product:design-critique",

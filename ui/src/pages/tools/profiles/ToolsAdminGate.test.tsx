@@ -107,7 +107,7 @@ describe("ToolsAdminGate", () => {
     expect(container.textContent).not.toContain(DENIAL);
     expect(container.textContent).not.toContain("gated content");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
 
   it("shows readable copy with Retry for a real error, not a denial", async () => {

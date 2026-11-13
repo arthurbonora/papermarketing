@@ -399,7 +399,7 @@ describe("ConnectionIntentInteractionBody dialog behavior", () => {
       document.querySelector('[data-testid="shared-connection-setup"]'),
     ).not.toBeNull();
     expect(document.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(document.body.textContent).not.toContain("Paperclip is restarting.");
+    expect(document.body.textContent).not.toContain("PaperMarketing is restarting.");
     expect(document.body.textContent).not.toContain("Couldn't load connection setup");
   });
 

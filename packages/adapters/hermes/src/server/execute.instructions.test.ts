@@ -204,7 +204,7 @@ console.log("Fixture completed\\nsession_id: ${SESSION_ID}");
     await execute({ ...ctx, config: { ...ctx.config, instructionsFilePath: undefined }, runtime: { ...ctx.runtime, sessionParams: { sessionId: SESSION_ID } } });
     const [, resumed] = await invocations();
     expect(resumed.systemPrompt).not.toContain(INSTRUCTIONS);
-    expect(resumed.systemPrompt).toContain("Paperclip API guidance:");
+    expect(resumed.systemPrompt).toContain("PaperMarketing API guidance:");
     expect(query(resumed)).toContain("Fresh human direction.");
   });
 });

@@ -106,9 +106,9 @@ vi.mock("../lib/clipboard", () => ({
 
 vi.mock("../context/CompanyContext", () => ({
   useCompany: () => ({
-    companies: [{ id: "company-1", name: "Paperclip", issuePrefix: "CO" }],
+    companies: [{ id: "company-1", name: "PaperMarketing", issuePrefix: "CO" }],
     selectedCompanyId: "company-1",
-    selectedCompany: { id: "company-1", name: "Paperclip", issuePrefix: "CO" },
+    selectedCompany: { id: "company-1", name: "PaperMarketing", issuePrefix: "CO" },
     selectionSource: "bootstrap",
     loading: false,
     error: null,
@@ -778,7 +778,7 @@ describe("AgentConfigForm environment selector", () => {
     mockAdaptersApi.list.mockResolvedValueOnce([{ type: adapterType, supportedRunners: ["legacy", "paperclip"], defaultRunner: "paperclip" }]);
     const result = await renderForm([], { adapterType, adapterConfig: { model: "existing-model", effort: "high" } });
     roots.push(result.root);
-    expect(result.container.textContent).toContain("Upgrade to Paperclip Runner");
+    expect(result.container.textContent).toContain("Upgrade to PaperMarketing Runner");
     await act(async () => setInputValue(result.container.querySelector<HTMLInputElement>('[placeholder="Agent name"]')!, "Renamed agent"));
     await flushReact();
     await clickByText(result.container, "Upgrade runner");
@@ -811,7 +811,7 @@ describe("AgentConfigForm environment selector", () => {
     mockAdaptersApi.list.mockResolvedValueOnce([{ type: "codex_local", supportedRunners: ["legacy", "paperclip"], defaultRunner: "paperclip" }]);
     const result = await renderForm([]);
     roots.push(result.root);
-    result.onSave.mockRejectedValueOnce(new Error("Paperclip Runner cannot honor these settings: extraArgs."));
+    result.onSave.mockRejectedValueOnce(new Error("PaperMarketing Runner cannot honor these settings: extraArgs."));
     await clickByText(result.container, "Upgrade runner");
     expect(result.container.querySelector('[role="alert"]')?.textContent).toContain("extraArgs");
     expect(result.onSave).toHaveBeenLastCalledWith({ runner: "paperclip" });
@@ -840,11 +840,11 @@ describe("AgentConfigForm environment selector", () => {
     await act(async () => changeAgent());
     await act(async () => finishUpgrade());
     await flushReact();
-    expect(container.textContent).not.toContain("Upgraded to Paperclip Runner.");
+    expect(container.textContent).not.toContain("Upgraded to PaperMarketing Runner.");
     expect(findButton(container, "Upgrade runner")).toBeDefined();
   });
 
-  it("switches a saved legacy Claude agent to Paperclip Runner on a Runner-only environment", async () => {
+  it("switches a saved legacy Claude agent to PaperMarketing Runner on a Runner-only environment", async () => {
     mockAdaptersApi.list.mockResolvedValue([{ type: "claude_local", supportedRunners: ["paperclip"], defaultRunner: "paperclip" }]);
     try {
       const result = await renderForm([], { adapterType: "claude_local", adapterConfig: { model: "claude-opus-5-5" } });
@@ -856,7 +856,7 @@ describe("AgentConfigForm environment selector", () => {
     } finally { mockAdaptersApi.list.mockResolvedValue([{ type: "codex_local", supportedRunners: ["legacy", "paperclip"], defaultRunner: "legacy" }]); }
   });
 
-  it("switches a new agent's Legacy choice to Paperclip Runner on a Runner-only environment", async () => {
+  it("switches a new agent's Legacy choice to PaperMarketing Runner on a Runner-only environment", async () => {
     mockAdaptersApi.list.mockResolvedValue([{ type: "claude_local", supportedRunners: ["paperclip"], defaultRunner: "paperclip" }]);
     try {
       const result = await renderCreateForm([], { ...defaultCreateValues, adapterType: "claude_local", runner: "legacy" });
@@ -866,7 +866,7 @@ describe("AgentConfigForm environment selector", () => {
   });
 
   it.each(["explicit", "instance", "managed", "env-draft"])("qualifies a saved Daytona Claude agent and upgrades with its legacy turn limit (%s environment)", async mode => {
-    const environment = makeEnvironment({ id: "daytona-computer", name: "Paperclip Sandbox", driver: "sandbox", status: "active",
+    const environment = makeEnvironment({ id: "daytona-computer", name: "PaperMarketing Sandbox", driver: "sandbox", status: "active",
       config: { provider: "daytona", snapshot: "managed-snapshot" }, metadata: { managedByPaperclip: true } });
     const inventory = (qualified: boolean) => [
       { type: "claude_local", supportedRunners: qualified ? ["paperclip", "legacy"] : ["legacy"], defaultRunner: qualified ? "paperclip" : "legacy" },
@@ -883,7 +883,7 @@ describe("AgentConfigForm environment selector", () => {
       adapterConfig: { model: "claude-opus-5-5", effort: "high", maxTurnsPerRun: 1000, dangerouslySkipPermissions: true } },
       { environmentVariablesPlacement: "configuration" });
     roots.push(result.root);
-    expect(result.container.textContent).toContain("Upgrade to Paperclip Runner");
+    expect(result.container.textContent).toContain("Upgrade to PaperMarketing Runner");
     expect(result.container.textContent).toContain("Max turns per run");
     expect(mockAgentsApi.qualifyRunner).not.toHaveBeenCalled();
     if (mode === "env-draft") {
@@ -924,7 +924,7 @@ describe("AgentConfigForm environment selector", () => {
   });
 
   it.each(["probe", "unsupported", "settings-changed"])("does not save after Daytona %s", async failure => {
-    const environment = makeEnvironment({ id: "daytona-computer", name: "Paperclip Sandbox", driver: "sandbox", status: "active",
+    const environment = makeEnvironment({ id: "daytona-computer", name: "PaperMarketing Sandbox", driver: "sandbox", status: "active",
       config: { provider: "daytona", snapshot: "managed-snapshot" } });
     mockAdaptersApi.list.mockResolvedValue([{ type: "claude_local", supportedRunners: ["legacy"], defaultRunner: "legacy" }, { type: "paperclip_runner", supportedRunners: ["legacy"], defaultRunner: "legacy" }]);
     let finish!: () => void;
@@ -1684,7 +1684,7 @@ describe("AgentConfigForm environment selector", () => {
     expect(selector?.textContent).toContain("Fake Sandbox · sandbox");
   });
 
-  it.each(["Paperclip Sandbox", "Paperclip Computer", "Custom managed environment"])("labels the platform-managed instance default %s by its configured name", async (name) => {
+  it.each(["PaperMarketing Sandbox", "PaperMarketing Computer", "Custom managed environment"])("labels the platform-managed instance default %s by its configured name", async (name) => {
     mockInstanceSettingsApi.get.mockResolvedValue({ defaultEnvironmentId: "managed-1" });
     const result = await renderForm([
       makeEnvironment({
@@ -1705,7 +1705,7 @@ describe("AgentConfigForm environment selector", () => {
     expect(selector?.textContent).not.toContain("· sandbox");
   });
 
-  it("uses Paperclip Sandbox while the managed default environment is unavailable", async () => {
+  it("uses PaperMarketing Sandbox while the managed default environment is unavailable", async () => {
     mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableEnvironments: true, enableManagedSandboxOnly: true });
     mockInstanceSettingsApi.get.mockResolvedValue({ defaultEnvironmentId: null });
     const result = await renderForm([
@@ -1714,8 +1714,8 @@ describe("AgentConfigForm environment selector", () => {
     roots.push(result.root);
 
     const selector = await environmentOptions(result.container);
-    expect(selector?.textContent).toContain("Default: Paperclip Sandbox");
-    expect(selector?.textContent).not.toContain("Paperclip Computer");
+    expect(selector?.textContent).toContain("Default: PaperMarketing Sandbox");
+    expect(selector?.textContent).not.toContain("PaperMarketing Computer");
   });
 
   it("renders non-local adapter config fields in the Adapter card", async () => {
@@ -4120,7 +4120,7 @@ describe("AgentConfigForm environment selector", () => {
     await flushUntil(() => mockAgentsApi.adapterModels.mock.calls.length > 1);
 
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
     expect(container.textContent).not.toContain("Loading models…");
 

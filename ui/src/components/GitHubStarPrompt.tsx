@@ -93,7 +93,7 @@ export function GitHubStarPrompt() {
           </div>
           <DialogTitle>You completed {STAR_PROMPT_COMPLETED_TASKS} tasks!</DialogTitle>
           <DialogDescription className="max-w-xs">
-            If you're enjoying Papermarketing, consider giving us a star on GitHub!
+            If you're enjoying PaperMarketing, consider giving us a star on GitHub!
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">

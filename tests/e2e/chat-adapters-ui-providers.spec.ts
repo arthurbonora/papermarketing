@@ -50,7 +50,7 @@ async function exerciseGitHubReviewSetup(page: Page, mock: ChatMock, seed: Seed,
   await page.getByRole("button", { name: "Select agent…", exact: true }).click();
   await page.getByRole("button", { name: "Select Maya", exact: true }).click();
   await expect(page.getByText("Maya is not configured for low-trust review")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Learn about low-trust agents" })).toHaveAttribute("href", /trust-and-low-trust-review/);
+  await expect(page.getByRole("link", { name: "Learn about low-trust agents" })).toHaveAttribute("href", "https://github.com/arthurbonora/papermarketing/blob/master/doc/connections/GITHUB-REVIEW-BOT.md");
   await testInfo.attach("Choose agent — inline low-trust warning", { body: await page.screenshot(), contentType: "image/png" });
   await page.getByRole("button", { name: "Change Maya to a low trust agent" }).click();
   await expect(page.getByText("Maya is not configured for low-trust review")).toHaveCount(0);
@@ -345,7 +345,7 @@ test.describe.serial("native chat adapter UI", () => {
     await page.getByRole("button", { name: "Choose an active agent" }).click();
     await page.getByRole("button", { name: "Select Maya", exact: true }).click();
     await page.locator("summary:visible").filter({ hasText: "Advanced" }).click();
-    await expect(page.getByLabel("Slack app name", { exact: true })).toHaveValue("maya-paperclip");
+    await expect(page.getByLabel("Slack app name", { exact: true })).toHaveValue("maya-papermarketing");
     await expect(page.getByLabel("Bot display name", { exact: true })).toHaveValue("maya");
     await expect(page.getByLabel("Slash command", { exact: true })).toHaveValue("/maya");
     await page.getByRole("button", { name: "Continue", exact: true }).click();
@@ -397,7 +397,7 @@ test.describe.serial("native chat adapter UI", () => {
     mock.setWebhookVerified();
     await expect(page.getByRole("heading", { name: "Success", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Download avatar" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Link .* to my Paperclip account/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Link .* to my PaperMarketing account/ })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Open your Slack DM" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Copy message" })).toHaveCount(0);
     await page.reload();
@@ -645,11 +645,11 @@ test.describe.serial("native chat adapter UI", () => {
 
       if (provider.provider === "slack") {
         await expect(page.getByRole("heading", { name: "Verify Slack connection" })).toBeVisible();
-        await expect(page.getByText("Slack needs to confirm that it can reach your Paperclip instance.")).toBeVisible();
+        await expect(page.getByText("Slack needs to confirm that it can reach your PaperMarketing instance.")).toBeVisible();
         mock.setWebhookVerified();
         await expect(page.getByRole("heading", { name: "Connect your Slack account" })).toBeVisible();
         await expect(page.getByText("/maya connect", { exact: true })).toBeVisible();
-        await page.getByRole("button", { name: "Link Test operator to my Paperclip account" }).click();
+        await page.getByRole("button", { name: "Link Test operator to my PaperMarketing account" }).click();
         await page.getByRole("button", { name: "Continue to message test" }).click();
       }
 

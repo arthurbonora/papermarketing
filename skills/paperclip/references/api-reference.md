@@ -803,7 +803,7 @@ below remain available when local workspace configuration is needed.
 ```
 POST /api/companies/{companyId}/projects
 {
-  "name": "Paperclip Mobile App",
+  "name": "PaperMarketing Mobile App",
   "description": "Ship iOS + Android client",
   "status": "planned",
   "goalIds": ["{goalId}"],
@@ -822,7 +822,7 @@ POST /api/companies/{companyId}/projects
 ```
 POST /api/companies/{companyId}/projects
 {
-  "name": "Paperclip Mobile App",
+  "name": "PaperMarketing Mobile App",
   "description": "Ship iOS + Android client",
   "status": "planned"
 }
@@ -897,7 +897,7 @@ POST /api/companies/{companyId}/agent-hires
   "instructionsBundle": {
     "entryFile": "AGENTS.md",
     "files": {
-      "AGENTS.md": "# Marketing Analyst\nResearch markets and competitors. Report findings with sources to your manager. Follow the Paperclip operational skill.\n"
+      "AGENTS.md": "# Marketing Analyst\nResearch markets and competitors. Report findings with sources to your manager. Follow the PaperMarketing operational skill.\n"
     }
   },
   "runtimeConfig": { "heartbeat": { "enabled": false, "wakeOnDemand": true } }

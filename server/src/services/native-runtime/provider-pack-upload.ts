@@ -28,7 +28,7 @@ export async function uploadVerifiedProviderPack(input: {
 }): Promise<void> {
   if (input.sourceDigest !== input.expectedDigest && !input.manifest) {
     const short = (digest: string) => digest.replace(/^sha256:/, "").slice(0, 12);
-    throw new Error(`runner_remote_provider_artifact_incompatible: selected provider pack ${short(input.expectedDigest)} is not the controller's pack ${short(input.sourceDigest)}; install the matching Paperclip package and Daytona image`);
+    throw new Error(`runner_remote_provider_artifact_incompatible: selected provider pack ${short(input.expectedDigest)} is not the controller's pack ${short(input.sourceDigest)}; install the matching PaperMarketing package and Daytona image`);
   }
   const measure = <T>(name: string, fn: () => Promise<T>) => input.trace ? input.trace.measure(name, fn) : fn();
   input.signal?.throwIfAborted();

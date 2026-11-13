@@ -269,8 +269,17 @@ describeEmbeddedPostgres("heartbeat native recovery interrupted by graceful shut
     const resumed = vi.fn(() => { throw new Error("next boot reached provider dispatch"); });
     const next = heartbeatService(f.db, { nativeSessionBackendFactory: resumed });
     try {
-      const { claims } = await next.recoverNativeRunsAfterRestart(new Date(), [f.runId]);
-      expect(claims).toEqual([expect.objectContaining({ runId: f.runId })]);
+      const { claims, dispositions } = await next.recoverNativeRunsAfterRestart(new Date(), [f.runId]);
+      const [disposition] = dispositions;
+      // Recovery skips locked rows and schedules another scan at the retry deadline.
+      if (dispositions.length === 1 && disposition?.kind === "awaiting_evidence"
+        && disposition.reason === "recovery_rows_busy" && disposition.runId === f.runId && disposition.retryAt) {
+        expect(claims).toEqual([]);
+        await waitForCondition("the next controller to dispatch after the recovery rows unlock",
+          () => resumed.mock.calls.length > 0);
+      } else {
+        expect(claims, JSON.stringify(dispositions)).toEqual([expect.objectContaining({ runId: f.runId })]);
+      }
     } finally { await next.drainActiveRunExecutions(); }
     expect(resumed).toHaveBeenCalledOnce();
   }, 90_000);

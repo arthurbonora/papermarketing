@@ -119,8 +119,8 @@ export function boardAccessRequired(req: Request, controlPage?: BoardControlPage
   const page = controlPage ?? boardControlPage(req);
   const scope = PLUGIN_ROUTE.test(deniedApiPath(req)) ? `${PLUGIN_ADMINISTRATION_SCOPE} ` : "";
   const where = page
-    ? `They can do it in the Paperclip web app: link [Open ${page[0]}](${page[1]}), with this conversation's company prefix as <prefix>.`
-    : "They can do it in the Paperclip web app or with their own board credentials. Link a page only if you already know its route; do not search for one.";
+    ? `They can do it in the PaperMarketing web app: link [Open ${page[0]}](${page[1]}), with this conversation's company prefix as <prefix>.`
+    : "They can do it in the PaperMarketing web app or with their own board credentials. Link a page only if you already know its route; do not search for one.";
   return forbidden("Board access required", {
     code: BOARD_ACCESS_REQUIRED_CODE,
     remediation: `This action is board-only by design and this denial is final: no agent credential, tool or other API route can do it, so do not search for one. Stop working on this step and reply now: tell the person that a board user must do it. ${scope}${where}`,

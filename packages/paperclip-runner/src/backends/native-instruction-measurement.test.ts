@@ -117,7 +117,7 @@ describe("native instruction payload measurement", () => {
         const turn = captured.calls.find(call => call.method === "turn/start")!.params;
         const instructions = setup.developerInstructions ?? setup.baseInstructions;
         expect(instructions).toContain(PAPERCLIP_EXECUTION_PROMPT);
-        expect(instructions).toContain("You are an agent in a Paperclip company.");
+        expect(instructions).toContain("You are an agent in a PaperMarketing company.");
         const deliveredTools = setup.dynamicTools as Array<{ name: string; description: string }>;
         expect(deliveredTools.filter(tool => tool.name === "paperclip_finish")).toEqual([
           expect.objectContaining({ description: PRP_COMPLETION_TOOL_DESCRIPTION }),

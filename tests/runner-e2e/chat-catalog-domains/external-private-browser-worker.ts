@@ -42,11 +42,11 @@ async function main() {
       const request = await described.json();
       if (request.clientName !== "Paperclip disposable CLI" || request.requestedCompanyId !== input.companyId || request.requiresSignIn !== false || request.requestedWrite !== false || request.requestedConfigure !== false || request.agentConnection === true
         || !request.companies?.some((company: { id: string; name: string }) => company.id === input.companyId && company.name === input.device!.companyName)) throw new Error("Device consent does not match the exact owned read-only request");
-      await page.getByRole("heading", { name: "Connect Paperclip disposable CLI to Paperclip", exact: true }).waitFor();
+      await page.getByRole("heading", { name: "Connect Paperclip disposable CLI to PaperMarketing", exact: true }).waitFor();
       await page.getByText(input.credential.toUpperCase(), { exact: true }).waitFor();
       await page.getByText(input.device.companyName, { exact: true }).waitFor();
-      await page.getByText("Read all of your Paperclip data", { exact: true }).waitFor();
-      if (await page.getByText("Write all of your Paperclip data", { exact: true }).isVisible()) throw new Error("Device read-only request unexpectedly offers write authority");
+      await page.getByText("Read all of your PaperMarketing data", { exact: true }).waitFor();
+      if (await page.getByText("Write all of your PaperMarketing data", { exact: true }).isVisible()) throw new Error("Device read-only request unexpectedly offers write authority");
       const approval = page.waitForResponse(response => new URL(response.url()).origin === base.origin && new URL(response.url()).pathname === "/api/mcp/device/consent" && response.request().method() === "POST");
       await page.getByRole("button", { name: "Connect organization", exact: true }).click();
       const approved = await approval, submitted = approved.request().postDataJSON();
@@ -72,7 +72,7 @@ async function main() {
       if(input.mode==="slack-wizard-confirm"){
       const intentResponse=page.waitForResponse(response=>new URL(response.url()).pathname===`${endpointPath}/principals/${identity.principalId}/link-intent`&&response.request().method()==="POST"&&response.status()===201);
       const confirmed=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chat-identity-links/confirm"&&response.request().method()==="POST"&&response.ok());
-      await page.getByRole("button",{name:`Link ${identity.externalLabel} to my Paperclip account`,exact:true}).click();
+      await page.getByRole("button",{name:`Link ${identity.externalLabel} to my PaperMarketing account`,exact:true}).click();
       const intent=await(await intentResponse).json(),token=new URL(intent.confirmationUrl,base.origin).searchParams.get("token"),confirmation=await confirmed;
       if(!token||confirmation.request().postDataJSON()?.token!==token||(await confirmation.json()).endpointId!==identity.endpointId)throw new Error("Actual Slack ownership button did not confirm its own generated scoped link");
       }

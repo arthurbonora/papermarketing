@@ -79,7 +79,7 @@ it("keeps loaded decision settings on screen when a refetch fails transiently", 
     expect(settings).toHaveBeenCalled();
     expect(container.textContent).toContain("Enable decisions");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   } finally { act(() => root.unmount()); client.clear(); settings.mockRestore(); container.remove(); }
 });

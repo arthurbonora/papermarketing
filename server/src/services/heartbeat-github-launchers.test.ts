@@ -122,11 +122,11 @@ process.stdout.write(JSON.stringify({token:process.env.GH_TOKEN || '', githubTok
     const result = JSON.parse(command.stdout);
     expect(result).toEqual({ token: "", githubToken: "", ssh: "", imageConfig: false,
       global: expect.stringMatching(/\/paperclip-github-operation-[^/]+\/gitconfig$/),
-      globalConfig: "[user]\n\tname = Paperclip\n\temail = noreply@paperclip.ing\n" });
+      globalConfig: "[user]\n\tname = PaperMarketing\n\temail = noreply@paperclip.ing\n" });
     await expect(readFile(result.global)).rejects.toMatchObject({ code: "ENOENT" });
     const commit = await execute({ command: "bash", args: ["--noprofile", "--norc", "-c",
       "git init -q && git commit --allow-empty -qm 'Local work' && git log -1 --format='%an <%ae>|%cn <%ce>'"], env: first.env });
-    expect(commit.stdout.trim()).toBe("Paperclip <noreply@paperclip.ing>|Paperclip <noreply@paperclip.ing>");
+    expect(commit.stdout.trim()).toBe("PaperMarketing <noreply@paperclip.ing>|PaperMarketing <noreply@paperclip.ing>");
     const changedPath = await prepareHeartbeatGitHubLaunchers({ ...base, runId: "run-three", env: { ...imageEnv, PATH: `${imageEnv.PATH}:/extra` } });
     expect(changedPath.env.PAPERCLIP_GITHUB_LAUNCHER_DIR).not.toBe(first.env.PAPERCLIP_GITHUB_LAUNCHER_DIR);
   } finally {

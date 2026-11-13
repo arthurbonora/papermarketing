@@ -51,12 +51,12 @@ function terminalNativeInteractionCopy(
       const outcome = interaction.result?.outcome;
       const body =
         outcome === "skipped"
-          ? "Skipped in Paperclip"
+          ? "Skipped in PaperMarketing"
           : outcome === "withdrawn"
-            ? "Withdrawn in Paperclip"
+            ? "Withdrawn in PaperMarketing"
             : outcome === "addressee_deleted"
               ? "Cancelled: addressed agent was removed"
-              : "Cancelled in Paperclip";
+              : "Cancelled in PaperMarketing";
       return { body, text: `${body}.` };
     }
     if (interaction.status === "expired") {
@@ -69,7 +69,7 @@ function terminalNativeInteractionCopy(
               ? "Expired: target is no longer current"
               : interaction.result?.outcome === "issue_closed"
                 ? "Expired: task is closed"
-                : "Expired in Paperclip";
+                : "Expired in PaperMarketing";
       return { body, text: `${body}.` };
     }
     return null;
@@ -99,7 +99,7 @@ function terminalNativeInteractionCopy(
     return { body, text: body };
   }
   if (interaction.kind !== "ask_user_questions") {
-    const body = ({ accepted: "Accepted", rejected: "Rejected", answered: "Answered", cancelled: "Cancelled in Paperclip", expired: "Expired in Paperclip" } as Record<string, string>)[interaction.status];
+    const body = ({ accepted: "Accepted", rejected: "Rejected", answered: "Answered", cancelled: "Cancelled in PaperMarketing", expired: "Expired in PaperMarketing" } as Record<string, string>)[interaction.status];
     return body ? { body, text: `${body}.` } : null;
   }
   if (interaction.status === "answered") {
@@ -122,10 +122,10 @@ function terminalNativeInteractionCopy(
     const outcome = interaction.result?.outcome;
     const body =
       outcome === "skipped"
-        ? "Skipped in Paperclip."
+        ? "Skipped in PaperMarketing."
         : outcome === "withdrawn"
-          ? "Withdrawn in Paperclip."
-          : "Cancelled in Paperclip.";
+          ? "Withdrawn in PaperMarketing."
+          : "Cancelled in PaperMarketing.";
     return { body, text: body };
   }
   if (interaction.status === "expired") {
@@ -137,7 +137,7 @@ function terminalNativeInteractionCopy(
           ? "Expired: replaced by a newer request"
           : interaction.result?.outcome === "issue_closed"
             ? "Expired: task is closed"
-            : "Expired in Paperclip";
+            : "Expired in PaperMarketing";
     return { body, text: `${body}.` };
   }
   return null;
@@ -401,14 +401,14 @@ export async function enqueueIssueInteractionChatPublications(
             ? [
                 {
                   type: "link" as const,
-                  label: "Open in Paperclip",
+                  label: "Open in PaperMarketing",
                   url: taskUrl,
                 },
               ]
             : [];
     if (connectionDecline && taskUrl) actions.unshift({ type: "link", label: "Review connection", url: taskUrl });
-    if (suggestions && taskUrl) actions.push({ type: "link", label: "Revise in Paperclip", url: taskUrl });
-    const text = [presentation.title, presentation.body, taskUrl ? `Open the task in Paperclip to respond: ${taskUrl}` : "Open the task in Paperclip to respond."].join("\n\n");
+    if (suggestions && taskUrl) actions.push({ type: "link", label: "Revise in PaperMarketing", url: taskUrl });
+    const text = [presentation.title, presentation.body, taskUrl ? `Open the task in PaperMarketing to respond: ${taskUrl}` : "Open the task in PaperMarketing to respond."].join("\n\n");
     const payload = projectSafeChatPublication({
       classification: "external",
       source: "issue_interaction",

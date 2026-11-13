@@ -63,7 +63,7 @@ export const coordinatorOwnerColumns = { leaseOwner: nativeRunFinalizations.leas
 const STOP_PROOF_REARM_DELAYS_MS = [30 * 60_000, 2 * 60 * 60_000, 8 * 60 * 60_000];
 
 /** User-facing text while a re-armed save runs. It names no person who must act. */
-export const STOP_PROOF_REARM_MESSAGE = "Paperclip is saving the previous run's files again now that the run has ended. "
+export const STOP_PROOF_REARM_MESSAGE = "PaperMarketing is saving the previous run's files again now that the run has ended. "
   + "No provider turn is submitted.";
 
 /**

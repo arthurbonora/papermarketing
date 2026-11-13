@@ -18,7 +18,7 @@ const REHOME_WAKE_RETRY_MAX_MS = 60 * 60_000;
 const BLOCK_OWNERSHIP_SLACK_MS = 60_000;
 
 export const LEGACY_WORKSPACE_REHOME_NOTE = "This task was set up in its parent's workspace by an earlier release, and that "
-  + "workspace was held by another task's unsaved files, so the task could not start. Paperclip moved the task to its own "
+  + "workspace was held by another task's unsaved files, so the task could not start. PaperMarketing moved the task to its own "
   + "workspace from the project base and continues it there. No work was lost: nothing ran in the shared workspace.";
 
 type RehomeWakeup = (agentId: string, options: {

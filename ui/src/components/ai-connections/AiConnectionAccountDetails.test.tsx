@@ -70,7 +70,7 @@ async function render(value = account, selectedGrant = grant, completePanel = fa
 }
 const identityCalls = () => fetchMock.mock.calls.filter(([url]) => url.includes("/identity?"));
 
-it("shows the provider email and organization separately from the Paperclip owner", async () => {
+it("shows the provider email and organization separately from the PaperMarketing owner", async () => {
   await render();
   expect(host.textContent).toContain("avery@example.test");
   expect(host.textContent).toContain("Example team");

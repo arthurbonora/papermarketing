@@ -316,7 +316,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const runtimeConfig = JSON.parse(
       await fs.readFile(path.join(prepared.env.XDG_CONFIG_HOME, "opencode", "opencode.json"), "utf8"),
     ) as Record<string, unknown>;
-    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://paperclip.ing" } } } });
+    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://papermarketing.cloud" } } } });
     expect(prepared.notes).toContain(
       "PAPERCLIP_OPENCODE_PROVIDERS contains invalid JSON; custom providers ignored.",
     );
@@ -333,7 +333,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const runtimeConfig = JSON.parse(
       await fs.readFile(path.join(prepared.env.XDG_CONFIG_HOME, "opencode", "opencode.json"), "utf8"),
     ) as Record<string, unknown>;
-    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://paperclip.ing" } } } });
+    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://papermarketing.cloud" } } } });
     expect(prepared.notes).toContain(
       "PAPERCLIP_OPENCODE_PROVIDERS is set but is not a JSON object; custom providers ignored.",
     );
@@ -377,7 +377,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const runtimeConfig = JSON.parse(
       await fs.readFile(path.join(prepared.env.XDG_CONFIG_HOME, "opencode", "opencode.json"), "utf8"),
     ) as Record<string, unknown>;
-    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://paperclip.ing" } } } });
+    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://papermarketing.cloud" } } } });
     expect(prepared.notes).toContain(
       "PAPERCLIP_OPENCODE_PROVIDERS: skipped provider(s) with non-object values: bifrost.",
     );
@@ -443,7 +443,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const runtimeConfig = JSON.parse(
       await fs.readFile(path.join(prepared.env.XDG_CONFIG_HOME, "opencode", "opencode.json"), "utf8"),
     ) as Record<string, unknown>;
-    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://paperclip.ing" } } } });
+    expect(runtimeConfig.provider).toMatchObject({ openrouter: { options: { headers: { "HTTP-Referer": "https://papermarketing.cloud" } } } });
     await prepared.cleanup();
   });
 
@@ -456,7 +456,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
 
     const config = JSON.parse(await fs.readFile(path.join(prepared.env.XDG_CONFIG_HOME, "opencode", "opencode.json"), "utf8"));
     expect(config.permission).toBeUndefined();
-    expect(config.provider.openrouter.options.headers["HTTP-Referer"]).toBe("https://paperclip.ing");
+    expect(config.provider.openrouter.options.headers["HTTP-Referer"]).toBe("https://papermarketing.cloud");
     await prepared.cleanup();
   });
 });

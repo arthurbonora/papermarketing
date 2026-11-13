@@ -75,7 +75,7 @@ export function buildDocumentTitle(breadcrumbs: Breadcrumb[], companyName?: stri
     ? []
     : [...breadcrumbs].reverse().map((breadcrumb) => breadcrumb.label);
   const companyPart = companyName?.trim() ? [companyName.trim()] : [];
-  const parts = [...pageParts, ...companyPart, "Papermarketing"];
+  const parts = [...pageParts, ...companyPart, "PaperMarketing"];
   return parts.join(" • ");
 }
 

@@ -1267,11 +1267,11 @@ describe("Paperclip Discord adapter patch", () => {
     expect(interaction.deferUpdate).not.toHaveBeenCalled();
     expect(interaction.reply).toHaveBeenCalledWith({
       content:
-        "This action is no longer available. Open the linked Paperclip task or ask an operator to link this account.",
+        "This action is no longer available. Open the linked PaperMarketing task or ask an operator to link this account.",
       flags: 64,
     });
     expect(logger.info).toHaveBeenCalledWith(
-      "Discord Gateway action was not acknowledged after Paperclip rejected it",
+      "Discord Gateway action was not acknowledged after PaperMarketing rejected it",
       expect.objectContaining({
         event: "interaction",
         messageId: "message-2",
@@ -1365,7 +1365,7 @@ describe("Paperclip Discord adapter patch", () => {
     expect(interaction.deferUpdate).not.toHaveBeenCalled();
     expect(interaction.reply).not.toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith(
-      "Discord Gateway action was not acknowledged after Paperclip rejected it",
+      "Discord Gateway action was not acknowledged after PaperMarketing rejected it",
       expect.objectContaining({
         event: "interaction",
         messageId: "message-2",

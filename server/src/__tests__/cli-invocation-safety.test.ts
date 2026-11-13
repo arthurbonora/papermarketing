@@ -848,8 +848,8 @@ describe("paperclipai CLI invocation safety", () => {
   // emit the onboard, bootstrap, and board-setup hints. These three surfaces
   // reach readers on the published install, who have no monorepo checkout. The
   // `pnpm paperclipai` script resolves only inside a checkout, so each surface
-  // must pin the `npx paperclipai` form. The client connection-error hint also
-  // reaches a reader who may run an installed package, so it keeps `npx`. The
+  // must pin the `npx paperclipai` form. The client connection-error hint
+  // distinguishes an existing PaperMarketing installation from its source checkout. The
   // env-lab cleanup hint runs from a source checkout and must work from any
   // subdirectory, so it uses the module-resolved direct-exec form (see below).
 
@@ -860,10 +860,12 @@ describe("paperclipai CLI invocation safety", () => {
     expect(source).not.toContain("pnpm exec paperclipai onboard");
   });
 
-  it("emits the safe run form from the client connection-error hint", () => {
+  it("keeps the client connection-error hint scoped to the configured installation or source checkout", () => {
     const source = read("cli/src/client/http.ts");
-    expect(source).toContain("npx paperclipai run");
+    expect(source).toContain("Start your configured PaperMarketing installation, or run `pnpm dev` from its source checkout.");
+    expect(source).not.toContain("npx paperclipai run");
     expect(source).not.toContain("pnpm paperclipai run");
+    expect(source).not.toContain("pnpm exec paperclipai run");
   });
 
   it("emits the checked-out CLI cleanup form from the env-lab status output", () => {

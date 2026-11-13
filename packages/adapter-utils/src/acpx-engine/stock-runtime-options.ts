@@ -103,6 +103,6 @@ export function splitWindowsAgentCommand(value: string): string[] {
 export function assertNoHostAcpxAuthEnvironment(environment: NodeJS.ProcessEnv = process.env): void {
   const names = Object.keys(environment).filter(name => name.toUpperCase().startsWith("ACPX_AUTH_"));
   if (names.length > 0) {
-    throw new Error(`Remove ${names.join(", ")} from the Paperclip server environment; ACPX would use it to authenticate agents.`);
+    throw new Error(`Remove ${names.join(", ")} from the PaperMarketing server environment; ACPX would use it to authenticate agents.`);
   }
 }

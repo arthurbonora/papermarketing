@@ -124,7 +124,7 @@ describe("MyUserSecretsTab", () => {
     expect(mockSecretsApi.listMyUserSecrets).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain("Personal GitHub token");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
 
   it("shows readable copy and a Retry button when the list fails to load", async () => {

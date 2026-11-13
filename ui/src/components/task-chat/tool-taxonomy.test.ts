@@ -44,15 +44,18 @@ describe("tool activity vocabulary", () => {
     expect(mcpToolIdentity("mcp.linear-server.search_issues")).toEqual({ namespace: "linear-server", name: "search_issues" });
     expect(mcpToolSegment("mcp__linear-server__search_issues")).toBe("Search issues");
     expect(mcpToolSegment("mcp.linear-server.search_issues")).toBe("Search issues");
-    const mcp = toolActivityPresentation({ name: "mcp.paperclip.search_tasks" });
-    expect(mcp).toMatchObject({
-      family: "mcp",
-      icon: McpIcon,
-      runningLabel: "Searching tasks",
-      completedLabel: "Searched tasks",
-      sourceLabel: "Paperclip",
-      confidence: "exact",
-    });
+    for (const name of ["mcp.paperclip.search_tasks", "mcp__Paperclip__search_tasks"]) {
+      expect(toolActivityPresentation({ name })).toMatchObject({
+        family: "mcp",
+        icon: McpIcon,
+        runningLabel: "Searching tasks",
+        completedLabel: "Searched tasks",
+        sourceLabel: "PaperMarketing",
+        technicalName: name,
+        confidence: "exact",
+      });
+    }
+    expect(toolActivityPresentation({ name: "mcp.linear-server.search_issues" }).sourceLabel).toBe("Linear server");
   });
 
   it("covers every ACP kind before falling back to a future extension name", () => {
@@ -91,7 +94,7 @@ describe("tool activity vocabulary", () => {
     }
   });
 
-  it("gives anticipated provider tools and Paperclip operations purpose-specific labels", () => {
+  it("gives anticipated provider tools and PaperMarketing operations purpose-specific labels", () => {
     const anticipated = [
       "ToolSearch", "NotebookRead", "NotebookEdit", "TaskOutput", "TaskStop", "SendMessage",
       "EnterPlanMode", "ExitPlanMode", "LSP", "TodoWrite", "ReportFindings", "Skill",

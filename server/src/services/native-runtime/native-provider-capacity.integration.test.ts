@@ -360,7 +360,7 @@ describe("native provider capacity failure persistence", () => {
       evidence: expect.objectContaining({ providerLimitResetAt: resetAt.toISOString() }) });
     // The hold says when work resumes, not that its session state is ambiguous.
     expect(hold.nextAction).toBe(`The provider usage limit resets at ${resetAt.toISOString()}. `
-      + "Paperclip will retry this task then; Retry starts it sooner if usage capacity is already restored.");
+      + "PaperMarketing will retry this task then; Retry starts it sooner if usage capacity is already restored.");
 
     // A hold saved by the previous release names no reset and calls the state ambiguous.
     const { providerLimitResetAt: _reset, ...oldEvidence } = hold.evidence;
@@ -439,7 +439,7 @@ describe("native provider capacity failure persistence", () => {
     const outcome = await requestProviderLimitResumeRetry(db, { companyId, actionId: hold.id },
       new Date(resetAt.getTime() + 1000));
     expect(outcome).toEqual({ requested: false, reason: "no_accountable_user" });
-    expect((await holdFor(issueId)).nextAction).toBe("Paperclip did not retry this task after the provider usage limit "
+    expect((await holdFor(issueId)).nextAction).toBe("PaperMarketing did not retry this task after the provider usage limit "
       + "reset because no user is accountable for the run. Retry the task when usage capacity is available.");
   });
 
@@ -479,10 +479,10 @@ describe("native provider capacity failure persistence", () => {
     const unreadable = await failTurn({ payload: weeklyLimit(resetAt), responsibleUserId: `user-${randomUUID()}` });
     await db.delete(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, unreadable.runId));
     const unreadableHold = await holdFor(unreadable.issueId);
-    expect(unreadableHold.nextAction).toContain("Paperclip will retry this task then");
+    expect(unreadableHold.nextAction).toContain("PaperMarketing will retry this task then");
     await expect(requestProviderLimitResumeRetry(db, { companyId, actionId: unreadableHold.id }, afterReset))
       .resolves.toEqual({ requested: false, reason: "reset_unknown" });
-    expect((await holdFor(unreadable.issueId)).nextAction).toBe("Paperclip did not retry this task after the provider "
+    expect((await holdFor(unreadable.issueId)).nextAction).toBe("PaperMarketing did not retry this task after the provider "
       + "usage limit reset because the provider's reset could no longer be read. Retry the task when usage capacity is available.");
     // The hold's run no longer failed for the usage limit.
     const changed = await failTurn({ payload: weeklyLimit(resetAt), responsibleUserId: `user-${randomUUID()}` });
@@ -490,7 +490,7 @@ describe("native provider capacity failure persistence", () => {
     const changedHold = await holdFor(changed.issueId);
     await expect(requestProviderLimitResumeRetry(db, { companyId, actionId: changedHold.id }, afterReset))
       .resolves.toEqual({ requested: false, reason: "source_run_mismatch" });
-    expect((await holdFor(changed.issueId)).nextAction).toBe("Paperclip did not retry this task after the provider "
+    expect((await holdFor(changed.issueId)).nextAction).toBe("PaperMarketing did not retry this task after the provider "
       + "usage limit reset because the failed run no longer matches this hold. Retry the task when usage capacity is available.");
   });
 
@@ -511,7 +511,7 @@ describe("native provider capacity failure persistence", () => {
     const [third] = await db.insert(agentWakeupRequests).values(earlierRetry(issueId)).returning();
     await expect(requestProviderLimitResumeRetry(db, { companyId, actionId: hold.id }, afterReset))
       .resolves.toEqual({ requested: false, reason: "automatic_retry_budget_used" });
-    expect((await holdFor(issueId)).nextAction).toBe("Paperclip did not retry this task after the provider usage limit "
+    expect((await holdFor(issueId)).nextAction).toBe("PaperMarketing did not retry this task after the provider usage limit "
       + "reset because three automatic Retries in a row did not restore usage. Retry the task when usage capacity is available.");
     expect(third.id).toBeTruthy();
 

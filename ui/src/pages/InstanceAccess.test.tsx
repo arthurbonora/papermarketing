@@ -145,7 +145,7 @@ describe("InstanceAccess read resilience", () => {
     expect(container.textContent).toContain("admin@example.com");
     expect(button("Save organization access")).toBeDefined();
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
 

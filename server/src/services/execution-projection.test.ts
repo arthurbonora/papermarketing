@@ -293,7 +293,7 @@ describe("execution truth projection", () => {
       coordinator({ phase: "retryable_failure", failureCode: "native_governed_wait_settlement_pending",
         nextAttemptAt: new Date(now.getTime() + 30_000) }),
     )).toMatchObject({ phase: "finishing", label: "Finishing shutdown", permittedActions: ["inspect_run"],
-      nextAction: "The work and waiting state are saved. Paperclip is confirming shutdown before continuing." });
+      nextAction: "The work and waiting state are saved. PaperMarketing is confirming shutdown before continuing." });
   });
   it("shows pending interaction only after productive work has stopped", () => {
     expect(

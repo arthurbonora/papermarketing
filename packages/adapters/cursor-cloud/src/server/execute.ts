@@ -223,7 +223,7 @@ function renderPaperclipEnvNote(env: Record<string, string>): string {
     .sort();
   if (keys.length === 0) return "";
   return [
-    "Paperclip runtime note:",
+    "PaperMarketing runtime note:",
     `The following PAPERCLIP_* environment variables are available in the cloud agent shell: ${keys.join(", ")}`,
     "Use them directly instead of assuming they are absent.",
   ].join("\n");
@@ -456,7 +456,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
 
   const agentOptions = buildAgentOptions({
     apiKey,
-    name: `Paperclip ${agent.name}`,
+    name: `PaperMarketing ${agent.name}`,
     model,
     envType,
     envName,

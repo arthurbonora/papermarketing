@@ -2455,8 +2455,8 @@ describe("FailedRunInboxRow", () => {
 
   it.each(["working", "failed"] as const)("shows saved-work shutdown guidance while %s without Retry", state => {
     const root = createRoot(container);
-    const message = state === "working" ? "Your work is saved. Paperclip is finishing shutdown."
-      : "Paperclip couldn’t confirm shutdown. Your work is saved; continuation is paused.";
+    const message = state === "working" ? "Your work is saved. PaperMarketing is finishing shutdown."
+      : "PaperMarketing couldn’t confirm shutdown. Your work is saved; continuation is paused.";
     const issue = createIssue({ interruption: { intentId: "saved-input", responsibility: "system", state,
       nextRetryAt: null, canRetry: false, userAction: null, sourceRunIds: ["run-1"], observedRunId: "run-1",
       retryWait: { reason: "governed_wait_settlement", message } } });

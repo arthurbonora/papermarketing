@@ -738,9 +738,9 @@ function installDiscordNativeCommands(
   const snowflake = (value: unknown): value is string =>
     typeof value === "string" && /^[1-9][0-9]{16,19}$/.test(value);
   const denied =
-    "This command is not available here. Open the Paperclip task or ask an operator to check your chat access.";
+    "This command is not available here. Open the PaperMarketing task or ask an operator to check your chat access.";
   const unconfirmed =
-    "This command could not be confirmed. Check the Paperclip task before trying again.";
+    "This command could not be confirmed. Check the PaperMarketing task before trying again.";
   discord.handleGatewayInteraction = async (interaction) => {
     if (!interaction.isChatInputCommand()) return await original(interaction);
     const startedAt = Date.now();
@@ -884,7 +884,7 @@ function assertDiscordAdapterCompatibility(adapter: Adapter, chat: Chat): void {
   const discord = adapter as unknown as DiscordAdapterInternals;
   if (discord.paperclipCompatibilityRevision !== "paperclip-discord-v6") {
     throw new DiscordAdapterCompatibilityError(
-      "Paperclip patch revision paperclip-discord-v6 is unavailable",
+      "PaperMarketing patch revision paperclip-discord-v6 is unavailable",
     );
   }
   if (typeof discord.startGatewayListener !== "function") {
@@ -2420,7 +2420,7 @@ export class ChatSdkEndpointRuntime {
       responseDeadlineAt ?? Number.POSITIVE_INFINITY,
     );
     const retryableTimeout = () =>
-      new Response("Paperclip could not durably accept the event in time", {
+      new Response("PaperMarketing could not durably accept the event in time", {
         status: 503,
         headers: {
           "content-type": "text/plain; charset=utf-8",
@@ -2481,7 +2481,7 @@ export class ChatSdkEndpointRuntime {
           return retryableTimeout();
       }
       if (response.ok && attempt.callbackError !== undefined) {
-        return new Response("Paperclip could not durably accept the event", {
+        return new Response("PaperMarketing could not durably accept the event", {
           status: 503,
           headers: {
             "content-type": "text/plain; charset=utf-8",

@@ -126,9 +126,9 @@ export const navigationBoundaryIdentityCases: readonly ChatCatalogCase[] = [
       const invalid = await observer.request(`/api/announcements/${encodeURIComponent(publication.id)}/dismiss`, "POST", { companyId: otherCompany.id });
       const invalidAuditCompanyStatus = invalid.status; await invalid.body?.cancel();
       const source = ctx.input.page.url();
-      await expect(ctx.input.page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("heading", { name: publication.title, exact: true })).toBeVisible();
+      await expect(ctx.input.page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("heading", { name: publication.title, exact: true })).toBeVisible();
       await openAnnouncementCompanySurface(ctx, otherCompany.issuePrefix);
-      await expect(ctx.input.page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("heading", { name: publication.title, exact: true })).toBeVisible();
+      await expect(ctx.input.page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("heading", { name: publication.title, exact: true })).toBeVisible();
       const secondary = await ctx.input.api.get<Publication | null>("/api/announcements/current");
       await ctx.input.page.goto(source, { waitUntil: "domcontentloaded" });
       return { publication, humanId: session.user.id, otherCompany, primaryVisible: true, secondaryVisible: true, samePublicationAcrossCompanies: secondary?.id === publication.id,
@@ -141,15 +141,15 @@ export const navigationBoundaryIdentityCases: readonly ChatCatalogCase[] = [
       state.beforeHumanPublicationId = (await ctx.input.api.get<Publication | null>("/api/announcements/current"))?.id;
       state.agentDismissStatus = await probeAgentPermission(ctx, `/api/announcements/${encodeURIComponent(publication.id)}/dismiss`, "POST", { companyId: ctx.input.fixtures.company.id });
       const response = ctx.input.page.waitForResponse(row => row.request().method() === "POST" && new URL(row.url()).pathname === `/api/announcements/${publication.id}/dismiss`);
-      await ctx.input.page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("button", { name: "Dismiss announcement", exact: true }).click();
+      await ctx.input.page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement", exact: true }).click();
       state.dismissRequestStatus = (await response).status(); state.afterHumanPublication = await ctx.input.api.get("/api/announcements/current");
       const other = state.otherCompany as Entity & { issuePrefix: string };
       await openAnnouncementCompanySurface(ctx, other.issuePrefix, true);
-      await expect(ctx.input.page.getByRole("complementary", { name: "Paperclip announcements" })).toHaveCount(0); state.secondaryAfterReloadHidden = true;
+      await expect(ctx.input.page.getByRole("complementary", { name: "PaperMarketing announcements" })).toHaveCount(0); state.secondaryAfterReloadHidden = true;
       const observer = observers.get(ctx)!; const receipt = await observer.request("/api/announcements/current"); state.observerAfterPublicationId = ((await receipt.json()) as Publication | null)?.id;
       const page = await observer.context.newPage();
       try { await page.goto(`/${ctx.input.fixtures.company.issuePrefix}/dashboard`, { waitUntil: "domcontentloaded" });
-        await expect(page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("heading", { name: publication.title, exact: true })).toBeVisible(); state.observerStillVisible = true;
+        await expect(page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("heading", { name: publication.title, exact: true })).toBeVisible(); state.observerStillVisible = true;
       } finally { await page.close(); }
       await ctx.input.evidence("identity-personal-announcement-dismissal.json", { publicationId: publication.id, userId: state.humanId, secondaryAfterReloadHidden: state.secondaryAfterReloadHidden, observerStillVisible: state.observerStillVisible, invalidAuditCompanyStatus: state.invalidAuditCompanyStatus });
       await ctx.input.page.goto(source, { waitUntil: "domcontentloaded" });

@@ -52,7 +52,7 @@ describe("Google Antigravity setup admission", () => {
       result: { code: "command_execution_failed", message: "failed to start ACPX provider: ACPX sidecar command session.open was rejected (retryable=false, classification=admission_installation)" } } });
     const result = antigravityConnectionProbeFailure("company-1", error);
     expect(result).toMatchObject({ status: "fail", checks: [{ code: "antigravity_installation_check_failed",
-      message: "Paperclip could not complete the local Google Antigravity installation check.", hint: expect.stringContaining("instance operator") }] });
+      message: "PaperMarketing could not complete the local Google Antigravity installation check.", hint: expect.stringContaining("instance operator") }] });
     expect(mocks.warn).toHaveBeenCalledExactlyOnceWith({ companyId: "company-1", code: "antigravity_installation_check_failed",
       errorClass: "Error", commandCode: "command_execution_failed", classification: "admission_installation", retryable: false },
     "Antigravity installation check failed before account verification");
@@ -134,7 +134,7 @@ describe("Google Antigravity setup admission", () => {
     mocks.admission.mockReturnValue(undefined);
     await expect(testAntigravityConnection(context, model)).rejects.toThrow("not available for this company");
     await expect(testAntigravityConnection({ ...context, executionTarget: { kind: "remote" } as AdapterEnvironmentTestContext["executionTarget"] }, model))
-      .rejects.toThrow("requires the Paperclip host");
+      .rejects.toThrow("requires the PaperMarketing host");
     expect(mocks.credentials).not.toHaveBeenCalled();
     expect(mocks.probe).not.toHaveBeenCalled();
   });

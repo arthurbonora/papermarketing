@@ -116,14 +116,14 @@ export function assertEphemeralWorkspaceExecution(input: {
   // Runtime selection has not promoted a fresh run yet. Validate storage here;
   if (input.adapterType !== "paperclip_runner"
     || (!input.pluginTaskWorkspace && !input.remoteAuthority)) {
-    throw unprocessable("Volume-free servers require native Paperclip Runner execution with remote workspace storage.",
+    throw unprocessable("Volume-free servers require native PaperMarketing Runner execution with remote workspace storage.",
       { code: "ephemeral_execution_configuration_required" });
   }
 }
 
 export function assertEphemeralNativeRuntime(native: boolean) {
   if (process.env.PAPERCLIP_EPHEMERAL_SERVER === "true" && !native) {
-    throw unprocessable("Volume-free servers require native Paperclip Runner execution with remote workspace storage.",
+    throw unprocessable("Volume-free servers require native PaperMarketing Runner execution with remote workspace storage.",
       { code: "ephemeral_execution_configuration_required" });
   }
 }

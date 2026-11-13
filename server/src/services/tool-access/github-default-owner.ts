@@ -4,8 +4,8 @@ type Connection = { config: Record<string, unknown>; transportConfig?: Record<st
  * `organization` is omitted. A managed connection can only write there when
  * the Paperclip GitHub App is installed on that personal account. */
 const OWNER_DESCRIPTIONS: Record<string, string> = {
-  create_repository: "Organization to create the repository in. When omitted, the repository goes to your personal account, unless the Paperclip GitHub App is installed only on one organization; then Paperclip uses that organization.",
-  fork_repository: "Organization to fork to. When omitted, the fork goes to your personal account, unless the Paperclip GitHub App is installed only on one organization; then Paperclip uses that organization.",
+  create_repository: "Organization to create the repository in. When omitted, the repository goes to your personal account, unless the GitHub App for this connection is installed only on one organization; then PaperMarketing uses that organization.",
+  fork_repository: "Organization to fork to. When omitted, the fork goes to your personal account, unless the GitHub App for this connection is installed only on one organization; then PaperMarketing uses that organization.",
 };
 
 function record(value: unknown): Record<string, unknown> {

@@ -78,7 +78,7 @@ describe("heartbeat task markdown rendering", () => {
     const chat = { id: "chat", identifier: "RUN-1", title: "Chat", conversationAgentId: "ceo" };
     const enabled = buildPaperclipTaskMarkdown({ issue: chat, nativeRunner: true, statusCardsEnabled: true })!;
     expect(enabled).toContain("Status Cards:");
-    expect(enabled).toContain("A status card is a saved Paperclip feature, not a document or comment");
+    expect(enabled).toContain("A status card is a saved PaperMarketing feature, not a document or comment");
     expect(enabled).toContain("POST /api/companies/{companyId}/status-cards");
     expect(enabled).toContain("POST /api/status-cards/{id}/refresh");
     expect(enabled).toContain("Do not sleep or poll the card. Report the outcome the response gives");

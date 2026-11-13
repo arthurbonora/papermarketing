@@ -35,10 +35,10 @@ it("allows a valid readiness result after the unrelated 45-second cap within the
   expect(await result).toEqual({ value: f.worker, error: undefined, settledAt: 50_000 });
 });
 
-it("waits for the lifecycle owner's automatic verification recovery", async () => {
+it.each([recoveryError, recoveryError.replace("PaperMarketing", "Paperclip")])("waits for automatic verification recovery: %s", async lifecycleError => {
   vi.useFakeTimers({ now: 0 });
   const f = fixture(now => now >= 50_000 ? { lifecycleState: "ready", lifecycleError: null }
-    : { lifecycleState: "verifying", lifecycleError: recoveryError,
+    : { lifecycleState: "verifying", lifecycleError,
       lifecycleOperation: { id: "verification", attempts: 1, retryRequired: false, retryAt: new Date(20_000).toISOString() } });
   const result = outcome(f.ctx);
   await vi.advanceTimersByTimeAsync(50_000);

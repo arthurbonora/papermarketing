@@ -45,7 +45,7 @@ export async function prepareAntigravityRunnerCredentials(input: {
   for (const key of [AUTH_SECRET, "GEMINI_HOME", "GOOGLE_API_KEY", "GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_CLOUD_ACCESS_TOKEN"]) delete environment[key];
   if (environment.GEMINI_API_KEY?.trim()) return { environment, home: null };
   delete environment.GEMINI_API_KEY;
-  if (input.remote) throw new Error("Google Antigravity subscription authentication is not qualified for remote environments. Select a Google API key or use the Paperclip host.");
+  if (input.remote) throw new Error("Google Antigravity subscription authentication is not qualified for remote environments. Select a Google API key or use the PaperMarketing host.");
   if (input.lifecycleMode === "warm") throw new Error("Google Antigravity subscription authentication requires turn-by-turn sessions; warm sessions are not qualified.");
   const home = input.managedHome?.trim();
   if (!home) throw new Error("Google Antigravity requires a selected managed Google account or Google API key.");

@@ -1308,7 +1308,7 @@ export function pluginLoader(
         ? formatLocalPluginManualBuildHint(resolvedPackagePath, pkgJson)
         : "";
       throw new Error(
-        `Package ${resolvedPackageName} at ${resolvedPackagePath} does not appear to be a Paperclip plugin (no manifest found).${manualBuildHint}`,
+        `Package ${resolvedPackageName} at ${resolvedPackagePath} does not appear to be a PaperMarketing plugin (no manifest found).${manualBuildHint}`,
       );
     }
 
@@ -1401,7 +1401,7 @@ export function pluginLoader(
   ): Promise<PluginRecord> {
     const manifest = await loadManifestFromPackageRoot(packageRoot);
     if (!manifest) {
-      throw new Error(`Plugin package ${plugin.packageName} no longer exposes a Paperclip manifest`);
+      throw new Error(`Plugin package ${plugin.packageName} no longer exposes a PaperMarketing manifest`);
     }
     if (manifest.id !== plugin.pluginKey) {
       throw new Error(

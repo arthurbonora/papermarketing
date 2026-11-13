@@ -1002,7 +1002,7 @@ describe("chat prompt policy", () => {
   });
 
   it("points chat at the teams catalog for ready-made teams and stops the search there", () => {
-    expect(AGENT_CHAT_DIRECTIVE).toContain("Ready-made teams are installable packages in Paperclip's teams catalog");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("Ready-made teams are installable packages in PaperMarketing's teams catalog");
     expect(AGENT_CHAT_DIRECTIVE).toContain("list the catalog with GET /api/teams/catalog");
     expect(AGENT_CHAT_DIRECTIVE).toContain("do not look for others in package registries, repositories or the web");
     expect(AGENT_CHAT_DIRECTIVE).toContain("The web app has no teams catalog page, so do not link one");
@@ -1013,10 +1013,10 @@ describe("chat prompt policy", () => {
   });
 
   it("tells chat to answer terminal requests with the person's own CLI commands", () => {
-    expect(AGENT_CHAT_DIRECTIVE).toContain("they mean their own terminal: give them commands using the Paperclip CLI, npx paperclipai");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("they mean their own terminal: give them commands using the PaperMarketing CLI, npx paperclipai");
     expect(AGENT_CHAT_DIRECTIVE).toContain("instead of doing the work yourself, saving a file in your workspace or writing curl");
     expect(AGENT_CHAT_DIRECTIVE).toContain("Fill in values you can read here, such as this company's id");
-    expect(AGENT_CHAT_DIRECTIVE).toContain("Write the Paperclip address as <your Paperclip URL>");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("Write the PaperMarketing address as <your PaperMarketing URL>");
     expect(AGENT_CHAT_DIRECTIVE).toContain("npx paperclipai run cancel <runId> stops a queued or running one (board users only)");
     expect(AGENT_CHAT_DIRECTIVE).toContain("a command whose output is piped cannot open the sign-in prompt");
     const prompt = buildPaperclipTaskMarkdown({ issue: { id: "chat", identifier: "RUN-1", title: "Chat", workMode: "ask", conversationAgentId: "agent" } });
@@ -1057,7 +1057,7 @@ describe("chat prompt policy", () => {
     expect(AGENT_CHAT_DIRECTIVE).toContain("Pausing, stopping or resuming a whole task tree (a parent task and all of its subtasks) is a person's control, not an agent action.");
     expect(AGENT_CHAT_DIRECTIVE).toContain("chooses More task actions, then Pause subtree");
     expect(AGENT_CHAT_DIRECTIVE).toContain("do not change task statuses or assignees, cancel runs, pause agents, or create tasks or routines to resume it later");
-    expect(AGENT_CHAT_DIRECTIVE).toContain("Paperclip has no scheduled resume");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("PaperMarketing has no scheduled resume");
     expect(AGENT_CHAT_DIRECTIVE).toContain("[<identifier>](/<prefix>/issues/<identifier>)");
     const prompt = buildPaperclipTaskMarkdown({ issue: { id: "chat", identifier: "RUN-1", title: "Chat", workMode: "ask", conversationAgentId: "agent" } });
     expect(prompt).toContain("then Pause subtree");
@@ -1111,7 +1111,7 @@ describe("chat prompt policy", () => {
     expect(AGENT_CHAT_DIRECTIVE).toContain("Some developer labs, including the task-chat interaction lab at /<prefix>/dev/task-chat-lab, are registered only in a development build of the UI");
     expect(AGENT_CHAT_DIRECTIVE).not.toContain("Developer labs, such as");
     expect(AGENT_CHAT_DIRECTIVE).toContain("the design guide and the ux-lab pages, are registered in every build");
-    expect(AGENT_CHAT_DIRECTIVE).toContain("running pnpm dev in their own Paperclip checkout and visiting /<prefix>/dev/task-chat-lab");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("running pnpm dev in their own PaperMarketing checkout and visiting /<prefix>/dev/task-chat-lab");
     const prompt = buildPaperclipTaskMarkdown({ issue: { id: "chat", identifier: null, title: "Chat", workMode: "ask", conversationAgentId: "agent" } });
     expect(prompt).toContain("/<prefix>/dev/task-chat-lab");
   });
@@ -1145,7 +1145,7 @@ describe("chat prompt policy", () => {
   it("gives chat replies a usable route for both task and approval sources", () => {
     expect(AGENT_CHAT_DIRECTIVE).toContain("/<prefix>/issues/<identifier>");
     expect(AGENT_CHAT_DIRECTIVE).toContain("For approval links, use /<prefix>/approvals/<approvalId>");
-    expect(AGENT_CHAT_DIRECTIVE).toContain("Never invent a hostname for a Paperclip link.");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("Never invent a hostname for a PaperMarketing link.");
     expect(AGENT_CHAT_DIRECTIVE).toContain("Write every company link as a Markdown link");
     expect(AGENT_CHAT_DIRECTIVE).toContain("a bare path or a path in inline code is not clickable");
     expect(AGENT_CHAT_DIRECTIVE).toContain("Start each link target with exactly one slash");

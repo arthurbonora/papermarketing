@@ -179,7 +179,7 @@ done`,
     // The check fails closed, but an unfinished check is not a found conflict.
     if (result.exitCode !== 0)
       throw new Error(
-        `Paperclip could not check the environment's project authentication settings (${result.timedOut ? "timed out" : `exit ${result.exitCode ?? result.signal ?? "unknown"}`}). The run did not start; it can be retried.`,
+        `PaperMarketing could not check the environment's project authentication settings (${result.timedOut ? "timed out" : `exit ${result.exitCode ?? result.signal ?? "unknown"}`}). The run did not start; it can be retried.`,
       );
     return;
   }

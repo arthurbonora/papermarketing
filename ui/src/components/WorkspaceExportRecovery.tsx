@@ -75,7 +75,7 @@ export function WorkspaceExportRecovery({ action, className, issueId, companyId,
         action={action} issueId={issueId} companyId={companyId} className={className}
         confirmStop={stopEvidence => issuesApi.confirmControllerStopped(issueId, {
           actionId: action.id, runId: action.evidence.runId as string, stopEvidence })}
-        copy={{ waiting: "This run’s previous server was recorded before Paperclip stored which host it ran on, so Paperclip can’t verify that it stopped. The run’s saved state is kept.",
+        copy={{ waiting: "This run’s previous server was recorded before PaperMarketing stored which host it ran on, so PaperMarketing can’t verify that it stopped. The run’s saved state is kept.",
           question: "How did you confirm that the previous server stopped?",
           placeholder: "For example: the old server container was replaced and is no longer running.",
           resuming: "Controller stop recorded. Checking recovery…" }} /></>;
@@ -92,7 +92,7 @@ export function WorkspaceExportRecovery({ action, className, issueId, companyId,
           actionId: action.id, recordId: action.evidence.recordId as string, stopEvidence,
           // The version shown here: a request refreshed since must be confirmed again.
           ...(typeof action.evidence.recordUpdatedAt === "string" ? { recordVersion: action.evidence.recordUpdatedAt } : {}) })}
-        copy={{ waiting: `${resource.what} was recorded before Paperclip stored which server held it, so Paperclip can’t verify that the server stopped. It stays reserved until then.`,
+        copy={{ waiting: `${resource.what} was recorded before PaperMarketing stored which server held it, so PaperMarketing can’t verify that the server stopped. It stays reserved until then.`,
           question: "How did you confirm that the previous server stopped?",
           placeholder: "For example: the old server container was replaced and is no longer running.",
           resuming: resource.releasing }} /></>;
@@ -191,10 +191,10 @@ export function PreviousServerStopConfirmation({ action, runId: givenRunId, form
   const ready = evidence.trim().length >= 20;
   return <div className={cn("flex flex-col gap-2 text-sm", className)} data-testid="previous-server-stop">
     <p role="status">{confirm.isSuccess ? copy?.resuming ?? "Restoring saved work…"
-      : copy?.waiting ?? "The previous server stopped while it was saving this task’s files, and Paperclip can’t verify that it stopped. The agent’s result is saved."}</p>
+      : copy?.waiting ?? "The previous server stopped while it was saving this task’s files, and PaperMarketing can’t verify that it stopped. The agent’s result is saved."}</p>
     {confirm.isSuccess ? null : !canConfirm
       ? <p className="text-xs text-muted-foreground">{accessView.kind === "loading" || accessView.kind === "reconnecting"
-        ? "Checking access…" : "Paperclip is waiting to confirm that the previous server stopped."}</p>
+        ? "Checking access…" : "PaperMarketing is waiting to confirm that the previous server stopped."}</p>
       : !open ? <Button variant="outline" size="sm" className="self-start" onClick={() => setOpen(true)}>
         {copy?.confirm ?? "Confirm the previous server stopped"}</Button>
       : <form className="flex flex-col gap-2" onSubmit={event => { event.preventDefault(); if (ready && !confirm.isPending) confirm.mutate(); }}>
@@ -219,11 +219,11 @@ type RecoveryInput = { actionId: string; runId: string };
 function unverifiedSourceText(inspected: WorkspaceSourceInspection | undefined): string {
   if (!inspected || inspected.status === "verified") return "";
   if (inspected.status === "not_inspected")
-    return "Paperclip can’t check the saved files’ source here because the run recorded too many sources.";
+    return "PaperMarketing can’t check the saved files’ source here because the run recorded too many sources.";
   const code = inspected.sourceVerification?.reason ?? inspected.failureCode;
   return code === "allocation_ownership_ambiguous"
-    ? "Paperclip can’t confirm that this run alone used the sandbox that holds the saved files."
-    : `Paperclip can’t verify the saved files’ recorded source (${code}).`;
+    ? "PaperMarketing can’t confirm that this run alone used the sandbox that holds the saved files."
+    : `PaperMarketing can’t verify the saved files’ recorded source (${code}).`;
 }
 
 function RetainedFilesRecovery({ action, issueId, companyId, className, onRecoveryControlChange }: {
@@ -364,7 +364,7 @@ function RetainedFilesRecovery({ action, issueId, companyId, className, onRecove
   return <div className={cn("flex flex-col gap-2 text-sm", className)} data-testid="retained-file-recovery">
     <ReportRecoveryControl owns={ownsRecoveryControl} onChange={onRecoveryControlChange} />
     <p role="status">{saved ? "Saved files recovered. Task recovery is still being checked."
-      : diskFullRest && !waiting ? "The sandbox disk was full when Paperclip saved the files. Free space, then use Retry to save them and finish the task."
+      : diskFullRest && !waiting ? "The sandbox disk was full when PaperMarketing saved the files. Free space, then use Retry to save them and finish the task."
       : failedReceipt ? "File recovery has not finished. The saved source remains protected."
       : restoring ? "Recovering saved files. Work remains paused until recovery is verified."
         : waiting ? "File recovery is queued. Waiting for verified saved files."
@@ -385,7 +385,7 @@ function RetainedFilesRecovery({ action, issueId, companyId, className, onRecove
       {current && recovery.status === "blocked" && (serverAcknowledged || recovery.retryable !== true)
         ? <p role="alert">File recovery has not finished. The saved files remain protected and are not applied.</p> : null}
       {unverified ? <p role="status" className="text-muted-foreground">
-        {unverifiedSourceText(source.data?.sourceInspection)} Paperclip does not apply files it can’t verify.
+        {unverifiedSourceText(source.data?.sourceInspection)} PaperMarketing does not apply files it can’t verify.
       </p> : null}
       {sourceReady && !current ? <p role="alert">This file recovery was replaced. Check its status to show the task’s current recovery.</p> : null}
     </> : accessView.kind === "error" ? <p role="alert" className="text-sm text-destructive">Task access could not be checked. Refresh before requesting file recovery.</p>

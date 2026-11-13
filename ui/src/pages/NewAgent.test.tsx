@@ -272,7 +272,7 @@ describe("New agent setup", () => {
     expect(secrets.create).toHaveBeenCalledTimes(1);
   });
 
-  it("retains an unfinished legacy harness when the current target defaults to Paperclip Runner", async () => {
+  it("retains an unfinished legacy harness when the current target defaults to PaperMarketing Runner", async () => {
     await render("codex_local");
     const setupId = api.create.mock.calls[0][1].setupId;
     await act(async () => root.render(null));
@@ -911,7 +911,7 @@ describe("New agent setup", () => {
       cloud: { managed: true },
     });
     envApi.list.mockResolvedValue([
-      { id: "sandbox-1", name: "Paperclip Cloud", driver: "sandbox", config: { provider: "daytona" } },
+      { id: "sandbox-1", name: "Cloud", driver: "sandbox", config: { provider: "daytona" } },
     ]);
     envApi.capabilities.mockResolvedValue({
       sandboxProviders: { daytona: { supportsLoginPty: true } },

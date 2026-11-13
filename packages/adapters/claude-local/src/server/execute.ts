@@ -947,7 +947,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     }
     if (runtimeMcpServers.length > 0) {
       commandNotes.push(
-        `Using ${runtimeMcpServers.length} Paperclip-managed MCP server(s) from strict config ${effectiveMcpConfigPath}.`,
+        `Using ${runtimeMcpServers.length} PaperMarketing-managed MCP server(s) from strict config ${effectiveMcpConfigPath}.`,
       );
     }
     if (onMeta) {

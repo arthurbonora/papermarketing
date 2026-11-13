@@ -276,7 +276,7 @@ describe("Coordinator task status glyphs (BUG-07)", () => {
   const glyph = (href: string) => container.querySelector<SVGElement>(`a[href="${href}"] svg[role="img"]`);
 
   it("shows a covered-blocked recent task with the same queued glyph and label as the task pane", async () => {
-    fixture.recentTasks = [{ id: "task-1", companyId: "company", identifier: "ONB-1", title: "Paperclip onboarding",
+    fixture.recentTasks = [{ id: "task-1", companyId: "company", identifier: "ONB-1", title: "PaperMarketing onboarding",
       status: "blocked", displayStatus: "blocked", externalConversationState: null, blockerAttention: covered, recordedAt: 1 }];
     await renderSidebar();
     expect(glyph("/issues/ONB-1")?.style.color).toBe("var(--status-task-icon-in_queue)");

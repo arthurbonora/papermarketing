@@ -457,7 +457,7 @@ describe("PaperclipRunnerToolAuthority", () => {
       const expected = [
         { id: commentIds[0], authorAgentId: null, authorUserId: "board-user", origin: "comment", body: "Check the configuration." },
         { id: commentIds[1], authorAgentId: agentId, authorUserId: null, origin: "fast_response",
-          body: "[Paperclip acknowledgement; not agent work] I will check the configuration." },
+          body: "[PaperMarketing acknowledgement; not agent work] I will check the configuration." },
         { id: commentIds[2], authorAgentId: agentId, authorUserId: null, origin: "comment",
           body: "Verified the configuration: two settings need updates." },
       ];
@@ -514,7 +514,7 @@ describe("PaperclipRunnerToolAuthority", () => {
         { id: commentIds[0], sourceTrust: quarantine,
           body: lowTrustReader ? "QUARANTINED legacy history canary" : LOW_TRUST_QUARANTINED_BODY },
         { id: commentIds[1], origin: "fast_response", sourceTrust: quarantine,
-          body: `[Paperclip acknowledgement; not agent work] ${lowTrustReader ? "QUARANTINED acknowledgement canary" : LOW_TRUST_QUARANTINED_BODY}` },
+          body: `[PaperMarketing acknowledgement; not agent work] ${lowTrustReader ? "QUARANTINED acknowledgement canary" : LOW_TRUST_QUARANTINED_BODY}` },
         { id: commentIds[2], sourceTrust: promotion, body: "Reviewed and promoted summary" },
         { id: commentIds[3], sourceTrust: null, body: "Trusted coordination message" },
       ] });

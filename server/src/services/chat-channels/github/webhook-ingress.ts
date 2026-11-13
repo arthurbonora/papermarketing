@@ -493,7 +493,7 @@ export function createGitHubWebhookIngress(db: Db, options: GitHubWebhookIngress
                   eventKind,
                   state: "filtered",
                   processedAt: new Date(),
-                  redactedError: "Destination is not enabled in Paperclip",
+                  redactedError: "Destination is not enabled in PaperMarketing",
                   normalizedEvent: {
                     providerEventId,
                     kind: eventKind,

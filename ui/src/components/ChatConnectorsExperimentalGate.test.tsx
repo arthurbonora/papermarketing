@@ -186,7 +186,7 @@ describe("Chat connectors visibility gate", () => {
     expect(api.get).toHaveBeenCalledTimes(2);
     expect(container.querySelector("[data-chat-setup]")).not.toBeNull();
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
   it("shows readable copy with Retry when the endpoint fails to load", async () => {

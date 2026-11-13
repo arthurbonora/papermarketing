@@ -217,7 +217,7 @@ export async function testNativeRunnerAuthentication(context: AdapterEnvironment
         linked = (await lstat(authPath)).isSymbolicLink();
         if (linked && !context.managedAiCredentialHome?.trim()) {
           const field = environment.CODEX_HOME?.trim() ? "env.CODEX_HOME" : "operator CODEX_HOME";
-          throw new Error(`${field} uses a linked auth.json that Paperclip Runner tasks cannot read. Use a managed Codex Connection.`);
+          throw new Error(`${field} uses a linked auth.json that PaperMarketing Runner tasks cannot read. Use a managed Codex Connection.`);
         }
         const resolvedAuthPath = await realpath(authPath);
         const source = await stat(resolvedAuthPath);
@@ -252,7 +252,7 @@ export async function testNativeRunnerAuthentication(context: AdapterEnvironment
     if (receipt.helloProbePassed !== true || receipt.provider !== provider || typeof receipt.effectiveModel !== "string" || !receipt.effectiveModel.trim() || receipt.effectiveModel === "unknown" || (model !== null && receipt.effectiveModel !== model)
       || receipt.providerDriver !== "codex_app_server") throw new Error("The selected native runtime returned an incompatible account or model verification receipt.");
     return { adapterType: "paperclip_runner", status: "pass", testedAt: new Date().toISOString(), checks: [{ code: `${provider}_hello_probe_passed`, level: "info",
-      message: `The native ${provider} runtime verified the selected account and model in ${remote ? "the selected environment" : "the Paperclip host"}.` }] };
+      message: `The native ${provider} runtime verified the selected account and model in ${remote ? "the selected environment" : "the PaperMarketing host"}.` }] };
   } catch (error) {
     if (error instanceof NativeEnvironmentProbeCleanupError) throw error;
     const message = redactNativeProbeMessage(error instanceof Error ? error.message : "The selected native runtime could not verify this account.", { ...environment, ...(sourceAuthJson ? { [authKey]: sourceAuthJson } : {}) });

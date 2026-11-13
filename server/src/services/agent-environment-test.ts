@@ -33,7 +33,7 @@ function finishManagedConnectionTest(adapterType: string, context: AdapterEnviro
     || !result.checks.some(check => check.code === "acpx_remote_runtime_unverified" && check.level === "warn")) return result;
   const checks = result.checks.map(check => check.code === "acpx_remote_runtime_unverified" && check.level === "warn"
     ? { ...check, code: "acpx_remote_runtime_managed", level: "info" as const,
-        message: "The remote platform is supported. Paperclip manages Runner preparation and verifies its runtime before execution." }
+        message: "The remote platform is supported. PaperMarketing manages Runner preparation and verifies its runtime before execution." }
     : check);
   return { ...result, checks, status: checks.some(check => check.level === "error") ? "fail" : checks.some(check => check.level === "warn") ? "warn" : "pass" };
 }
@@ -57,7 +57,7 @@ export function agentEnvironmentTestService(db: Db, pluginWorkerManager?: Plugin
     if ((await instanceSettings.getExperimental()).enableManagedSandboxOnly === true) {
       const managed = await environmentsSvc.findManagedSandboxEnvironment(companyId);
       if (!managed) {
-        throw unprocessable("The managed sandbox is unavailable. Restore Paperclip Sandbox and retry.", {
+        throw unprocessable("The managed sandbox is unavailable. Restore PaperMarketing Sandbox and retry.", {
           code: "managed_sandbox_unavailable",
         });
       }

@@ -168,7 +168,7 @@ export async function unidentifiedLocalLaunchRefusals(db: Db, runs: Unidentified
     if (run.runtimeMode !== "native" || !run.finishedAt || !FINISHED_RUN_STATUSES.has(run.status))
       result.set(run.id, { code: "run_not_finished", message: "Only a finished run's stop can be confirmed." });
     else if (run.processPid || run.processGroupId)
-      result.set(run.id, { code: "process_identity_recorded", message: "This run recorded its process. Paperclip verifies that process itself." });
+      result.set(run.id, { code: "process_identity_recorded", message: "This run recorded its process. PaperMarketing verifies that process itself." });
     else candidates.push(run);
   }
   if (!candidates.length) return result;

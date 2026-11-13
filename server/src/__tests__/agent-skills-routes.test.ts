@@ -1201,7 +1201,7 @@ describe("agent skill routes", () => {
           adapterType: "claude_local",
         }),
         expect.objectContaining({
-          "AGENTS.md": expect.stringMatching(/^You are an agent in a Paperclip company\.\r?\n$/),
+          "AGENTS.md": expect.stringMatching(/^You are an agent in a PaperMarketing company\.\r?\n$/),
         }),
         { entryFile: "AGENTS.md", replaceExisting: false },
       );

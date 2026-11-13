@@ -4,8 +4,12 @@ export const SUCCESSFUL_RUN_HANDOFF_REQUIRED_ACTION = "issue.successful_run_hand
 export const SUCCESSFUL_RUN_HANDOFF_RESOLVED_ACTION = "issue.successful_run_handoff_resolved";
 export const SUCCESSFUL_RUN_HANDOFF_ESCALATED_ACTION = "issue.successful_run_handoff_escalated";
 export const SUCCESSFUL_RUN_HANDOFF_REQUIRED_NOTICE_BODY =
-  "Paperclip needs a disposition before this issue can continue.";
+  "PaperMarketing needs a disposition before this issue can continue.";
 export const SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY =
+  "PaperMarketing could not resolve this issue's missing disposition automatically. The source assignment is unchanged and a board decision is required.";
+const LEGACY_REQUIRED_NOTICE_BODY =
+  "Paperclip needs a disposition before this issue can continue.";
+const LEGACY_EXHAUSTED_NOTICE_BODY =
   "Paperclip could not resolve this issue's missing disposition automatically. The source assignment is unchanged and a board decision is required.";
 
 export function isSuccessfulRunHandoffActivity(action: string) {
@@ -70,6 +74,7 @@ export function successfulRunHandoffFromActivity(event: ActivityEvent): Successf
 export function isSuccessfulRunHandoffComment(text: string) {
   const trimmed = text.trim();
   return trimmed === SUCCESSFUL_RUN_HANDOFF_REQUIRED_NOTICE_BODY
+    || trimmed === LEGACY_REQUIRED_NOTICE_BODY
     || /^##\s+(This issue still needs a next step|Run finished without a next step|Successful run missing issue disposition)/i.test(trimmed)
     || isSuccessfulRunHandoffEscalationComment(trimmed);
 }
@@ -77,6 +82,7 @@ export function isSuccessfulRunHandoffComment(text: string) {
 export function isSuccessfulRunHandoffEscalationComment(text: string) {
   const trimmed = text.trim();
   return trimmed === SUCCESSFUL_RUN_HANDOFF_EXHAUSTED_NOTICE_BODY
+    || trimmed === LEGACY_EXHAUSTED_NOTICE_BODY
     || /^Paperclip exhausted the bounded successful-run handoff correction\b/i.test(trimmed);
 }
 

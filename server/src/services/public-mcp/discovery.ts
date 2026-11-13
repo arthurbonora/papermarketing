@@ -25,7 +25,7 @@ export function mcpDiscoveryDocuments(raw: McpDiscovery): Array<{ path: string; 
     const dot = profile === "dot-mcp", endpoint = dot ? "/mcp/runner" : "/mcp/paperclip", oauthPath = dot ? "/mcp/runner/oauth" : "/mcp/oauth";
     const issuer = dot ? input.origin + oauthPath : input.origin, prefix = input.origin + oauthPath;
     const scopes = dot ? ["paperclip:agent","offline_access"] : ["paperclip:read","paperclip:write","paperclip:configure","offline_access"];
-    const resource = { resource: input.origin + endpoint, authorization_servers: [issuer], scopes_supported: dot ? scopes : scopes.slice(0,3), bearer_methods_supported: ["header"], resource_name: dot ? "Paperclip agent" : "Paperclip" };
+    const resource = { resource: input.origin + endpoint, authorization_servers: [issuer], scopes_supported: dot ? scopes : scopes.slice(0,3), bearer_methods_supported: ["header"], resource_name: dot ? "PaperMarketing agent" : "PaperMarketing" };
     if (!dot) documents.push({ path: "/.well-known/oauth-protected-resource", document: resource });
     documents.push({ path: "/.well-known/oauth-protected-resource" + endpoint, document: resource });
     documents.push({ path: "/.well-known/oauth-authorization-server" + (dot ? oauthPath : ""), document: {

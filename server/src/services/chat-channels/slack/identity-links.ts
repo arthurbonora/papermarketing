@@ -65,7 +65,7 @@ export function createSlackIdentityLinks(db: Db, { previewIdentityLink, stagePro
       payload: {
         version: 1, effect: "ephemeral_message", authorizationMode: "safe_notice",
         threadId: channelId, userId: userId,
-        text: "Your Slack account is connected to Paperclip. Future messages use your Paperclip permissions.", settleDelivery: false
+        text: "Your Slack account is connected to PaperMarketing. Future messages use your PaperMarketing permissions.", settleDelivery: false
       },
       runtimeContext: confirmationRuntime,
     });

@@ -179,7 +179,7 @@ export function unreachableServerRemediation(
   const detail = reason ? UNREACHABLE_SERVER_REASONS[reason] : undefined;
   if (!detail) return {};
   return {
-    remediation: `Paperclip could not reach this MCP server at its saved URL: ${detail}. This result is final until the person fixes it: they must correct the URL, or start the server or make it reachable from Paperclip, and then check it again. Retrying now will not connect it, and you must not contact other hosts, ports or network addresses yourself as a workaround. Reply now: tell the person the server could not be reached and what they need to fix, do not say it is connected, and link [Open Connectors](/<prefix>/apps), with this conversation's company prefix as <prefix>, where they can fix or remove the connection or set it up again.`,
+    remediation: `PaperMarketing could not reach this MCP server at its saved URL: ${detail}. This result is final until the person fixes it: they must correct the URL, or start the server or make it reachable from PaperMarketing, and then check it again. Retrying now will not connect it, and you must not contact other hosts, ports or network addresses yourself as a workaround. Reply now: tell the person the server could not be reached and what they need to fix, do not say it is connected, and link [Open Connectors](/<prefix>/apps), with this conversation's company prefix as <prefix>, where they can fix or remove the connection or set it up again.`,
   };
 }
 

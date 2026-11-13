@@ -14,7 +14,7 @@ const { spawn } = require('node:child_process');
 // A PATH shim can capture this launcher's absolute path and call it again.
 // Reject that cycle before resolving another executable or capturing authority.
 if (process.env.PAPERCLIP_GITHUB_OPERATION_ACTIVE) {
-  process.stderr.write('Paperclip: GitHub launcher_recursion_rejected.\n');
+  process.stderr.write('PaperMarketing: GitHub launcher_recursion_rejected.\n');
   process.exit(126);
 }
 const directory = path.dirname(fs.realpathSync(process.argv[1]));
@@ -26,7 +26,7 @@ const executable = originalPath.map(p => path.join(p, program)).find(p => {
   try { fs.accessSync(p, fs.constants.X_OK); return fs.statSync(p).isFile(); } catch { return false; }
 });
 if (!['git', 'gh'].includes(program) || !executable) {
-  process.stderr.write('Paperclip: requested GitHub command is not installed.\n');
+  process.stderr.write('PaperMarketing: requested GitHub command is not installed.\n');
   process.exit(127);
 }
 const localGitCommands = new Set(['init', 'status', 'add', 'config', 'rev-parse', 'log', 'diff', 'diff-files', 'write-tree', 'show', 'branch', 'checkout', 'switch', 'restore', 'reset', 'rm', 'mv', 'worktree', 'grep', 'blame', 'describe', 'ls-files', 'ls-tree', 'cat-file', 'rev-list', 'merge-base', 'show-ref', 'for-each-ref', 'symbolic-ref', 'check-ignore', 'version', 'help']);
@@ -43,7 +43,7 @@ function isLocalGit(args) {
   }
   return false;
 }
-// With a Paperclip GitHub connection, repositories are created and forked
+// With a PaperMarketing GitHub connection, repositories are created and forked
 // through its tools so access rules, approvals, owner defaults and audit apply.
 const connectorRepositoryTools = new Map([['create', 'create_repository'], ['new', 'create_repository'], ['fork', 'fork_repository']]);
 function connectorRepositoryTool(args) {
@@ -66,7 +66,7 @@ ${options.brokerFile ? String.raw`
     }
   } catch {}
 ` : ''}
-  const diagnostic = (code) => process.stderr.write('Paperclip: GitHub ' + code + '; continuing without managed credentials.\n');
+  const diagnostic = (code) => process.stderr.write('PaperMarketing: GitHub ' + code + '; continuing without managed credentials.\n');
   let connected = false;
   const configRoot = env.GH_CONFIG_DIR || os.tmpdir();
   // A missing/unwritable scratch directory must not break local Git. The
@@ -80,7 +80,7 @@ ${options.brokerFile ? String.raw`
     fs.chmodSync(configDirectory, 0o700);
     configReady = true;
     process.once('exit', () => { try { fs.rmSync(configDirectory, { recursive: true, force: true }); } catch {} });
-    fs.writeFileSync(path.join(configDirectory, 'gitconfig'), '[user]\n\tname = Paperclip\n\temail = noreply@paperclip.ing\n', { mode: 0o600 });
+    fs.writeFileSync(path.join(configDirectory, 'gitconfig'), '[user]\n\tname = PaperMarketing\n\temail = noreply@paperclip.ing\n', { mode: 0o600 });
     authorReady = true;
   } catch { diagnostic('configuration_directory_unavailable'); }
   {
@@ -136,8 +136,8 @@ ${options.brokerFile ? String.raw`
       if (result.status === 'unavailable') {
         const reason = typeof result.reason === 'string'
           ? result.reason.replace(/[\x00-\x1f\x7f]/g, ' ').slice(0, 500)
-          : 'Check the GitHub connection in Paperclip';
-        process.stderr.write('Paperclip: GitHub access unavailable: ' + reason + '. Continuing without GitHub credentials.\n');
+          : 'Check the GitHub connection in PaperMarketing';
+        process.stderr.write('PaperMarketing: GitHub access unavailable: ' + reason + '. Continuing without GitHub credentials.\n');
       }
       connected = result.status === 'available';
       if (result.status === 'available' && configReady) {
@@ -151,7 +151,7 @@ ${options.brokerFile ? String.raw`
   }
   const connectorTool = connected ? connectorRepositoryTool(process.argv.slice(2)) : null;
   if (connectorTool) {
-    process.stderr.write("Paperclip: use the GitHub connection's " + connectorTool + " tool instead of gh repo " + process.argv[3] +
+    process.stderr.write("PaperMarketing: use the GitHub connection's " + connectorTool + " tool instead of gh repo " + process.argv[3] +
       ", so the connection's access rules apply. " + (connectorTool === 'fork_repository'
         ? 'Then clone the fork or add it as a git remote.' : 'Then add the repository as a git remote and push.') + '\n');
     process.exitCode = 1;
@@ -168,10 +168,10 @@ ${options.brokerFile ? String.raw`
   env.GIT_SSH_COMMAND = 'ssh -F /dev/null -o IdentityAgent=none -o IdentitiesOnly=yes -o IdentityFile=none -o BatchMode=yes';
   const child = spawn(executable, process.argv.slice(2), { env, stdio: 'inherit' });
   for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => child.kill(signal));
-  child.once('error', () => { process.stderr.write('Paperclip: GitHub command could not start.\n'); process.exitCode = 1; });
+  child.once('error', () => { process.stderr.write('PaperMarketing: GitHub command could not start.\n'); process.exitCode = 1; });
   child.once('exit', (code, signal) => { process.exitCode = code === null ? 128 : code; });
 }
-main().catch(() => { process.stderr.write('Paperclip: GitHub launcher_setup_failed.\n'); process.exitCode = 1; });
+main().catch(() => { process.stderr.write('PaperMarketing: GitHub launcher_setup_failed.\n'); process.exitCode = 1; });
 `;
 }
 

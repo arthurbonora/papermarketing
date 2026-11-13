@@ -255,7 +255,7 @@ export function createHeartbeatScheduling(
         ? "its timeout was reached"
         : "its maximum attempt count was reached";
     return [
-      `Paperclip cleared the scheduled external-service monitor for ${label} because ${reason}.`,
+      `PaperMarketing cleared the scheduled external-service monitor for ${label} because ${reason}.`,
       "",
       `- Attempt count: ${input.nextAttemptCount}`,
       `- Recovery policy: ${input.recoveryPolicy}`,

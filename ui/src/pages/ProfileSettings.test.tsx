@@ -46,7 +46,7 @@ vi.mock("../context/BreadcrumbContext", () => ({
 vi.mock("../context/CompanyContext", () => ({
   useCompany: () => ({
     selectedCompanyId: "company-1",
-    selectedCompany: { id: "company-1", name: "Paperclip", issuePrefix: "PAP" },
+    selectedCompany: { id: "company-1", name: "PaperMarketing", issuePrefix: "PAP" },
   }),
 }));
 
@@ -107,7 +107,7 @@ describe("ProfileSettings", () => {
     await act(async () => root.unmount());
   });
 
-  it("uploads a clicked avatar into Paperclip storage and persists the returned asset path", async () => {
+  it("uploads a clicked avatar into PaperMarketing storage and persists the returned asset path", async () => {
     const root = createRoot(container);
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -238,7 +238,7 @@ describe("ProfileSettings", () => {
     expect(mockAuthApi.getSession).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain("Jane Example");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
 
     await act(async () => root.unmount());

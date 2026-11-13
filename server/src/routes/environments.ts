@@ -642,7 +642,7 @@ export function environmentRoutes(
       if (impact.reusableSandboxLeaseHolders.some(holder => holder.leasePolicy === "retain_on_failure")) {
         return "Cannot delete this environment while it keeps a failed run's workspace copy (a stopped sandbox kept for file recovery). Deleting the environment with consent destroys that sandbox and the files only it holds.";
       }
-      return "Cannot delete this environment while it has a reusable sandbox lease. Remove the associated execution workspace or issue so Paperclip can destroy the sandbox, then retry.";
+      return "Cannot delete this environment while it has a reusable sandbox lease. Remove the associated execution workspace or issue so PaperMarketing can destroy the sandbox, then retry.";
     }
     return null;
   }

@@ -187,22 +187,22 @@ export function exhaustedSystemRecoveryAction(state: SystemRecoveryState, eviden
   // Another Retry cannot release a copyback owner that stopped without reporting.
   if (state.failure?.code === "copyback_stop_unconfirmed")
     return "Recovery of saved work is waiting for the previous server's file copy to stop. "
-      + "Recovery resumes once Paperclip can confirm that it stopped. No provider turn is submitted.";
+      + "Recovery resumes once PaperMarketing can confirm that it stopped. No provider turn is submitted.";
   // An unproven agent stop is re-proven automatically once the run is over
   // (workspace-recovery-stop-proof), while a bounded re-arm remains.
   if (evidence !== undefined && isExhaustedStopProofWait(state) && !stopProofRearmsSpent(evidence))
     return "Recovery of saved work is waiting to confirm that the previous run stopped. "
-      + "Paperclip tries again automatically, and the agent will not repeat its work.";
+      + "PaperMarketing tries again automatically, and the agent will not repeat its work.";
   const cause = state.failure?.cause ? `, cause: ${state.failure.cause.label}` : "";
   if (state.failure?.cause?.label === "sandbox_disk_full")
-    return "Saving the agent's files stopped because the sandbox disk is full. Paperclip deletes only inactive tool "
+    return "Saving the agent's files stopped because the sandbox disk is full. PaperMarketing deletes only inactive tool "
       + "caches it can prove safe, and that did not free enough space. Automatic recovery does not repeat a save that fails the same way. "
       + "Retry saves the files again. The agent's result is kept, and the agent will not repeat its work.";
   if (isDeterministicRecoveryRefusal(state)) {
     const code = state.failure!.code;
     // Never promise a release. A retained-file hold the fallback settles
     // (workspace-recovery-fallback) replaces this text with its own outcome.
-    return `Paperclip refused to recover the saved files: ${recoveryRefusalReasons[code] ?? "a safety check on the saved files did not pass"} `
+    return `PaperMarketing refused to recover the saved files: ${recoveryRefusalReasons[code] ?? "a safety check on the saved files did not pass"} `
       + `(${code}${cause}). Automatic recovery does not repeat this check, because the same saved state gives the same result. `
       + "Retry runs the check again. The agent's result is saved, and the agent will not repeat its work.";
   }
@@ -217,7 +217,7 @@ export function isDeterministicRecoveryRefusal(state: Pick<SystemRecoveryState, 
 }
 
 const recoveryRefusalReasons: Partial<Record<RecoveryFailureCode, string>> = {
-  allocation_ownership_ambiguous: "Paperclip cannot prove which runs used the sandbox that holds the saved files",
+  allocation_ownership_ambiguous: "PaperMarketing cannot prove which runs used the sandbox that holds the saved files",
   source_binding_invalid: "the recorded source of the saved files does not match the run that saved them",
   snapshot_verification_failed: "the saved snapshot of the files did not pass verification",
   archive_unsafe: "the saved file archive contains entries that are not safe to apply",

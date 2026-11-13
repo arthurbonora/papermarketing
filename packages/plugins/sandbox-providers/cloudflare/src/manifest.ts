@@ -22,7 +22,7 @@ const manifest: PaperclipPluginManifestV1 = {
       kind: "sandbox_provider",
       displayName: "Cloudflare Sandbox",
       description:
-        "Runs Paperclip sandbox environments through a Cloudflare Worker bridge backed by the Sandbox SDK and Durable Objects.",
+        "Runs PaperMarketing sandbox environments through a Cloudflare Worker bridge backed by the Sandbox SDK and Durable Objects.",
       configSchema: {
         type: "object",
         properties: {

@@ -1883,13 +1883,13 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         const filteredReason = !endpointAllowed
           ? "Connection is not active"
           : !destinationAllowed
-            ? "Destination is not enabled in Paperclip"
+            ? "Destination is not enabled in PaperMarketing"
             : principalResolution.linkedDenied
-              ? "Linked Paperclip account is not currently permitted"
+              ? "Linked PaperMarketing account is not currently permitted"
               : !principalAllowed
                 ? endpoint.allowUnlinkedPeople
                   ? "Endpoint sponsor can no longer authorize external guests"
-                  : "External identity must be linked to a Paperclip account"
+                  : "External identity must be linked to a PaperMarketing account"
                 : "Message did not address the agent or an active task thread";
         await db.transaction(async (tx) => {
           await notifyChatDeliveryWork(tx);
@@ -2076,7 +2076,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
             : controlCommand === "new"
               ? isTelegramForumTopic
                 ? telegramForumControlResponse("new", taskLabel, Boolean(existingIssue), Boolean(existingConversation))
-                : "Send your request to start a new Paperclip task."
+                : "Send your request to start a new PaperMarketing task."
               : existingConversation
                 ? isTelegramForumTopic
                   ? telegramForumControlResponse("close", taskLabel, Boolean(existingIssue), true)
@@ -2258,7 +2258,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
         }
         if (!conversation)
           throw conflict(
-            "Could not bind external conversation to a Paperclip task",
+            "Could not bind external conversation to a PaperMarketing task",
           );
 
         const issue =
@@ -2347,7 +2347,7 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                       type: "key_value",
                       label: "Authority",
                       value: taskUserId
-                        ? "Linked Paperclip user"
+                        ? "Linked PaperMarketing user"
                         : "Sponsored external guest (restricted)",
                     },
                   ],
@@ -2503,11 +2503,11 @@ export function chatChannelService(db: Db, options: ChatChannelServiceOptions) {
                 : endpointStillAllowed
                   ? destinationStillAllowed
                     ? currentPrincipalAuthorization.linkedDenied
-                      ? "Linked Paperclip account is not currently permitted"
+                      ? "Linked PaperMarketing account is not currently permitted"
                       : currentEndpoint.allowUnlinkedPeople
                         ? "Endpoint sponsor can no longer authorize external guests"
-                        : "External identity must be linked to a Paperclip account"
-                    : "Destination is not enabled in Paperclip"
+                        : "External identity must be linked to a PaperMarketing account"
+                    : "Destination is not enabled in PaperMarketing"
                   : "Connection is not active",
               updatedAt: filteredAt,
             })

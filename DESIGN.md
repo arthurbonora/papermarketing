@@ -1,4 +1,4 @@
-# Paperclip Design Principles
+# PaperMarketing Design Principles
 
 **Status:** v0.3 — anchor document for design-language simplification. Governs structure, not brand. Brand values (color, type, iconography) are intentionally unspecified: they are being redesigned and will land as token values only. Nothing in `ui/` may hardcode them. Spacing/radius scales are likewise TBD pending the token audit (see Principle 3).
 
@@ -10,7 +10,7 @@ Agents and humans modifying `ui/` treat this file as the source of truth for des
 
 ## Product stance
 
-Paperclip is an operational control plane: org charts, tasks, heartbeat runs, budgets, approvals, audit logs. The user is an operator scanning state and making decisions. Every screen should answer, in order: *what is happening, does it need me, what do I do about it.* Density in service of scanning beats whitespace in service of aesthetics — but density comes from information, never from chrome.
+PaperMarketing is an operational control plane: org charts, tasks, heartbeat runs, budgets, approvals, audit logs. The user is an operator scanning state and making decisions. Every screen should answer, in order: *what is happening, does it need me, what do I do about it.* Density in service of scanning beats whitespace in service of aesthetics — but density comes from information, never from chrome.
 
 ## The token layer (where visual values live)
 
@@ -431,7 +431,7 @@ width tokens and configurable column order. Review the complete composition in
 - Created by is the recorded creator (human or agent) and shows a name. Assignee
   shows the current agent's avatar or human's profile photo beside their name,
   with the shared avatar fallback when an image is unavailable. Human photos load
-  only from Paperclip asset URLs; external profile URLs use initials. The avatar stays
+  only from PaperMarketing asset URLs; external profile URLs use initials. The avatar stays
   visible while a long name reveals on hover or focus. Do not infer either
   identity from tree depth or task status.
 - Task combines the status icon and title under one header and one Columns-menu
@@ -1011,7 +1011,7 @@ Further consolidation proposals, pending visual review:
 
 ### Collection empty states and roster selection
 
-Projects uses the large artifact stack with a dark grey Paperclip mark on an off-white
+Projects uses the large artifact stack with a dark grey PaperMarketing mark on an off-white
 image front. The empty-state action is “Create project”. Artwork, message and
 primary action have 20px gaps (`gap-5`). Hovering or keyboard-focusing the action
 fans the same artwork as hovering the graphic. Artifacts uses that stack for

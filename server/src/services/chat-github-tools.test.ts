@@ -45,7 +45,7 @@ describe("GitHub review tool contract", () => {
       maxLength: 24000,
     });
     expect(properties.summary).toMatchObject({
-      description: expect.stringContaining("Paperclip adds"),
+      description: expect.stringContaining("PaperMarketing adds"),
     });
     expect(properties.rationale).toMatchObject({
       description: expect.stringContaining("Do not repeat the summary"),

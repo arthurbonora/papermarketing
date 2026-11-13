@@ -50,7 +50,7 @@ async function buildKimiSkillSnapshot(config: Record<string, unknown>): Promise<
     locationLabel: "~/.kimi-code/skills",
     missingDetail: "Configured but not currently linked into the Kimi skills home.",
     externalConflictDetail: "Skill name is occupied by an external installation.",
-    externalDetail: "Installed outside Paperclip management.",
+    externalDetail: "Installed outside PaperMarketing management.",
   });
 }
 

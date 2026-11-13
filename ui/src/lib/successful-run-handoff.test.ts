@@ -34,4 +34,15 @@ describe("successful run handoff UI helpers", () => {
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_ESCALATED_ACTION).className).toContain("red");
     expect(successfulRunHandoffActivityTone(SUCCESSFUL_RUN_HANDOFF_RESOLVED_ACTION).className).toContain("border");
   });
+
+  it("recognizes exact notices persisted before the rename", () => {
+    const required = "Paperclip needs a disposition before this issue can continue.";
+    const exhausted = "Paperclip could not resolve this issue's missing disposition automatically. The source assignment is unchanged and a board decision is required.";
+    expect(isSuccessfulRunHandoffComment(required)).toBe(true);
+    expect(isSuccessfulRunHandoffEscalationComment(required)).toBe(false);
+    expect(isSuccessfulRunHandoffComment(exhausted)).toBe(true);
+    expect(isSuccessfulRunHandoffEscalationComment(exhausted)).toBe(true);
+    expect(isSuccessfulRunHandoffComment(`${required} Additional text.`)).toBe(false);
+    expect(isSuccessfulRunHandoffEscalationComment(`${exhausted} Additional text.`)).toBe(false);
+  });
 });

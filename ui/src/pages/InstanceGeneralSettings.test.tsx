@@ -322,7 +322,7 @@ describe("InstanceGeneralSettings read resilience", () => {
     expect(mockInstanceSettingsApi.getGeneral).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain("Backup retention");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
 

@@ -660,7 +660,7 @@ describe("codex_local ACP lane", () => {
       expect.objectContaining({
         code: "codex_acp_credentials_missing",
         level: "warn",
-        message: expect.stringContaining("Paperclip server"),
+        message: expect.stringContaining("PaperMarketing server"),
         hint: expect.stringContaining("separate Codex/chat session"),
       }),
     );

@@ -62,7 +62,7 @@ async function callRuntimeConnectionTool(
   const endpoint = process.env[endpointEnv]?.trim();
   const token = process.env.PAPERCLIP_RUNTIME_TOOLS_TOKEN?.trim();
   if (!endpoint || !token) {
-    throw new Error("Connection intent tools are available only inside an active Paperclip heartbeat run");
+    throw new Error("Connection intent tools are available only inside an active PaperMarketing heartbeat run");
   }
   const response = await fetch(endpoint, {
     method: "POST",
@@ -289,7 +289,7 @@ export function createToolDefinitions(client: PaperclipApiClient): ToolDefinitio
     ),
     makeTool(
       "paperclipMe",
-      "Get the current authenticated Paperclip actor details",
+      "Get the current authenticated PaperMarketing actor details",
       z.object({}),
       async () => client.requestJson("GET", "/agents/me"),
     ),
@@ -676,7 +676,7 @@ export function createToolDefinitions(client: PaperclipApiClient): ToolDefinitio
     ),
     makeTool(
       "paperclipApiRequest",
-      "Make a JSON request to an existing Paperclip /api endpoint for unsupported operations",
+      "Make a JSON request to an existing PaperMarketing /api endpoint for unsupported operations",
       apiRequestSchema,
       async ({ method, path, jsonBody }) => {
         if (!path.startsWith("/") || path.includes("..")) {

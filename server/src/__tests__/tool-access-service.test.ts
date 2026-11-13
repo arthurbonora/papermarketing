@@ -12512,7 +12512,7 @@ describeEmbeddedPostgres("tool access service", () => {
     });
 
     expect(registrationBody).toMatchObject({
-      client_name: "Paperclip localhost-3105",
+      client_name: "PaperMarketing localhost-3105",
       redirect_uris: [redirectUri],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
@@ -12939,7 +12939,7 @@ describeEmbeddedPostgres("tool access service", () => {
     expect(connectRes.body).toMatchObject({
       code: "oauth_redirect_origin_unsupported",
       error:
-        "This Paperclip needs a browser-reachable HTTPS address (or loopback HTTP) before browser sign-in can start.",
+        "This PaperMarketing needs a browser-reachable HTTPS address (or loopback HTTP) before browser sign-in can start.",
     });
   });
 
@@ -13385,7 +13385,7 @@ describeEmbeddedPostgres("tool access service", () => {
     ).toBe("notion-dcr-client");
     expect(registrationBodies).toEqual([
       {
-        client_name: "Paperclip paperclip-dev-tail29c1aa-ts-net",
+        client_name: "PaperMarketing paperclip-dev-tail29c1aa-ts-net",
         redirect_uris: [redirectUri],
         grant_types: ["authorization_code", "refresh_token"],
         response_types: ["code"],
@@ -20377,7 +20377,7 @@ describeEmbeddedPostgres("tool access service", () => {
           transport: "mcp_remote",
           status: "draft",
           config: { url: "https://mcp.example/github" },
-          warnings: [expect.stringContaining("Paperclip secret")],
+          warnings: [expect.stringContaining("PaperMarketing secret")],
         }),
         expect.objectContaining({
           name: "local",
@@ -20387,7 +20387,7 @@ describeEmbeddedPostgres("tool access service", () => {
             importedCommand: "npx",
             importedArgs: ["-y", "@example/local-mcp"],
           },
-          warnings: [expect.stringContaining("approved Paperclip template")],
+          warnings: [expect.stringContaining("approved PaperMarketing template")],
         }),
       ]),
     );

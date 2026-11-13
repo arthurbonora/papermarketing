@@ -45,7 +45,7 @@ export function readConfigFile(options?: { includeProvenance: true }): Paperclip
     raw = JSON.parse(fs.readFileSync(configPath, "utf-8"));
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid Paperclip config at ${configPath}: failed to read or parse JSON: ${reason}`);
+    throw new Error(`Invalid PaperMarketing config at ${configPath}: failed to read or parse JSON: ${reason}`);
   }
 
   try {
@@ -64,7 +64,7 @@ export function readConfigFile(options?: { includeProvenance: true }): Paperclip
     return config;
   } catch (error) {
     if (error instanceof ZodError) {
-      throw new Error(`Invalid Paperclip config at ${configPath}: ${formatConfigValidationError(error)}`);
+      throw new Error(`Invalid PaperMarketing config at ${configPath}: ${formatConfigValidationError(error)}`);
     }
 
     throw error;

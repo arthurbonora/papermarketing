@@ -19,7 +19,7 @@ const oauthErrors: ErrorRequestHandler = (error, _req, res, next) => {
   const known = error instanceof McpOAuthError;
   res.status(known ? error.status : 500).json({
     error: known ? error.code : "server_error",
-    error_description: known ? error.message : "Paperclip could not complete the connection request.",
+    error_description: known ? error.message : "PaperMarketing could not complete the connection request.",
   });
 };
 
@@ -118,7 +118,7 @@ export function publicMcpIngressRoutes(oauth: PublicMcpOAuth, execute: ReturnTyp
           return { isError: true, content: [{ type: "text", text: JSON.stringify(result) }], structuredContent: result };
         }
         const message = error instanceof McpApiError || error instanceof McpCapabilityError || error instanceof McpOAuthError ? error.message
-          : "Paperclip could not confirm this operation. Before retrying a write, inspect the task and comments and keep the same requestId.";
+          : "PaperMarketing could not confirm this operation. Before retrying a write, inspect the task and comments and keep the same requestId.";
         return { isError: true, content: [{ type: "text", text: message }] };
       }
     };
@@ -168,7 +168,7 @@ export function publicMcpIngressRoutes(oauth: PublicMcpOAuth, execute: ReturnTyp
       } catch (error) {
         if (error instanceof McpEventError) fail(error.code, error.message, error.reason ? { reason: error.reason } : undefined);
         else if (error instanceof z.ZodError || error instanceof McpApiError || error instanceof McpOAuthError) fail(-32602, "Invalid arguments or unavailable authority.");
-        else fail(-32603, "Paperclip could not complete the request.");
+        else fail(-32603, "PaperMarketing could not complete the request.");
       }
       return;
     }
@@ -200,7 +200,7 @@ export function publicMcpManagementRoutes(oauth: PublicMcpOAuth, agentOAuth?: Pu
   };
   const sameOrigin: RequestHandler = (req, _res, next) => {
     const origin = req.headers.origin ?? (req.headers.referer ? new URL(req.headers.referer).origin : "");
-    if (origin !== oauth.config.origin && origin !== oauth.config.authorizationOrigin) throw new McpOAuthError("access_denied", "Connection changes require the Paperclip browser origin.", 403);
+    if (origin !== oauth.config.origin && origin !== oauth.config.authorizationOrigin) throw new McpOAuthError("access_denied", "Connection changes require the PaperMarketing browser origin.", 403);
     next();
   };
   router.use(["/mcp", "/dot-mcp"], (_req, res, next) => { res.setHeader("Cache-Control", "no-store"); next(); });

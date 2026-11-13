@@ -2288,7 +2288,7 @@ function tokensMatch(received) {
 
 // Read the bridge token a local caller presented. The gateway accepts two
 // header conventions for the same token. "Authorization: Bearer <token>" is the
-// bridge convention. "X-API-Key: <token>" is the convention the public Paperclip
+// bridge convention. "X-API-Key: <token>" is the convention the public PaperMarketing
 // API documents, so an agent that follows those docs sends it first. Both
 // headers carry the same per-run token and both reach the same constant-time
 // comparison in tokensMatch, so the second header removes a needless 401 without

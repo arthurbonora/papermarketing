@@ -7,18 +7,18 @@ export const STORAGE_UNAVAILABLE_CODE = "storage_unavailable";
 
 export const STORAGE_UNAVAILABLE_WAIT_RETRY_REASON = "storage_unavailable_wait";
 
-export const STORAGE_UNAVAILABLE_MESSAGE = "File storage was unavailable, so this attempt stopped before it could save its work. Paperclip will retry automatically when storage is back.";
+export const STORAGE_UNAVAILABLE_MESSAGE = "File storage was unavailable, so this attempt stopped before it could save its work. PaperMarketing will retry automatically when storage is back.";
 
-export const STORAGE_CREDENTIALS_REJECTED_MESSAGE = "File storage rejected Paperclip's storage credentials (they may have expired or been rotated), so this attempt stopped before it could save its work. Paperclip will retry automatically when valid credentials are available.";
+export const STORAGE_CREDENTIALS_REJECTED_MESSAGE = "File storage rejected PaperMarketing's storage credentials (they may have expired or been rotated), so this attempt stopped before it could save its work. PaperMarketing will retry automatically when valid credentials are available.";
 
 /** For a storage failure that no storage wait owns, such as a run whose native
  * recovery keeps its files without replaying an unfinished turn. Nothing
  * retries it automatically, so the text offers Retry instead of promising one. */
-export const STORAGE_UNAVAILABLE_HELD_MESSAGE = "File storage was unavailable, so this attempt stopped before it could save its work. Paperclip is not retrying it automatically. Retry or send a message to continue.";
+export const STORAGE_UNAVAILABLE_HELD_MESSAGE = "File storage was unavailable, so this attempt stopped before it could save its work. PaperMarketing is not retrying it automatically. Retry or send a message to continue.";
 
-export const STORAGE_CREDENTIALS_REJECTED_HELD_MESSAGE = "File storage rejected Paperclip's storage credentials (they may have expired or been rotated), so this attempt stopped before it could save its work. Paperclip is not retrying it automatically. Retry or send a message to continue.";
+export const STORAGE_CREDENTIALS_REJECTED_HELD_MESSAGE = "File storage rejected PaperMarketing's storage credentials (they may have expired or been rotated), so this attempt stopped before it could save its work. PaperMarketing is not retrying it automatically. Retry or send a message to continue.";
 
-export const STORAGE_UNAVAILABLE_EXHAUSTED_MESSAGE = "File storage stayed unavailable or kept rejecting Paperclip's storage credentials through every automatic retry, so Paperclip stopped retrying this task. Check the storage service and its credentials, then Retry.";
+export const STORAGE_UNAVAILABLE_EXHAUSTED_MESSAGE = "File storage stayed unavailable or kept rejecting PaperMarketing's storage credentials through every automatic retry, so PaperMarketing stopped retrying this task. Check the storage service and its credentials, then Retry.";
 
 export const STORAGE_UNAVAILABLE_RETRY = {
   retryReason: STORAGE_UNAVAILABLE_WAIT_RETRY_REASON, wakeReason: "storage_unavailable_retry", maxAttempts: 10, delayMs: 60_000,

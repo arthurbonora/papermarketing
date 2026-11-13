@@ -60,7 +60,7 @@ test("an interrupted app bundle offers a retry that restores the saved task", as
       return intercepted.abort();
     });
     await page.goto(route);
-    await expect(page.getByRole("heading", { name: "Papermarketing couldn’t start" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "PaperMarketing couldn’t start" })).toBeVisible();
     expect(interruptedBundles).toBeGreaterThan(0);
     expect(await page.locator("#root").evaluate(root => root.childElementCount)).toBe(0);
     await page.unroute("**/assets/*.js");

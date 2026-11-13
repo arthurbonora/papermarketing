@@ -701,7 +701,7 @@ export async function restoreRemoteWorkspaceDirectory(input: {
      const content=await fs.readFile(name);if(crypto.createHash('sha256').update(content).digest('hex')!==file.sha256)throw Error('allocation_changed');
      return {name:path.basename(name),content};}));
    };
-   // A retired root holds a Paperclip preparation or restore receipt; anything else is unknown.
+   // A retired root holds a PaperMarketing preparation or restore receipt; anything else is unknown.
    const ownReceipt=async p=>{
     const runtime=path.join(p,'.paperclip-runtime');if(!await stat(runtime))return false;await directory(runtime);
     for(const [name,key] of [['workspace-restored.json','identity'],['workspace-ready.json','preparationIdentity']]){

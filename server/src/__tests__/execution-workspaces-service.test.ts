@@ -1020,7 +1020,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
         state: "blocked",
         isDestructiveCloseAllowed: false,
         blockingReasons: [
-          "Paperclip could not verify the workspace git status. Retry before destructive cleanup.",
+          "PaperMarketing could not verify the workspace git status. Retry before destructive cleanup.",
         ],
       });
 
@@ -1537,7 +1537,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     expect(readiness?.git).toMatchObject({ hasUntrackedFiles: true, untrackedEntryCount: 5_000 });
     expect(readiness?.warnings).toContain("The workspace has 5000 untracked files.");
     expect(readiness?.blockingReasons).not.toContain(
-      "Paperclip could not verify the workspace git status. Retry before destructive cleanup.",
+      "PaperMarketing could not verify the workspace git status. Retry before destructive cleanup.",
     );
     expect(await svc.sweepTerminalWorkspaces()).toMatchObject({ archived: 0, skippedUndelivered: 1 });
     await expect(fs.access(seeded.worktreePath)).resolves.toBeUndefined();
@@ -2509,7 +2509,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
 
     expect(readiness).toMatchObject({ state: "blocked", isDestructiveCloseAllowed: false });
     expect(readiness?.blockingReasons).toContain(
-      "Paperclip could not verify the workspace git status. Retry before destructive cleanup.",
+      "PaperMarketing could not verify the workspace git status. Retry before destructive cleanup.",
     );
   });
 
@@ -2523,7 +2523,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
 
     expect(readiness).toMatchObject({ state: "blocked", isDestructiveCloseAllowed: false });
     expect(readiness?.blockingReasons).toContain(
-      "Paperclip could not verify the workspace git status. Retry before destructive cleanup.",
+      "PaperMarketing could not verify the workspace git status. Retry before destructive cleanup.",
     );
   });
 
@@ -2538,7 +2538,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
 
     expect(readiness).toMatchObject({ state: "blocked", isDestructiveCloseAllowed: false });
     expect(readiness?.blockingReasons).toContain(
-      "Paperclip could not verify the workspace git status. Retry before destructive cleanup.",
+      "PaperMarketing could not verify the workspace git status. Retry before destructive cleanup.",
     );
   });
 

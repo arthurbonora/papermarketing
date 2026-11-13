@@ -99,7 +99,7 @@ describe("board-only denial", () => {
     const res = await request(createApp(agentActor)).get(`/api/companies/${COMPANY_ID}/managed-agent-profiles`).expect(403);
     expect(res.body.code).toBe(BOARD_ACCESS_REQUIRED_CODE);
     expect(res.body.remediation).toContain("this denial is final");
-    expect(res.body.remediation).toContain("Paperclip web app or with their own board credentials");
+    expect(res.body.remediation).toContain("PaperMarketing web app or with their own board credentials");
     expect(res.body.remediation).toContain("Link a page only if you already know its route; do not search for one");
     expect(res.body.remediation).not.toContain("](/");
   });
@@ -138,7 +138,7 @@ describe("board-only denial", () => {
     expect(AGENT_CHAT_DIRECTIVE).toContain("its API catalog authorization actor is board, or a call returns 403 \"Board access required\"");
     expect(AGENT_CHAT_DIRECTIVE).toContain("that boundary is final");
     expect(AGENT_CHAT_DIRECTIVE).toContain("so stop searching for one");
-    expect(AGENT_CHAT_DIRECTIVE).toContain("tell the person which control in the Paperclip web app to use, link its page when you know the route");
+    expect(AGENT_CHAT_DIRECTIVE).toContain("tell the person which control in the PaperMarketing web app to use, link its page when you know the route");
     expect(AGENT_CHAT_DIRECTIVE).not.toContain("use permitted discovery to identify the supported operator path");
     expect(AGENT_CHAT_DIRECTIVE).toContain("Reply now instead of making more calls");
     expect(AGENT_CHAT_DIRECTIVE).not.toContain("Complete other permitted work");

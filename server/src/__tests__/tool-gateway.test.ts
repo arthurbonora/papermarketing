@@ -768,7 +768,7 @@ describeEmbeddedPostgres("tool gateway acceptance", () => {
       const session = await gateway.createSession({ companyId: company.id, agentId: agent.id, runId: run.id });
       const listed = (await gateway.listToolsForSession(session.token)).find((tool) => tool.name === toolName);
       expect((listed?.parametersSchema as { properties?: Record<string, { description?: string }> } | undefined)
-        ?.properties?.organization?.description).toMatch(/installed only on one organization; then Paperclip uses that organization/);
+        ?.properties?.organization?.description).toMatch(/installed only on one organization; then PaperMarketing uses that organization/);
 
       await gateway.executeTool({ sessionToken: session.token, tool: toolName, parameters: { name: "agent-site" } });
       await gateway.executeTool({ sessionToken: session.token, tool: toolName,

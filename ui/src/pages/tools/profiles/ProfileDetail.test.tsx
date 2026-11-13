@@ -237,7 +237,7 @@ describe("ProfileDetail", () => {
     expect(container.textContent).toContain("Everyday work");
     expect(container.textContent).toContain("What it allows");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
 
   it("shows readable copy and a Retry button for a real error", async () => {

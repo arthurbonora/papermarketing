@@ -615,7 +615,7 @@ export function createSlackSessionStop(db: Db, options: SlackSessionStopOptions)
                 eq(agents.id, payload.assignedAgentId),
               ),
             )
-            .then((rows) => rows[0]?.name ?? "Paperclip agent");
+            .then((rows) => rows[0]?.name ?? "PaperMarketing agent");
           await stageAuthorizedTaskControlPublication(tx, {
             companyId: current.companyId,
             conversationId: conversation.id,

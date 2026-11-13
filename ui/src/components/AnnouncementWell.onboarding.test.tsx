@@ -27,7 +27,7 @@ describe("announcement well during onboarding", () => {
   let container: HTMLDivElement;
   let root: Root;
   const health = { deploymentMode: "authenticated" } as HealthStatus;
-  const visible = () => Boolean(container.querySelector('[aria-label="Paperclip announcements"]'));
+  const visible = () => Boolean(container.querySelector('[aria-label="PaperMarketing announcements"]'));
   let client: QueryClient;
   const flush = async () => { await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); }); };
   const render = async () => {

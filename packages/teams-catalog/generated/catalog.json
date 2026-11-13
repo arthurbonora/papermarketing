@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "packageName": "@paperclipai/teams-catalog",
   "packageVersion": "0.1.0",
-  "generatedAt": "2026-11-09T20:56:53.242Z",
+  "generatedAt": "2026-11-13T02:36:36.866Z",
   "teams": [
     {
       "id": "paperclipai:bundled:company-defaults:core-exec-team",
@@ -11,7 +11,7 @@
       "category": "company-defaults",
       "slug": "core-exec-team",
       "name": "Core Exec Team",
-      "description": "Default leadership and engineering team for bootstrapping a Paperclip company with a CEO, CTO, QA Engineer, starter project, and a recurring CEO heartbeat review task.",
+      "description": "Default leadership and engineering team for bootstrapping a PaperMarketing company with a CEO, CTO, QA Engineer, starter project, and a recurring CEO heartbeat review task.",
       "path": "catalog/bundled/company-defaults/core-exec-team",
       "entrypoint": "TEAM.md",
       "schema": "agentcompanies/v1",
@@ -96,14 +96,14 @@
         {
           "path": "TEAM.md",
           "kind": "team",
-          "sizeBytes": 2014,
-          "sha256": "e0c38e9af1a5dd1888fb81a72feba75a9ab1be4c78d8ceb658e2e5cd621c5096"
+          "sizeBytes": 2024,
+          "sha256": "b67d8fd16f2bf1dcbeb150f8244e6dc3f1d64b896b47b3e0b71c40c3eacff869"
         },
         {
           "path": "agents/ceo/AGENTS.md",
           "kind": "agent",
-          "sizeBytes": 263,
-          "sha256": "75848c6f794646a93e23bc73b80d31ef0eb8b83c105423eb98ea29e7685d2fd0"
+          "sizeBytes": 268,
+          "sha256": "c4cec0ae25a3613d394a1a597849cc60841ab3d0182fe67e0a3efdc528893358"
         },
         {
           "path": "agents/cto/AGENTS.md",
@@ -132,7 +132,7 @@
       ],
       "trustLevel": "markdown_only",
       "compatibility": "compatible",
-      "contentHash": "sha256:9d0416ebc0a81585dc51b73efb25decba9e1e3f3741940fc9fca74f3238f344d"
+      "contentHash": "sha256:04fc36dbd6bbe7317bb32fa6ffbd6157c474de76c9897724f6eb061e34b119c2"
     },
     {
       "id": "paperclipai:bundled:product:product-design",
@@ -421,14 +421,14 @@
         {
           "path": "TEAM.md",
           "kind": "team",
-          "sizeBytes": 1097,
-          "sha256": "04c89ffaf7d8d778b1e18bae7cbea3c5740c359a61c42a139759eaad443b7f76"
+          "sizeBytes": 1107,
+          "sha256": "6eacda24bc5e65d749aed9300fb74fce501a5743009109ab758b9f9c9d2845aa"
         },
         {
           "path": "agents/speko-company-phone-agent/AGENTS.md",
           "kind": "agent",
-          "sizeBytes": 3202,
-          "sha256": "76953ef1ab541a219d9835bd0a3461845e92a1861e90675a167734854f2647f2"
+          "sizeBytes": 3222,
+          "sha256": "023cc7225a72b379ede77903f7565d4347e3e05b22b4a474fe7593a5dab58911"
         },
         {
           "path": "LICENSE",
@@ -439,13 +439,13 @@
         {
           "path": "README.md",
           "kind": "readme",
-          "sizeBytes": 1417,
-          "sha256": "445c4b7ec5a201b73123aba1ce5dbb5a52352ed488364eed62a041c30656c7d7"
+          "sizeBytes": 1383,
+          "sha256": "1daa32a427335c542e01e10d1b5d9bc410da506c91da5ec03b94356623ea42d8"
         }
       ],
       "trustLevel": "assets",
       "compatibility": "compatible",
-      "contentHash": "sha256:4a38efe38a407db87a6872880aa9c575f39b34dbb8c0c65dbac0d28aec69116c"
+      "contentHash": "sha256:11a1dfd88facebedbadc912f71adb055c33df58a3450d351f74a4a37aab28c1b"
     },
     {
       "id": "paperclipai:optional:content:content-machine",

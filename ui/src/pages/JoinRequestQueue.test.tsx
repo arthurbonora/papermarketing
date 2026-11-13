@@ -24,7 +24,7 @@ vi.mock("@/api/access", () => ({
 vi.mock("@/context/CompanyContext", () => ({
   useCompany: () => ({
     selectedCompanyId: "company-1",
-    selectedCompany: { id: "company-1", name: "Paperclip" },
+    selectedCompany: { id: "company-1", name: "PaperMarketing" },
   }),
 }));
 
@@ -108,7 +108,7 @@ describe("JoinRequestQueue", () => {
     expect(container.textContent).toContain("Board User");
     expect(container.textContent).toContain("Join Request Queue");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
 
     await act(async () => root.unmount());

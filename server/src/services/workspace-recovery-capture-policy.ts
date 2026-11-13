@@ -11,7 +11,7 @@ import type { WorkspaceRecoverySourceIdentity } from "./workspace-recovery-sourc
 import { coordinatorOwnerColumns, releaseLapsedCoordinatorOwner, sourceRunProvablyOver } from "./workspace-recovery-stop-proof.js";
 
 /** User-facing text while the retried save runs. It names no person who must act. */
-export const CAPTURE_POLICY_REARM_MESSAGE = "Paperclip is saving the previous run's files again with its updated save rules. "
+export const CAPTURE_POLICY_REARM_MESSAGE = "PaperMarketing is saving the previous run's files again with its updated save rules. "
   + "No provider turn is submitted.";
 
 /**

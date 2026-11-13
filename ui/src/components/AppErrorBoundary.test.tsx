@@ -69,7 +69,7 @@ describe("AppErrorBoundary", () => {
       );
     });
 
-    expect(container.textContent).toContain("Paperclip hit an error");
+    expect(container.textContent).toContain("PaperMarketing hit an error");
     expect(container.textContent).toContain("Maximum update depth exceeded");
 
     expect(captureBrowserExceptionMock).toHaveBeenCalledTimes(1);
@@ -96,7 +96,7 @@ describe("AppErrorBoundary", () => {
     });
     expect(reloadMock).toHaveBeenCalledTimes(1);
     expect(captureBrowserExceptionMock).not.toHaveBeenCalled();
-    expect(container.querySelector('[role="status"]')?.textContent).toContain("Reloading Paperclip");
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("Reloading PaperMarketing");
     act(() => root.unmount());
 
     // The reloaded pages keep failing, as when an asset stays broken.
@@ -112,7 +112,7 @@ describe("AppErrorBoundary", () => {
     });
     expect(reloadMock).toHaveBeenCalledTimes(1);
     expect(captureBrowserExceptionMock).toHaveBeenCalledTimes(1);
-    expect(container.textContent).toContain("Paperclip hit an error");
+    expect(container.textContent).toContain("PaperMarketing hit an error");
     act(() => nextRoot.unmount());
   });
 
@@ -130,7 +130,7 @@ describe("AppErrorBoundary", () => {
       expect(captureBrowserExceptionMock).not.toHaveBeenCalled();
 
       act(() => { vi.advanceTimersByTime(RELOAD_ABANDONED_MS); });
-      expect(container.textContent).toContain("Paperclip hit an error");
+      expect(container.textContent).toContain("PaperMarketing hit an error");
       expect(captureBrowserExceptionMock).toHaveBeenCalledTimes(1);
       act(() => root.unmount());
     } finally {
@@ -148,7 +148,7 @@ describe("AppErrorBoundary", () => {
       );
     });
 
-    expect(container.textContent).toContain("Paperclip hit an error");
+    expect(container.textContent).toContain("PaperMarketing hit an error");
     expect(container.textContent).toContain("effect exploded");
 
     act(() => {
@@ -188,7 +188,7 @@ describe("AppErrorBoundary", () => {
       expect.objectContaining({ name: "NotFoundError" }),
       { boundary: "app", componentStack: expect.stringContaining("BrokenDomInsertion") },
     );
-    expect(container.textContent).toContain("Paperclip hit an error");
+    expect(container.textContent).toContain("PaperMarketing hit an error");
     act(() => root.unmount());
   });
 

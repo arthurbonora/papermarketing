@@ -81,7 +81,7 @@ export function agentRunnerAvailability(harness: string, target: RunnerTarget = 
 }
 
 function incompatible(fields: string[]): never {
-  throw unprocessable(`Paperclip Runner cannot honor these settings: ${fields.join(", ")}. Remove them before retrying.`, { code: "agent_runner_config_incompatible", fields });
+  throw unprocessable(`PaperMarketing Runner cannot honor these settings: ${fields.join(", ")}. Remove them before retrying.`, { code: "agent_runner_config_incompatible", fields });
 }
 
 function resolveGrokRunnerConfig(config: Record<string, unknown>): Record<string, unknown> {
@@ -233,7 +233,7 @@ function resolveAgentRunner(input: AgentRunnerSelection): { adapterType: string;
         ...(config.acpxSessionMode !== undefined ? ["acpxSessionMode"] : []),
         ...(!["off", "minimal", "low", "medium", "high", "xhigh"].includes(String(thinking)) ? [config.thinking !== undefined ? "thinking" : "piThinkingLevel"] : []),
       ];
-      if (unsupported.length) throw unprocessable(`Legacy Pi cannot honor these settings: ${unsupported.join(", ")}. Keep Paperclip Runner or explicitly choose compatible settings.`, { code: "agent_runner_config_incompatible", fields: unsupported });
+      if (unsupported.length) throw unprocessable(`Legacy Pi cannot honor these settings: ${unsupported.join(", ")}. Keep PaperMarketing Runner or explicitly choose compatible settings.`, { code: "agent_runner_config_incompatible", fields: unsupported });
       for (const key of ["provider", "acpxAgent", "acpxPermissionMode", "acpxSessionMode", "piThinkingLevel", "lifecycleMode", "idleTimeoutMs"]) delete config[key];
       return { adapterType: "pi_local", adapterConfig: { ...config, thinking } };
     }
@@ -263,8 +263,8 @@ function resolveAgentRunner(input: AgentRunnerSelection): { adapterType: string;
   }
   if (native && harness !== "codex_local" && choice === "paperclip") return { adapterType, adapterConfig: normalizeLegacyRunnerProvider(config) };
   if (!availability.supportedRunners.includes("paperclip")) throw unprocessable(input.target?.driver === "sandbox"
-    ? "Paperclip Runner is unavailable for this sandbox. Choose an immutable OCI image digest and run its environment connection probe to qualify the OS, architecture and libc."
-    : "Paperclip Runner is unavailable for this harness and environment. Choose a supported harness or environment.", { code: "agent_runner_unavailable" });
+    ? "PaperMarketing Runner is unavailable for this sandbox. Choose an immutable OCI image digest and run its environment connection probe to qualify the OS, architecture and libc."
+    : "PaperMarketing Runner is unavailable for this harness and environment. Choose a supported harness or environment.", { code: "agent_runner_unavailable" });
   if (native) return { adapterType, adapterConfig: normalizeLegacyRunnerProvider(config) };
   if (harness === "cursor_cloud") {
     const unsupported = ["promptTemplate", "bootstrapPromptTemplate"].filter(key => typeof config[key] === "string" && config[key].trim());
@@ -481,7 +481,7 @@ async function resolveAgentEnvironmentForCompany(db: Db, companyId: string, defa
   let environment = environmentId ? await envs.getById(environmentId) : null;
   if (settings.experimental?.enableManagedSandboxOnly && (!environment || environment.driver === "local")) {
     environment = await envs.findManagedSandboxEnvironment(companyId);
-    if (!environment) throw unprocessable("The managed sandbox is unavailable. Restore Paperclip Sandbox and retry.", {
+    if (!environment) throw unprocessable("The managed sandbox is unavailable. Restore PaperMarketing Sandbox and retry.", {
       code: "managed_sandbox_unavailable", ...(executionMode ? { executionMode } : {}),
     });
   }

@@ -307,7 +307,7 @@ describe("execute", () => {
     // Fresh run: brief exactly once (task markdown only; wake-prompt copy suppressed).
     expect(runBodies[0]!.input.split(description)).toHaveLength(2);
     // Stable-session resume: compact task markdown, no re-sent brief.
-    expect(runBodies[1]!.input).toContain("Paperclip task context:");
+    expect(runBodies[1]!.input).toContain(compactTaskMarkdown);
     expect(runBodies[1]!.input).not.toContain(description);
   });
 
@@ -659,7 +659,7 @@ describe("execute", () => {
     ctx.onDispatch = vi.fn();
     const result = await execute(ctx);
 
-    expect(result.errorMessage).toContain("refers to the Paperclip server, not an agent sandbox");
+    expect(result.errorMessage).toContain("refers to the PaperMarketing server, not an agent sandbox");
     expect(result.errorMessage).toContain("adapterConfig.apiBaseUrl");
     expect(result.errorMessage).toContain("hermes_local");
     expect(result.errorMessage).not.toContain("gateway-private-key");
@@ -693,7 +693,7 @@ describe("execute", () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw Object.assign(new Error("fetch failed"), { cause }); }));
     const result = await execute(makeCtx({ apiBaseUrl, apiKey: "secret-key" }));
     expect(result.errorCode).toBe("hermes_gateway_connect_failed");
-    expect(result.errorMessage).not.toContain("refers to the Paperclip server");
+    expect(result.errorMessage).not.toContain("refers to the PaperMarketing server");
     expect(result.errorMeta).toEqual({});
     expect(result.executionRecovery).toBeUndefined();
   });
@@ -705,7 +705,7 @@ describe("execute", () => {
     const result = await execute(makeCtx({ apiBaseUrl: "http://127.0.0.1:8642", apiKey: "secret-key" }));
     expect(result.errorCode).toBe("hermes_gateway_upstream_error");
     expect(result.errorMeta?.category).toBeUndefined();
-    expect(result.errorMessage).not.toContain("refers to the Paperclip server");
+    expect(result.errorMessage).not.toContain("refers to the PaperMarketing server");
     expect(result.executionRecovery).toBeUndefined();
   });
 

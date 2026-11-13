@@ -414,7 +414,7 @@ export async function admitExplicitNativeContinuation(input: {
       if (repairedTerminal && taskRetry?.sourceRunId === run.id && taskRetry.strategy === "evaluate"
         && await canResumePreservedResultFinalization(db, companyId, run.id,
           ["scheduled", "running", "awaiting_evidence"].includes(recovery?.state ?? "") ? "pending" : "ready"))
-        return blocked("finalizing_saved_result", "Paperclip is finishing the saved result.");
+        return blocked("finalizing_saved_result", "PaperMarketing is finishing the saved result.");
       if (completedResult && !repairedTerminal && !(freshIntent && snapshotSettled)) {
         // Nothing finishes the saved result while a stopped copyback owner is
         // unverified. The run's live retained recovery records that hold; name
@@ -430,25 +430,25 @@ export async function admitExplicitNativeContinuation(input: {
           sql`${issueRecoveryActions.evidence}->>'runId' = ${run.id}`,
           sql`${issueRecoveryActions.evidence} ? 'systemRecovery'`));
         if (live.some(row => row.ownerHold))
-          return blocked("workspace_owner_stop_required", "Paperclip is waiting to confirm that the previous server stopped saving files. Your Retry is saved.");
+          return blocked("workspace_owner_stop_required", "PaperMarketing is waiting to confirm that the previous server stopped saving files. Your Retry is saved.");
         // A spent recovery budget finishes nothing by itself. Another Retry
         // starts one new recovery generation (task-retry), so name that action
         // instead of an endless finalizing wait (RC-50b, s14).
         if (live.length && live.every(row => row.recoveryState === "exhausted"))
           return live.some(row => row.retryClass === "service_required")
-            ? blocked("saved_work_recovery_refused", "Paperclip refused to recover the saved files because a safety check on them cannot pass. Retry runs the same check again.")
+            ? blocked("saved_work_recovery_refused", "PaperMarketing refused to recover the saved files because a safety check on them cannot pass. Retry runs the same check again.")
             : blocked("saved_work_recovery_failed", "Saving the agent's files failed. Retry to try again.");
-        return blocked("finalizing_saved_result", "Paperclip is finishing the saved result.");
+        return blocked("finalizing_saved_result", "PaperMarketing is finishing the saved result.");
       }
     }
     // A repaired export no longer blocks execution. Its machine receipt still
     // binds the saved user turn; finalized file state alone is insufficient.
     if (["native_workspace_sync_out_unrecoverable", "native_workspace_sync_out_retry_exhausted"].includes(action.cause)
       && !freshIntent && !await hasVerifiedWorkspaceRepair(db, run)) return blocked("workspace_repair_required",
-      "Paperclip is recovering saved work before continuing. Your message is saved.");
+      "PaperMarketing is recovering saved work before continuing. Your message is saved.");
     if ((run.resultJson?.workspaceRestoreFailure === "restore_unsafe_archive" || hasRequiredWorkspaceRecovery(run.resultJson))
       && !freshIntent && !await hasVerifiedWorkspaceRepair(db, run)) {
-      return blocked("workspace_repair_required", "Paperclip is recovering saved work before continuing. Your message is saved.");
+      return blocked("workspace_repair_required", "PaperMarketing is recovering saved work before continuing. Your message is saved.");
     }
     const cancelledStartup = await isCancelledNativeStartup(db, run, coordinator);
     if (partiallyDeliveredQueue && run.runtimeMode !== "native" && !unusedAdmission && !cancelledStartup && !failedPreparation) return null;
@@ -504,7 +504,7 @@ export async function admitExplicitNativeContinuation(input: {
     const preserved = hasRequiredWorkspaceRecovery(run.resultJson) ? null
       : await preserveNativeFailedWorkspace(db, run);
     if (preserved && hasRequiredWorkspaceRecovery(preserved.resultJson)) return blocked("workspace_repair_required",
-      "Paperclip is recovering saved work before continuing. Your message is saved.");
+      "PaperMarketing is recovering saved work before continuing. Your message is saved.");
     const leases = await db.select()
       .from(environmentLeases).where(and(
         eq(environmentLeases.companyId, companyId), eq(environmentLeases.heartbeatRunId, run.id),
@@ -520,14 +520,14 @@ export async function admitExplicitNativeContinuation(input: {
       if (leases.some(lease => !lease.releasedAt || lease.cleanupStatus === "failed")) return blocked("local_cleanup", "Waiting for the previous environment to finish cleanup. Your message will start automatically.");
       if (!unusedAdmission && !cancelledStartup && !failedPreparation) {
         if (freshIntent && (run.processPid || run.processGroupId) && !await recordedLocalExecutionStopped(db, run))
-          return blocked("process_identity_missing", "Paperclip is verifying that the previous session stopped.");
+          return blocked("process_identity_missing", "PaperMarketing is verifying that the previous session stopped.");
         // A missing process identity is not evidence that a provider exited.
         if (!run.processPid && !run.processGroupId &&
             !await hasNativeLocalProcessStop(db, companyId, run.id) &&
             !await hasHistoricalSuspendedNativeSession(db, run) &&
             !await nativeRunNeverLaunched(db, run) &&
             !(run.runtimeMode === "native" &&
-              await recordUnidentifiedLocalRunnerStop(db, run, { record: !input.dryRun }))) return blocked("process_identity_missing", "The previous run has no verified stop record. Paperclip cannot start this message yet.");
+              await recordUnidentifiedLocalRunnerStop(db, run, { record: !input.dryRun }))) return blocked("process_identity_missing", "The previous run has no verified stop record. PaperMarketing cannot start this message yet.");
         if (run.processPid && !processStopped(run.processPid)) return blocked("process_running", "Waiting for the previous process to stop. Your message will start automatically.");
         if (run.processGroupId && !processStopped(-run.processGroupId)) return blocked("process_running", "Waiting for the previous process to stop. Your message will start automatically.");
       }

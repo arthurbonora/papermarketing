@@ -119,7 +119,7 @@ describe("ordinary task interruption", () => {
       providerFailure: { schema: "paperclip.provider-failure.v1", provider: "openai", phase: "startup", category: "overloaded",
         retryability: "unknown", message: "Try later." } });
     expect(container.textContent).toContain("Checking that the previous attempt stopped. Trying again in 30s…");
-    expect(container.textContent).not.toContain("Paperclip will retry automatically.");
+    expect(container.textContent).not.toContain("PaperMarketing will retry automatically.");
   });
   it("leaves genuine user decisions to their specific action surface", async () => {
     await render({ ...failed, responsibility: "user", state: "waiting_for_user", userAction: "approval", canRetry: false });

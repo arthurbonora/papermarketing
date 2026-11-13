@@ -96,7 +96,7 @@ describe("githubOwnerToolInputSchema", () => {
     const projected = githubOwnerToolInputSchema(managed, "create_repository", createSchema);
     expect(projected.required).toEqual(["name"]);
     expect((projected.properties as Record<string, { description?: string }>).organization?.description)
-      .toMatch(/installed only on one organization; then Paperclip uses that organization/);
+      .toMatch(/installed only on one organization; then PaperMarketing uses that organization/);
     expect(createSchema.properties.organization.description).toMatch(/omit to create in your personal account/);
     expect(githubOwnerToolInputSchema({ config: { sourceTemplateKey: "github", connectionMethodKey: "mcp-key" } },
       "create_repository", createSchema)).toBe(createSchema);

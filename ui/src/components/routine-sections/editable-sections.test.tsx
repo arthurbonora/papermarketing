@@ -101,7 +101,7 @@ describe("TriggersSection", () => {
     await render();
     await click("Resume setup");
     expect(container.textContent).toContain("This webhook URL appears to be private");
-    expect(container.querySelector('a[href="https://docs.paperclip.ing/reference/deploy/https/"]')).not.toBeNull();
+    expect(container.querySelector('a[href="https://github.com/arthurbonora/papermarketing/blob/master/doc/DEPLOYMENT-MODES.md"]')).not.toBeNull();
     expect(button("Check connection").disabled).toBe(false);
     await click("Check connection");
     expect(container.textContent).toContain("This webhook URL appears to be private");

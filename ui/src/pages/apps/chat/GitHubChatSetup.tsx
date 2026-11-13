@@ -431,7 +431,7 @@ export function GitHubChatSetup() {
             <>
               <p className="text-sm">
                 Connect GitHub account <strong>{state.identity.login}</strong>{" "}
-                to your Paperclip account.
+                to your PaperMarketing account.
               </p>
               {footer("Confirm my account", async () => {
                 await githubChatApi.confirmIdentity(
@@ -444,7 +444,7 @@ export function GitHubChatSetup() {
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Link your GitHub account so your mentions use your Paperclip
+                Link your GitHub account so your mentions use your PaperMarketing
                 permissions.
               </p>
               {(accounts.data?.length ?? 0) > 0 && (
@@ -540,10 +540,10 @@ export function GitHubChatSetup() {
       ) : state?.state === "enrollment" ? (
         <>
           <p className="text-sm">
-            Paperclip Cloud receives GitHub events and securely delivers them to
+            Cloud receives GitHub events and securely delivers them to
             this instance.
           </p>
-          {footer("Connect Paperclip Cloud", async () => {
+          {footer("Connect Cloud", async () => {
             authorization.reserve();
             const result = await toolsApi.startCloudConnectorEnrollment(
               selectedCompanyId!,

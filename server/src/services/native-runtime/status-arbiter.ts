@@ -6,7 +6,7 @@ export const NATIVE_STATUS_ARBITER_POLICY_VERSION = "phase6-v13";
 /** The automatic continuation after a failed turn is used once per chain. */
 export const NATIVE_RUN_FAILED_RETRY_CAUSE = "native_run_failed";
 export const NATIVE_RUN_FAILED_CONTINUATION_EXHAUSTED_ACTION =
-  "The agent's turn failed again after Paperclip continued it automatically. The saved work is kept. Check the failed run, then Retry the task.";
+  "The agent's turn failed again after PaperMarketing continued it automatically. The saved work is kept. Check the failed run, then Retry the task.";
 
 export type NativeAuthoritativeIssueStatus =
   | "backlog"

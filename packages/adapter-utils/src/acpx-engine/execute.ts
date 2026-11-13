@@ -1070,7 +1070,7 @@ async function prepareManagedCodexHome(input: {
 
   await onLog(
     "stdout",
-    `[paperclip] Using Paperclip-managed ACPX Codex home "${targetHome}" (seeded from "${sourceHome}").\n`,
+    `[paperclip] Using PaperMarketing-managed ACPX Codex home "${targetHome}" (seeded from "${sourceHome}").\n`,
   );
   return targetHome;
 }
@@ -1224,7 +1224,7 @@ async function prepareClaudeSkillRuntime(input: {
   }));
   const promptInstructions = selectedNames.length > 0
     ? [
-        "Paperclip has materialized selected runtime skills for this ACPX Claude session.",
+        "PaperMarketing has materialized selected runtime skills for this ACPX Claude session.",
         `Skill root: ${skillsHome}`,
         `Selected skills: ${selectedNames.join(", ")}`,
         ...skillDescriptions,
@@ -1242,7 +1242,7 @@ async function prepareClaudeSkillRuntime(input: {
     },
     promptInstructions,
     commandNotes: selectedNames.length > 0
-      ? [`Materialized ${selectedNames.length} Paperclip skill(s) for ACPX Claude at ${skillsHome}.`]
+      ? [`Materialized ${selectedNames.length} PaperMarketing skill(s) for ACPX Claude at ${skillsHome}.`]
       : [],
     bundleDir: selectedNames.length > 0 ? skillsHome : null,
   };
@@ -2173,7 +2173,7 @@ async function buildRuntime(input: {
       companyId: agent.companyId,
     });
     skillCommandNotes.push(
-      `Wrote Paperclip-managed Claude settings to ${paperclipClaudeSettings.filePath} (defaultMode=${paperclipClaudeSettings.defaultMode}${
+      `Wrote PaperMarketing-managed Claude settings to ${paperclipClaudeSettings.filePath} (defaultMode=${paperclipClaudeSettings.defaultMode}${
         paperclipClaudeSettings.overrodeDontAsk ? "; overrode user dontAsk" : ""
       }, +${paperclipClaudeSettings.additionalDirectories.length} read root(s), +${paperclipClaudeSettings.allow.length} allow rule(s)).`,
     );
@@ -2221,7 +2221,7 @@ async function buildRuntime(input: {
     );
     skillsIdentity = { mode: "custom_unsupported", desiredSkillNames: desired };
     if (desired.length > 0) {
-      skillCommandNotes.push("Selected Paperclip skills are tracked only; ACPX custom commands do not expose a runtime skill contract yet.");
+      skillCommandNotes.push("Selected PaperMarketing skills are tracked only; ACPX custom commands do not expose a runtime skill contract yet.");
     }
   }
 
@@ -2645,13 +2645,13 @@ async function buildRuntime(input: {
     // remember a previous home's skill paths; supply the current root on every
     // turn, after the remote launch environment has rebased CODEX_HOME.
     skillPromptInstructions = [
-      `Paperclip has materialized selected runtime skills for this ACPX ${acpxAgent === "codex" ? "Codex" : "Gemini"} run.`,
+      `PaperMarketing has materialized selected runtime skills for this ACPX ${acpxAgent === "codex" ? "Codex" : "Gemini"} run.`,
       `Skill root for this run: ${currentSkillRoot}`,
       `Selected skills: ${skillsIdentity.selectedSkills.join(", ")}`,
       "When a task calls for one of these skills, read its SKILL.md from this root and follow it. Resolve referenced scripts and files relative to that skill. Use this run's root even when an earlier turn used a different path.",
       ...(acpxAgent === "gemini" && skillsIdentity.selectedSkills.includes("paperclip")
         ? [
-          "Before calling Paperclip APIs or delivering task artifacts, read the selected paperclip skill's SKILL.md and its referenced artifact workflow. A completion comment does not upload an artifact or change task status.",
+          "Before calling PaperMarketing APIs or delivering task artifacts, read the selected paperclip skill's SKILL.md and its referenced artifact workflow. A completion comment does not upload an artifact or change task status.",
           "Gemini's shell tool rejects command substitution. Write JSON request bodies to a workspace file and use curl --data-binary @file, or use the selected skill's helpers, instead of constructing a body with command substitution.",
         ]
         : []),
@@ -3084,7 +3084,7 @@ function renderPaperclipEnvNote(env: Record<string, string>): string {
     .sort();
   if (paperclipKeys.length === 0) return "";
   return [
-    "Paperclip runtime note:",
+    "PaperMarketing runtime note:",
     `The following PAPERCLIP_* environment variables are available in this run: ${paperclipKeys.join(", ")}`,
     "Do not assume these variables are missing without checking your shell environment.",
   ].join("\n");
@@ -3093,8 +3093,8 @@ function renderPaperclipEnvNote(env: Record<string, string>): string {
 function renderApiAccessNote(env: Record<string, string>): string {
   if (!env.PAPERCLIP_API_URL || !env.PAPERCLIP_API_KEY) return "";
   const lines = [
-    "Paperclip API access note:",
-    "Use terminal commands with curl to make Paperclip API requests.",
+    "PaperMarketing API access note:",
+    "Use terminal commands with curl to make PaperMarketing API requests.",
     "Normalize the base URL before adding API paths:",
     `  PAPERCLIP_API_BASE="\${PAPERCLIP_API_URL%/}"; PAPERCLIP_API_BASE="\${PAPERCLIP_API_BASE%/api}"`,
     "GET example:",
@@ -5062,7 +5062,7 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
             command: prepared.agentCommand ?? prepared.acpxAgent,
             cwd: prepared.cwd,
             commandNotes: [
-              `ACPX runtime embedded in Paperclip with ${prepared.mode} session mode.`,
+              `ACPX runtime embedded in PaperMarketing with ${prepared.mode} session mode.`,
               `Effective ACPX permission mode: ${prepared.permissionMode}.`,
               ...(prepared.requestedModel
                 ? [
@@ -5209,7 +5209,7 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
             pendingToolsAtStop = [...interruptionTools.values()].filter(isPendingAcpTool);
             void ctx.onLog(
               "stderr",
-              `[paperclip] A pending tool call (kind ${stalledTool.kind}) had no update for ${Math.round(stalledTool.silentMs / 1000)}s; ending the turn. Its permission request ${stalledTool.permissionRequested ? "reached" : "did not reach"} Paperclip.\n`,
+              `[paperclip] A pending tool call (kind ${stalledTool.kind}) had no update for ${Math.round(stalledTool.silentMs / 1000)}s; ending the turn. Its permission request ${stalledTool.permissionRequested ? "reached" : "did not reach"} PaperMarketing.\n`,
             ).catch(() => {});
             void turn.cancel({ reason: "paperclip stalled tool watchdog" }).catch(() => {});
             armCancelDeadline();
@@ -5377,7 +5377,7 @@ export function createAcpxEngineExecutor(deps: AcpxEngineExecutorOptions = {}) {
         // only the closed ACP tool kind and the silent time.
         const toolStalled = stalledTool !== null && !timedOut && !channelLost && terminal.status !== "completed";
         const toolStalledMessage = stalledTool
-          ? `A pending tool call (kind ${stalledTool.kind}) received no update for ${Math.round(stalledTool.silentMs / 60_000)} minutes, so Paperclip ended the turn instead of waiting for the execution timeout.`
+          ? `A pending tool call (kind ${stalledTool.kind}) received no update for ${Math.round(stalledTool.silentMs / 60_000)} minutes, so PaperMarketing ended the turn instead of waiting for the execution timeout.`
           : null;
         // A completed, non-timed-out turn whose channel stayed live is the one
         // success path. Every other outcome — a failed, cancelled, or timed-out

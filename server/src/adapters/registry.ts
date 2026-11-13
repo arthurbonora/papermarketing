@@ -227,7 +227,7 @@ The standalone ACPX adapter has been retired. Use:
 - claude_local with adapterConfig.engine="acp" for Claude ACP execution.
 - codex_local with adapterConfig.engine="acp" for Codex ACP execution.
 
-Paperclip keeps this tombstone registered so stale acpx_local rows fail clearly instead of falling back to the process adapter.
+PaperMarketing keeps this tombstone registered so stale acpx_local rows fail clearly instead of falling back to the process adapter.
 `;
 
 // The Claude interactive login capability. Claude runs `claude setup-token` on a
@@ -426,7 +426,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         ? error
         : new PaperclipRunnerProviderProfileError(
             "paperclip_runner_provider_unsupported",
-            "Paperclip Runner provider configuration is invalid.",
+            "PaperMarketing Runner provider configuration is invalid.",
           );
       return {
         adapterType: "paperclip_runner",
@@ -446,7 +446,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
     }
     if (profile.provider === "cursor_cloud") {
       const failure = (code: string, message: string) => ({ adapterType: "paperclip_runner", status: "fail" as const, testedAt: new Date().toISOString(), checks: [{ code, level: "error" as const, message }] });
-      if (context.executionTarget?.kind === "remote") return failure("cursor_cloud_local_controller_required", "Select a local Paperclip controller. Cursor hosts the execution environment.");
+      if (context.executionTarget?.kind === "remote") return failure("cursor_cloud_local_controller_required", "Select a local PaperMarketing controller. Cursor hosts the execution environment.");
       const configuredEnv = context.config.env;
       const binding = configuredEnv && typeof configuredEnv === "object" && !Array.isArray(configuredEnv)
         ? (configuredEnv as Record<string, unknown>).CURSOR_API_KEY : undefined;
@@ -476,11 +476,11 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
     }
     if (profile.provider === "muse") {
       return { adapterType: "paperclip_runner", status: "warn" as const, testedAt: new Date().toISOString(),
-        checks: [{ code: "muse_background_test_required", level: "warn" as const, message: "Muse manages its model and billing. Verify the paired receiver and independent background reply in Paperclip; this read-only check does not wake Muse." }] };
+        checks: [{ code: "muse_background_test_required", level: "warn" as const, message: "Muse manages its model and billing. Verify the paired receiver and independent background reply in PaperMarketing; this read-only check does not wake Muse." }] };
     }
     if (profile.provider === "openai_dot") {
       return { adapterType: "paperclip_runner", status: "warn" as const, testedAt: new Date().toISOString(),
-        checks: [{ code: "dot_event_test_required", level: "warn" as const, message: "Dot manages its model and billing. Validate the dedicated agent binding and event round trip in Paperclip; this read-only check does not wake the Dot." }] };
+        checks: [{ code: "dot_event_test_required", level: "warn" as const, message: "Dot manages its model and billing. Validate the dedicated agent binding and event round trip in PaperMarketing; this read-only check does not wake the Dot." }] };
     }
     if (profile.provider === "acpx") {
       try {
@@ -644,7 +644,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         )
       : buildNpmRuntimeCommandSpec(config, "codex", "@openai/codex@0.160.0"),
   agentConfigurationDoc:
-    "# Paperclip Runner\n\nAdapter: paperclip_runner\n\nRuns Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX Claude/Grok Build/Cursor/Pi through the Rust Paperclip runner and authenticated PRP transport. Pi accepts an explicit provider/model ID and uses the company credentials bound to the agent environment. GitHub Copilot requires a saved GitHub token and an explicitly selected available model. Managed providers use company-scoped qualified profiles, explicit retention acknowledgement, and spend limits. A board operator creates each Claude Managed (Anthropic managed agent) profile through POST /api/companies/{companyId}/managed-agent-profiles; agent credentials cannot create, qualify or list one.\n",
+    "# PaperMarketing Runner\n\nAdapter: paperclip_runner\n\nRuns Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX Claude/Grok Build/Cursor/Pi through the Rust PaperMarketing runner and authenticated PRP transport. Pi accepts an explicit provider/model ID and uses the company credentials bound to the agent environment. GitHub Copilot requires a saved GitHub token and an explicitly selected available model. Managed providers use company-scoped qualified profiles, explicit retention acknowledgement, and spend limits. A board operator creates each Claude Managed (Anthropic managed agent) profile through POST /api/companies/{companyId}/managed-agent-profiles; agent credentials cannot create, qualify or list one.\n",
   getConfigSchema: () => ({
     fields: [
       {
@@ -770,7 +770,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         label: "Estimated session ceiling (USD)",
         type: "number" as const,
         default: 1,
-        hint: "Paperclip estimate; AWS does not provide a per-session currency hard stop.",
+        hint: "PaperMarketing estimate; AWS does not provide a per-session currency hard stop.",
         meta: { visibleWhen: { key: "provider", value: "aws_agentcore" } },
       },
       {

@@ -499,7 +499,7 @@ describe("governed retained-file recovery", () => {
       const controllerAction = { ...action, cause: "native_controller_host_unverified", ownerType: "board",
         evidence: { runId: "run-1", controller: { bootId: "boot", pid: 7 } } } as unknown as IssueRecoveryAction;
       await mount(controllerAction);
-      expect(container.textContent).toContain("before Paperclip stored which host it ran on");
+      expect(container.textContent).toContain("before PaperMarketing stored which host it ran on");
       await click("Confirm the previous server stopped");
       const textarea = container.querySelector("textarea")!;
       await act(async () => {
@@ -520,7 +520,7 @@ describe("governed retained-file recovery", () => {
         evidence: { kind: "environment_run_lease_active", recordId: "lease-1", runId: "run-1" } } as unknown as IssueRecoveryAction;
       // An operator sees the wait but cannot attest the stop.
       await mount(ownerGoneAction);
-      expect(container.textContent).toContain("before Paperclip stored which server held it");
+      expect(container.textContent).toContain("before PaperMarketing stored which server held it");
       expect(button("Confirm the previous server stopped")).toBeUndefined();
       client.setQueryData(queryKeys.access.currentBoardAccess, { userId: "board-1", source: "session", isInstanceAdmin: false,
         companyIds: ["company-1"], memberships: [{ companyId: "company-1", membershipRole: "owner", status: "active" }] });
@@ -568,7 +568,7 @@ describe("governed retained-file recovery", () => {
       const ownerGone = (kind: string) => ({ ...action, cause: "ownership_owner_unprovable", ownerType: "board",
         evidence: { kind, recordId: "run-1", runId: "run-1", recordUpdatedAt: "2026-11-08T10:00:00.000Z" } }) as unknown as IssueRecoveryAction;
       await mount(ownerGone("legacy_controller_lease"));
-      expect(container.textContent).toContain("This task’s earlier run was recorded before Paperclip stored which server held it");
+      expect(container.textContent).toContain("This task’s earlier run was recorded before PaperMarketing stored which server held it");
       expect(button("Confirm the previous server stopped")).toBeDefined();
       await mount(ownerGone("a_future_kind"));
       expect(container.textContent).toContain("A resource from this task’s earlier run was recorded");
