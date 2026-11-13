@@ -618,7 +618,7 @@ describe("adapter skill snapshots", () => {
         key: optionalEntry.key,
         state: "external",
         managed: false,
-        detail: "Installed outside Paperclip management.",
+      detail: "Installed outside PaperMarketing management.",
       }),
     );
     expect(snapshot.entries).toContainEqual(

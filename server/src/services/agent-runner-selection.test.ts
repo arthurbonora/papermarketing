@@ -119,7 +119,7 @@ describe("server-owned Codex runner selection", () => {
     await expect(resolveNewAgentRunnerForCompany({} as never, "company", {
       adapterType: "cursor_cloud", runner: "auto", setupOnly, adapterConfig: {},
     })).rejects.toMatchObject({
-      message: "The managed sandbox is unavailable. Restore Paperclip Sandbox and retry.",
+      message: "The managed sandbox is unavailable. Restore PaperMarketing Sandbox and retry.",
       status: 422,
       details: { code: "managed_sandbox_unavailable" },
     });

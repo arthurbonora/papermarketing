@@ -63,7 +63,7 @@ describe("external Paperclip task links", () => {
           publicBaseUrl: baseUrl,
         }),
       ).toBe(
-        "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+        "Maya stopped before completing this turn. Open the task in PaperMarketing for details.",
       );
     },
   );

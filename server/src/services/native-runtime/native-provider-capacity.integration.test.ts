@@ -360,7 +360,7 @@ describe("native provider capacity failure persistence", () => {
       evidence: expect.objectContaining({ providerLimitResetAt: resetAt.toISOString() }) });
     // The hold says when work resumes, not that its session state is ambiguous.
     expect(hold.nextAction).toBe(`The provider usage limit resets at ${resetAt.toISOString()}. `
-      + "Paperclip will retry this task then; Retry starts it sooner if usage capacity is already restored.");
+      + "PaperMarketing will retry this task then; Retry starts it sooner if usage capacity is already restored.");
 
     // A hold saved by the previous release names no reset and calls the state ambiguous.
     const { providerLimitResetAt: _reset, ...oldEvidence } = hold.evidence;

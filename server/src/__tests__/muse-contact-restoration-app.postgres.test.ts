@@ -84,7 +84,7 @@ describe.skipIf(!databaseUrl).each(["permission", "lifecycle"] as const)("normal
       { message: "Sign in as a company operator to configure Muse.", code: "company_operator_required" },
       { message: "Missing permission: agents:create.", code: "agents_create_permission_missing" },
       { message: "Permission agents:create does not cover the requested scope.", code: "agents_create_scope_denied" },
-      { message: "Enable Muse and Paperclip Runner in experimental settings.", code: "muse_runner_disabled" },
+      { message: "Enable Muse and PaperMarketing Runner in experimental settings.", code: "muse_runner_disabled" },
     ].find(value => parsed.success && value.message === parsed.data.error);
     return fixed ? { status, ...fixed }
       : { status, code: "unclassified_invitation_response", message: "Invitation response details withheld" };

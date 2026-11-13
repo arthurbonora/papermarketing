@@ -17721,7 +17721,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       eventKind: "message",
       conversationId: null,
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "Destination is not enabled in PaperMarketing",
       normalizedEvent: {
         kind: "message",
         filtering: {
@@ -17746,7 +17746,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         id: rows[0]!.id,
         status: "filtered",
         summary: "message ignored",
-        detail: "Destination is not enabled in Paperclip",
+        detail: "Destination is not enabled in PaperMarketing",
         replayable: false,
       }),
     );
@@ -19596,7 +19596,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             providerThreadCreated: false,
           },
         }),
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "Destination is not enabled in PaperMarketing",
         state: "filtered",
       },
     ]);
@@ -25126,7 +25126,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect.objectContaining({ state: "active", sessionGeneration: 1 }),
     ]);
     expect(runtime.endpoints.get(endpoint.id)?.posts[0]?.text).toBe(
-      "Send your request to start a new Paperclip task.",
+      "Send your request to start a new PaperMarketing task.",
     );
     // Command-only acknowledgements have no run whose final reply can retire
     // a processing reaction. The subsequent task message has its own receipt.
@@ -25300,7 +25300,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       state: "filtered",
       attempts: 0,
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "Destination is not enabled in PaperMarketing",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: "teams-setup-group-disabled" },
@@ -25717,7 +25717,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     ).resolves.toEqual([
       {
         state: "filtered",
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "Destination is not enabled in PaperMarketing",
         normalizedEvent: expect.objectContaining({
           providerEventId: `${directThread.thread.id}:teams-direct-disabled`,
           kind: "direct_message",
@@ -26154,7 +26154,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(delivery).toMatchObject({
         state: "filtered",
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "Destination is not enabled in PaperMarketing",
         normalizedEvent: {
           filtering: { contentRetained: false },
           message: { providerMessageId: rootMessageId },
@@ -26257,7 +26257,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(delivery).toMatchObject({
       state: "filtered",
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "Destination is not enabled in PaperMarketing",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: messageId },
@@ -26581,7 +26581,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(delivery).toMatchObject({
       state: "filtered",
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "Destination is not enabled in PaperMarketing",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: messageId },
@@ -30513,7 +30513,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(deliveries[2]).toMatchObject({
       eventKind: "action",
       state: "filtered",
-      redactedError: "External chat modal submission denied by Paperclip",
+      redactedError: "External chat modal submission denied by PaperMarketing",
       processedAt: expect.any(Date),
     });
     expect(JSON.stringify(await service.get(endpoint.id))).not.toContain(
@@ -34673,7 +34673,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       runtime.endpoints.get(endpoint.id)?.posts.map((post) => post.text),
     ).toEqual([
       "old-generation-final",
-      "Send your request to start a new Paperclip task.",
+      "Send your request to start a new PaperMarketing task.",
     ]);
     await expect(service.listConversations(endpoint.id)).resolves.toEqual([
       expect.objectContaining({ id: oldConversation.id, state: "completed" }),
@@ -34739,7 +34739,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       runtime.endpoints.get(endpoint.id)?.posts.map((post) => post.text),
     ).toEqual([
       "old-generation-final",
-      "Send your request to start a new Paperclip task.",
+      "Send your request to start a new PaperMarketing task.",
       "new-generation-final",
     ]);
     expect(
@@ -37238,7 +37238,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     ).toMatchObject({
       progressState: "failed",
       text: expect.stringContaining(
-        "Ask a Paperclip admin to create a private identity link for this account or enable isolated guest execution, then start a new task.",
+        "Ask a PaperMarketing admin to create a private identity link for this account or enable isolated guest execution, then start a new task.",
       ),
     });
   });
@@ -40644,7 +40644,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         expect.objectContaining({
           state: "filtered",
           attempts: 1,
-          redactedError: "External action denied by Paperclip authorization",
+          redactedError: "External action denied by PaperMarketing authorization",
           normalizedEvent: {
             providerEventId: expect.stringMatching(
               /^action-denied:[a-f0-9]{64}$/,
@@ -44244,7 +44244,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         principalId: expect.any(String),
         state: "filtered",
         attempts: 1,
-        redactedError: "External action denied by Paperclip authorization",
+        redactedError: "External action denied by PaperMarketing authorization",
         normalizedEvent: {
           providerEventId: expect.stringMatching(
             /^action-denied:[a-f0-9]{64}$/,
@@ -44265,7 +44265,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           kind: "delivery",
           status: "filtered",
           summary: "action ignored",
-          detail: "External action denied by Paperclip authorization",
+          detail: "External action denied by PaperMarketing authorization",
           replayable: false,
         }),
       ]),
@@ -46325,7 +46325,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           expect.objectContaining({
             kind: "delivery",
             status: "filtered",
-            detail: "External chat modal submission denied by Paperclip",
+            detail: "External chat modal submission denied by PaperMarketing",
             replayable: false,
           }),
         ]),
@@ -47106,7 +47106,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(denials[0]).toMatchObject({
         state: "filtered",
         attempts: 1,
-        redactedError: "External action denied by Paperclip authorization",
+        redactedError: "External action denied by PaperMarketing authorization",
         normalizedEvent: {
           providerEventId: expect.stringMatching(
             /^action-denied:[a-f0-9]{64}$/,
@@ -47368,7 +47368,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         principalId: principal.id,
         state: "filtered",
         attempts: 1,
-        redactedError: "External action denied by Paperclip authorization",
+        redactedError: "External action denied by PaperMarketing authorization",
         normalizedEvent: {
           providerEventId: expect.stringMatching(
             /^action-denied:[a-f0-9]{64}$/,
@@ -47391,7 +47391,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           kind: "delivery",
           status: "filtered",
           summary: "action ignored",
-          detail: "External action denied by Paperclip authorization",
+          detail: "External action denied by PaperMarketing authorization",
           replayable: false,
         }),
       ]),
@@ -49127,7 +49127,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       ) ?? [],
     ).toEqual([]);
     expect(publication.payload.text).toContain(
-      "Open the task in Paperclip to respond",
+      "Open the task in PaperMarketing to respond",
     );
     expect(callbacks.onModalSubmit).toBeTypeOf("function");
     expect(callbacks.onModalClose).toBeUndefined();
@@ -57441,7 +57441,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           }),
         }),
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "Destination is not enabled in PaperMarketing",
       },
     ]);
     await expect(
@@ -58024,7 +58024,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         principalId: null,
         redactedError:
           authorizationChange === "resource_disabled"
-            ? "Destination is not enabled in Paperclip"
+            ? "Destination is not enabled in PaperMarketing"
             : authorizationChange === "viewer"
               ? "Linked Paperclip account is not currently permitted"
               : "External identity must be linked to a Paperclip account",
@@ -58236,7 +58236,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           filtering: { contentRetained: false },
         }),
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "Destination is not enabled in PaperMarketing",
         state: "filtered",
       }),
     ]);
@@ -58992,7 +58992,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect.objectContaining({
         state: "filtered",
         principalId: null,
-        redactedError: "Destination is not enabled in Paperclip",
+        redactedError: "Destination is not enabled in PaperMarketing",
         normalizedEvent: expect.objectContaining({
           filtering: { contentRetained: false },
         }),
@@ -59213,7 +59213,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       },
       {
         threadId: dm.thread.id,
-        text: "Send your request to start a new Paperclip task.",
+        text: "Send your request to start a new PaperMarketing task.",
       },
       {
         threadId: dm.thread.id,
@@ -60518,7 +60518,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           state: "filtered",
           attempts: 0,
           conversationId: null,
-          redactedError: "Destination is not enabled in Paperclip",
+          redactedError: "Destination is not enabled in PaperMarketing",
           normalizedEvent: expect.objectContaining({
             deduplication: expect.objectContaining({ duplicateCount: 1 }),
           }),
@@ -63918,7 +63918,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       {
         threadId: dm.thread.id,
         messageId: "outbound-2",
-        text: "Maya needs a Paperclip admin to safely recover this turn before more work can start. Open the task in Paperclip for details.",
+        text: "Maya needs a PaperMarketing admin to safely recover this turn before more work can start. Open the task in PaperMarketing for details.",
       },
     ]);
     expect(JSON.stringify(providerRuntime?.edits)).not.toContain(
@@ -64120,7 +64120,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       {
         threadId: dm.thread.id,
         messageId: "outbound-2",
-        text: "Maya has no final response to show yet. Open the task in Paperclip for details.",
+        text: "Maya has no final response to show yet. Open the task in PaperMarketing for details.",
       },
     ]);
     expect(
@@ -64263,7 +64263,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           messageId: "outbound-2",
           text: publishesComment
             ? `Explicit Telegram reply via ${authorizationReason}`
-            : "Maya has no final response to show yet. Open the task in Paperclip for details.",
+            : "Maya has no final response to show yet. Open the task in PaperMarketing for details.",
         },
       ]);
       await expect(
@@ -69246,7 +69246,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await vi.advanceTimersByTimeAsync(10);
         expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([expect.objectContaining({
           payload: mode === "disabled"
-            ? { text: "This retry was not started. Open the task in Paperclip for details.", progressState: "failed" }
+            ? { text: "This retry was not started. Open the task in PaperMarketing for details.", progressState: "failed" }
             : { text: "Your retry is queued.", progressState: "queued" },
         })]);
         expect(coordinator.nextWakeAt()).toBeNull(); expect(idleWorkSnapshot().active).toBe(0);
@@ -69431,7 +69431,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       await settle();
       expect((await readAgentWakeupRequestsById(staged.actionId))[0].status).toBe("cancelled");
       expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual(expect.arrayContaining([expect.objectContaining({
-        payload: { text: "This retry was not started. Open the task in Paperclip for details.", progressState: "failed" },
+        payload: { text: "This retry was not started. Open the task in PaperMarketing for details.", progressState: "failed" },
       })]));
       const select = vi.spyOn(db, "select"), transaction = vi.spyOn(db, "transaction");
       try {
@@ -69590,7 +69590,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(await context.service.reconcileFailedRetryNotices({ scope }))
         .toEqual({ inserted: 1, contended: false, nextCursor: null });
       expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual(expect.arrayContaining([expect.objectContaining({
-        payload: { text: "This retry was not started. Open the task in Paperclip for details.", progressState: "failed" },
+        payload: { text: "This retry was not started. Open the task in PaperMarketing for details.", progressState: "failed" },
       })]));
       expect(await context.service.reconcileFailedRetryNotices({ scope }))
         .toEqual({ inserted: 0, contended: false, nextCursor: null });
@@ -71336,7 +71336,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         {
           threadId: context.thread.thread.id,
           messageId: originalWorking!.providerMessageId,
-          text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+          text: "Maya stopped before completing this turn. Open the task in PaperMarketing for details.",
         },
       ]);
 
@@ -71384,7 +71384,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           providerMessageId: originalWorking!.providerMessageId,
           payload: {
             progressState: "failed",
-            text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+            text: "Maya stopped before completing this turn. Open the task in PaperMarketing for details.",
           },
         }),
       ]);
@@ -75212,7 +75212,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       state: "filtered",
       attempts: 0,
       principalId: null,
-      redactedError: "Destination is not enabled in Paperclip",
+      redactedError: "Destination is not enabled in PaperMarketing",
       normalizedEvent: {
         filtering: { contentRetained: false },
         message: { providerMessageId: `${chatId}:10` },
@@ -79358,7 +79358,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     }, { timeout: 10_000 });
     const notices = () => readChatPublicationsByEndpointId(context.endpoint.id);
     const expectedText = change === "source removal" ? "This queued message was removed."
-      : "This follow-up was not started. Open the task in Paperclip for details.";
+      : "This follow-up was not started. Open the task in PaperMarketing for details.";
     const retire = async (database: typeof db) => {
       if (change === "source removal") return issueService(database).tombstoneComment(String(context.action.payload.commentId), {
         actorType: "user", userId: String(context.action.payload.requestedByActorId),
@@ -79493,7 +79493,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         .toEqual([expect.objectContaining({ status: "processed", result: expect.objectContaining({ code: "slack_session_stop_cancelled" }) })]);
       expect(await readAgentWakeupRequestsById(context.action.id)).toEqual([expect.objectContaining({ status: "cancelled" })]);
       expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual(expect.arrayContaining([expect.objectContaining({
-        payload: { text: "This follow-up was not started. Open the task in Paperclip for details.", progressState: "failed" },
+        payload: { text: "This follow-up was not started. Open the task in PaperMarketing for details.", progressState: "failed" },
       })]));
       expect(errors).toEqual([]);
     } finally { await coordinator.stop(); vi.useRealTimers(); await context.service.shutdown(); }
@@ -80079,7 +80079,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           issueId: context.conversation.issueId,
           idempotencyKey: `run:${runId}:failed:${context.endpoint.id}`,
           payload: {
-            text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+            text: "Maya stopped before completing this turn. Open the task in PaperMarketing for details.",
             progressState: "failed",
           },
         });
@@ -80093,7 +80093,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           {
             threadId: context.thread.thread.id,
             messageId: queued.providerMessageId,
-            text: "Maya stopped before completing this turn. Open the task in Paperclip for details.",
+            text: "Maya stopped before completing this turn. Open the task in PaperMarketing for details.",
           },
         ]);
         expect(JSON.stringify(runtime.edits)).not.toContain("was not started");
@@ -80189,7 +80189,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         {
           threadId: context.thread.thread.id,
           messageId: queued.providerMessageId,
-          text: "This follow-up was not started. Open the task in Paperclip for details.",
+          text: "This follow-up was not started. Open the task in PaperMarketing for details.",
         },
       ]);
       expect(JSON.stringify(runtime.edits)).not.toMatch(
