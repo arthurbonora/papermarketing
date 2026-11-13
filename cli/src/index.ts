@@ -73,7 +73,7 @@ program
 
 program
   .command("install")
-  .description("Install PaperMarketing into a managed per-user CLI store")
+  .description("Install a managed CLI from npm or a Git source (defaults to the upstream npm package)")
   .option("--canary", "Install the npm canary channel")
   .option("--version <version>", "Install an exact published npm version")
   .option("--ref <ref>", "Install a GitHub branch, tag, or commit SHA")
@@ -89,7 +89,7 @@ program
 program
   .command("update")
   .alias("upgrade")
-  .description("Check, update, or roll back the PaperMarketing CLI")
+  .description("Check, update, or roll back the managed CLI")
   .option("--latest", "Switch to the latest stable channel")
   .option("--canary", "Switch to the canary channel")
   .option("--version <version>", "Install an exact published version")
