@@ -396,12 +396,15 @@ export function toolActivityPresentation(input: ToolActivityPresentationInput): 
       : actionCopy(action, exact ? undefined : object);
   const semanticFamily = exact?.family ?? actionFamily(action);
   const family = transport === "mcp" ? "mcp" : semanticFamily;
-  const sourceLabel = namespace
-    ? humanizeToolName(namespace)
-    : transport === "mcp"
-      ? "MCP"
-      : undefined;
-  const summaryGroup = namespace.toLowerCase() === "paperclip"
+  const paperMarketingNamespace = namespace.toLowerCase() === "paperclip";
+  const sourceLabel = paperMarketingNamespace
+    ? "PaperMarketing"
+    : namespace
+      ? humanizeToolName(namespace)
+      : transport === "mcp"
+        ? "MCP"
+        : undefined;
+  const summaryGroup = paperMarketingNamespace
     ? paperclipSummaryGroup(action)
     : exact?.group ?? defaultSummaryGroup(action);
 

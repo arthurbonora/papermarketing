@@ -1677,7 +1677,7 @@ describe("claude_local ACP lane", () => {
     const first = await execute(buildContext(root, { context: wakeContext("issue_assigned") }));
     const freshPrompt = runtimes[0]?.startInputs[0]?.text ?? "";
     expect(freshPrompt.split(description)).toHaveLength(2);
-    expect(freshPrompt).toContain("PaperMarketing task context:");
+    expect(freshPrompt).toContain("Paperclip task context:");
 
     const second = await execute(buildContext(root, {
       runtime: {
@@ -1691,7 +1691,7 @@ describe("claude_local ACP lane", () => {
     expect(second.exitCode).toBe(0);
     const resumePrompt = runtimes[1]?.startInputs[0]?.text ?? "";
     expect(resumePrompt).not.toContain(description);
-    expect(resumePrompt).toContain("PaperMarketing task context:");
+    expect(resumePrompt).toContain("Paperclip task context:");
     expect(resumePrompt).toContain(
       "- issue description: omitted from this resume delta; fetch the issue if you need the latest brief",
     );

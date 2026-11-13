@@ -307,7 +307,7 @@ describe("execute", () => {
     // Fresh run: brief exactly once (task markdown only; wake-prompt copy suppressed).
     expect(runBodies[0]!.input.split(description)).toHaveLength(2);
     // Stable-session resume: compact task markdown, no re-sent brief.
-    expect(runBodies[1]!.input).toContain("PaperMarketing task context:");
+    expect(runBodies[1]!.input).toContain(compactTaskMarkdown);
     expect(runBodies[1]!.input).not.toContain(description);
   });
 

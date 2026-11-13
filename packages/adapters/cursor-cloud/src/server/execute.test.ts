@@ -225,7 +225,7 @@ describe("cursor_cloud execute", () => {
     expect(getRunMock).not.toHaveBeenCalled();
     expect(createMock.mock.calls[0]?.[0]).toMatchObject({
       apiKey: "cursor-secret",
-      name: "Paperclip Cursor Cloud Agent",
+      name: "PaperMarketing Cursor Cloud Agent",
       model: { id: "gpt-5.4" },
       cloud: {
         env: { type: "cloud" },
