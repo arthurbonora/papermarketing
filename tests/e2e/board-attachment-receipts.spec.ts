@@ -588,7 +588,7 @@ test("legacy failed upload can be removed before sending the retained text", asy
 });
 
 test("announcement dismissal handler tolerates an already-removed announcement", async ({ page }) => {
-  await page.setContent(`<aside aria-label="Paperclip announcements"><button aria-label="Dismiss announcement">Dismiss</button></aside><button id="continue" onclick="this.dataset.clicked='yes'">Continue</button>`);
+  await page.setContent(`<aside aria-label="PaperMarketing announcements"><button aria-label="Dismiss announcement">Dismiss</button></aside><button id="continue" onclick="this.dataset.clicked='yes'">Continue</button>`);
   const dismiss = page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement" });
   await page.addLocatorHandler(dismiss, async locator => {
     await page.locator("aside").evaluate(element => element.remove());
@@ -600,7 +600,7 @@ test("announcement dismissal handler tolerates an already-removed announcement",
 });
 
 test("announcement dismissal handler preserves errors while the target remains", async ({ page }) => {
-  await page.setContent('<aside aria-label="Paperclip announcements"><button disabled aria-label="Dismiss announcement">Dismiss</button></aside><button>Continue</button>');
+  await page.setContent('<aside aria-label="PaperMarketing announcements"><button disabled aria-label="Dismiss announcement">Dismiss</button></aside><button>Continue</button>');
   const dismiss = page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement" });
   page.setDefaultTimeout(1000);
   await expect(dismissAnnouncement(page, dismiss)).rejects.toThrow(/Timeout|timeout/);
@@ -609,7 +609,7 @@ test("announcement dismissal handler preserves errors while the target remains",
 });
 
 test("announcement dismissal handler tolerates detachment after its element snapshot", async ({ page }) => {
-  await page.setContent('<aside aria-label="Paperclip announcements"><button aria-label="Dismiss announcement">Dismiss</button></aside>');
+  await page.setContent('<aside aria-label="PaperMarketing announcements"><button aria-label="Dismiss announcement">Dismiss</button></aside>');
   const dismiss = page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement" });
   const snapshot = await dismiss.elementHandles();
   expect(snapshot).toHaveLength(1);

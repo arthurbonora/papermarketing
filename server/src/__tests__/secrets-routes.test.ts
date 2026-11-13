@@ -247,12 +247,12 @@ describe("secret routes", () => {
           operation: "secret.create",
           providerConfigId: "11111111-1111-4111-8111-111111111111",
           region: "us-east-1",
-          credentialPath: "Paperclip server runtime/provider credential path",
+          credentialPath: "PaperMarketing server runtime/provider credential path",
           requiredCapability: "secretsmanager:CreateSecret",
           actionableMessage:
             "AWS managed secret creation needs secretsmanager:CreateSecret in the selected region for this provider vault.",
           safeAlternative:
-            "If the secret already exists in AWS, link it as an external reference instead of creating a Paperclip-managed value.",
+            "If the secret already exists in AWS, link it as an external reference instead of creating a PaperMarketing-managed value.",
         },
       ),
     );
@@ -612,10 +612,10 @@ describe("secret routes", () => {
           providerConfigId: "discovery-preview",
           providerVaultContext: "draft_config",
           region: "us-east-1",
-          credentialPath: "Paperclip server runtime/provider credential path",
+          credentialPath: "PaperMarketing server runtime/provider credential path",
           requiredCapability: "secretsmanager:ListSecrets",
           actionableMessage:
-            "AWS discovery preview needs secretsmanager:ListSecrets in the selected region for the Paperclip server runtime/provider credential path.",
+            "AWS discovery preview needs secretsmanager:ListSecrets in the selected region for the PaperMarketing server runtime/provider credential path.",
           safeAlternative:
             "If the operator already knows the exact AWS Secrets Manager ARN, paste/link that ARN instead of using discovery. Exact-resource DescribeSecret and runtime read permissions are still required.",
         },

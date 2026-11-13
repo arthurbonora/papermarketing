@@ -2,6 +2,8 @@ import { chatCatalogOriginalPhaseDeadline, type ChatCatalogCase, type ChatCatalo
 import { observeInternal, verifyInternalResult, type Entity, type InternalObservation } from "./internal-support.js";
 import { codexSubscriptionAgentConfig } from "../codex-subscription-fixture.js";
 import { pollUntil } from "../api.js";
+
+const automaticRetryPromise = /\b(?:PaperMarketing will|Paperclip will|It will) retry automatically\./;
 export function makeDefinition(scenarioId: string, setup: ChatCatalogCase["setup"], grade: ChatCatalogCase["grade"]): ChatCatalogCase {
   const coverageGaps = scenarioId === "goals.align-existing-work" ? ["cross-company-goal-rejection"]
     : scenarioId === "goals.explain-purpose" ? ["missing-association", "inaccessible-goal-nondisclosure"]
@@ -30,7 +32,7 @@ export async function fixtureWorker(ctx: ChatCatalogContext) {
           { timeout: Math.max(1, Math.min(5_000, deadlineAt - Date.now())) });
         const state = { id: row.id, companyId: row.companyId, lifecycleState: row.lifecycleState, status: row.status,
           errorPresent: !!row.lifecycleError,
-          automaticRecovery: /\b(?:Paperclip will|It will) retry automatically\./.test(row.lifecycleError ?? ""),
+          automaticRecovery: automaticRetryPromise.test(row.lifecycleError ?? ""),
           verificationPaused: row.lifecycleError?.includes("Automatic verification is paused.") ?? false };
         const current = JSON.stringify(state);
         if (current !== previous) { observations.push({ ...state, observedAt: new Date().toISOString() }); previous = current; }
@@ -44,7 +46,7 @@ export async function fixtureWorker(ctx: ChatCatalogContext) {
         // Public agent rows omit lifecycleOperation. The lifecycle owner exposes its
         // automatic-recovery promise and manual-repair boundary in fixed diagnostics.
         const recovering = originalDeadline !== undefined && row.lifecycleState === "verifying"
-          && /\b(?:Paperclip will|It will) retry automatically\./.test(row.lifecycleError ?? "")
+          && automaticRetryPromise.test(row.lifecycleError ?? "")
           && !row.lifecycleError?.includes("Automatic verification is paused.");
         return row.lifecycleError && !recovering ? "Morgan runtime setup failed" : undefined;
       } });

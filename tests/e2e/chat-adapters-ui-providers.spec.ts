@@ -345,7 +345,7 @@ test.describe.serial("native chat adapter UI", () => {
     await page.getByRole("button", { name: "Choose an active agent" }).click();
     await page.getByRole("button", { name: "Select Maya", exact: true }).click();
     await page.locator("summary:visible").filter({ hasText: "Advanced" }).click();
-    await expect(page.getByLabel("Slack app name", { exact: true })).toHaveValue("maya-paperclip");
+    await expect(page.getByLabel("Slack app name", { exact: true })).toHaveValue("maya-papermarketing");
     await expect(page.getByLabel("Bot display name", { exact: true })).toHaveValue("maya");
     await expect(page.getByLabel("Slash command", { exact: true })).toHaveValue("/maya");
     await page.getByRole("button", { name: "Continue", exact: true }).click();

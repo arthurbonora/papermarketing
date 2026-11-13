@@ -13,12 +13,12 @@ describe("saved governed wait shutdown", () => {
   it("names automatic shutdown settlement without offering a duplicate Retry", () => {
     expect(projectTaskInterruption(issue, { run: { ...pending, nativeResumeAt: new Date(now + 30_000) }, agent,
       paused: false, approval: false }, now)).toMatchObject({ state: "working", canRetry: false,
-        retryWait: { reason: "governed_wait_settlement", message: "Your work is saved. Paperclip is finishing shutdown." } });
+        retryWait: { reason: "governed_wait_settlement", message: "Your work is saved. PaperMarketing is finishing shutdown." } });
   });
   it("explains exhausted shutdown recovery while preserving the saved work", () => {
     expect(projectTaskInterruption(issue, { run: pending, agent, paused: false, approval: false }, now))
       .toMatchObject({ state: "failed", canRetry: false, retryWait: { reason: "governed_wait_settlement",
-        message: "Paperclip couldn’t confirm shutdown. Your work is saved; continuation is paused." } });
+        message: "PaperMarketing couldn’t confirm shutdown. Your work is saved; continuation is paused." } });
   });
   it("keeps genuine approvals authoritative", () => {
     expect(projectTaskInterruption(issue, { run: pending, agent, paused: false, approval: true }, now))
@@ -153,7 +153,7 @@ it("explains a persisted Retry wait without exposing the saved payload", () => {
     executionWaitReason: "workspace_repair_required" };
   const presentation = projectTaskInterruption(issue, { run: failed, agent, wait, paused: false, approval: false });
   expect(presentation).toMatchObject({ state: "failed", canRetry: true,
-    retryWait: { reason: "workspace_repair_required", message: "Retry is waiting for Paperclip to recover the saved files. Your message is saved." } });
+    retryWait: { reason: "workspace_repair_required", message: "Retry is waiting for PaperMarketing to recover the saved files. Your message is saved." } });
   expect(projectTaskInterruption(issue, { run: failed, agent, wait: { ...wait, sourceRunId: "another-run" }, paused: false, approval: false }))
     .not.toHaveProperty("retryWait");
   expect(projectTaskInterruption(issue, { run: failed, agent, wait: { ...wait, executionWaitReason: "secret-payload" }, paused: false, approval: false }))

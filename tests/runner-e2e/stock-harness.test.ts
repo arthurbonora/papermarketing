@@ -65,6 +65,9 @@ describe("stock harness Product E2E", () => {
     hire.invocations = [];
     expect(gradeStockHire(hire).every(check => check.passed)).toBe(true);
     expect(gradeStockHarness(hire)).toContainEqual(expect.objectContaining({ id: "provider-runs-present", passed: false }));
+    hire.bundle.files[0]!.content = "You are an agent in a Paperclip company.\n";
+    expect(gradeStockHire(hire)).toContainEqual(expect.objectContaining({ id: "default-hire-bundle", passed: false }));
+    hire.bundle.files[0]!.content = STOCK_HIRE_IDENTITY;
     hire.bundle.files[0]!.content += "Old operating manual.";
     expect(gradeStockHire(hire)).toContainEqual(expect.objectContaining({ id: "default-hire-bundle", passed: false }));
   });

@@ -5,7 +5,7 @@ import { readStockInstructionVariant } from "./stock-harness-instruction-variant
 
 // These are an independent product contract, not imports of the implementation
 // constants. Otherwise a larger shipped manual could silently update the oracle.
-export const STOCK_HIRE_IDENTITY = "You are an agent in a Paperclip company.\n";
+export const STOCK_HIRE_IDENTITY = "You are an agent in a PaperMarketing company.\n";
 export const STOCK_TEMPLATE_IDENTITY = "You are agent";
 const SKILL_SOURCES = ["../../skills/paperclip/SKILL.md", "../../skills/paperclip/references/issue-documents.md",
   "../../scripts/paperclip-issue-update.sh", "../../skills/paperclip/scripts/paperclip-issue-update.sh"];

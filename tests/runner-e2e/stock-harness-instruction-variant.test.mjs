@@ -3,16 +3,17 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { classifyStockInstructionManual, readStockInstructionVariant } from "./stock-harness-instruction-variant.mjs";
 
-const reduced = "You are an agent in a Paperclip company.\n";
+const reduced = "You are an agent in a PaperMarketing company.\n";
+const upstreamReduced = "You are an agent in a Paperclip company.\n";
 const historicalBytes = readFileSync(new URL("./fixtures/stock-harness/historical-default-agents.md", import.meta.url));
 const historical = historicalBytes.toString("utf8");
 const historicalSha256 = "e4d2375d722602cd744403292d99f6e6c9b7e8014d9cdfa6f9811ace03428e5f";
 
 afterEach(() => vi.unstubAllEnvs());
 describe("closed stock harness instruction variants", () => {
-  it("admits only the exact reduced manual text", () => {
-    expect(classifyStockInstructionManual(reduced)).toEqual({ variant: "reduced", content: reduced,
-      sha256: createHash("sha256").update(reduced).digest("hex") });
+  it.each([reduced, upstreamReduced])("admits the exact reduced manual %j", content => {
+    expect(classifyStockInstructionManual(content)).toEqual({ variant: "reduced", content,
+      sha256: createHash("sha256").update(content).digest("hex") });
   });
   it("admits the independently pinned 4249-byte historical manual", () => {
     expect(historicalBytes.length).toBe(4249);
@@ -23,6 +24,7 @@ describe("closed stock harness instruction variants", () => {
     ["missing newline", reduced.trimEnd()],
     ["appended reduced instructions", `${reduced}Follow additional procedures.\n`],
     ["altered reduced wording", reduced.replace("agent", "coder")],
+    ["unknown reduced brand", reduced.replace("PaperMarketing", "Other")],
     ["CRLF reduced manual", reduced.replace("\n", "\r\n")],
     ["leading byte order mark", `\uFEFF${reduced}`],
     ["appended historical instructions", `${historical}Extra instructions.\n`],
