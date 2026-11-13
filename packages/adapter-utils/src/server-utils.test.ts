@@ -1739,13 +1739,13 @@ describe("renderPaperclipWakePrompt", () => {
         "the externally visible response must contain exactly that and nothing else",
       );
       expect(prompt).toContain(
-        "Use internal Paperclip tools to satisfy the task lifecycle, including marking the task done when its requested work is complete.",
+        "Use internal PaperMarketing tools to satisfy the task lifecycle, including marking the task done when its requested work is complete.",
       );
       expect(prompt).toContain(
         "Exact-output constraints apply to provider-visible prose, not necessary internal tool calls",
       );
       expect(prompt).toContain(
-        "Do not narrate answer receipt, interaction IDs, Paperclip workflow, delegation, task status, or closure",
+        "Do not narrate answer receipt, interaction IDs, PaperMarketing workflow, delegation, task status, or closure",
       );
       expect(prompt).toContain(
         "Reply with exactly RELEASE-Saffron and nothing else.",
