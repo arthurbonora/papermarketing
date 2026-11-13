@@ -455,7 +455,7 @@ describe("AppDefinition catalog", () => {
       "One team install covers its standard channels",
     );
     expect(channel("telegram")?.guidanceMd).toContain(
-      "public Paperclip webhook endpoint",
+      "public PaperMarketing webhook endpoint",
     );
     expect(channel("slack")?.guidanceMd).toContain("reactions");
     expect(channel("slack")?.guidanceMd).toContain("direct messages");
