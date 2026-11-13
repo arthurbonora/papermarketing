@@ -532,7 +532,7 @@
     "packages/shared/src/workspace-restore.ts": "26e32555e2016ea761a88f03286caf69dfd195e1",
     "packages/shared/src/worktree-port-registry.test.ts": "ad52c4b3e552378929b56448b216144b00c44c9f",
     "packages/shared/src/worktree-port-registry.ts": "4c3a0a2b40d0598fe057ab9f9f0cc9ce2974a5b0",
-    "packages/shared/src/worktree-seed-source.test.ts": "852856b1b5b8f4d0d3dada6501886fe50a2c2dde",
+    "packages/shared/src/worktree-seed-source.test.ts": "36ba759d75a475137961f0f77d4c54796cbfccf6",
     "packages/shared/src/worktree-seed-source.ts": "bb956c2dffe2617fe86662eb2863f9c2c527ce19",
     "packages/shared/tsconfig.json": "5a24989cd30dcf3749ca7e60d4e83d6ddbb14714",
     "pnpm-lock.yaml": "83b26545dd53fd1c06eddb9656d2d1cec9058942",
