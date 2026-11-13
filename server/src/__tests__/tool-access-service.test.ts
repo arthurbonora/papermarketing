@@ -20377,7 +20377,7 @@ describeEmbeddedPostgres("tool access service", () => {
           transport: "mcp_remote",
           status: "draft",
           config: { url: "https://mcp.example/github" },
-          warnings: [expect.stringContaining("Paperclip secret")],
+          warnings: [expect.stringContaining("PaperMarketing secret")],
         }),
         expect.objectContaining({
           name: "local",
@@ -20387,7 +20387,7 @@ describeEmbeddedPostgres("tool access service", () => {
             importedCommand: "npx",
             importedArgs: ["-y", "@example/local-mcp"],
           },
-          warnings: [expect.stringContaining("approved Paperclip template")],
+          warnings: [expect.stringContaining("approved PaperMarketing template")],
         }),
       ]),
     );

@@ -1482,7 +1482,7 @@ export function createHeartbeatRunState(db: Db) {
       readNonEmptyString(summarizeRunErrorForModel(latestRun.error, latestRun.terminalFailureCategory));
 
     const handoffMarkdown = [
-      "Paperclip session handoff:",
+      "PaperMarketing session handoff:",
       `- Previous session: ${sessionId}`,
       issueId ? `- Issue: ${issueId}` : "",
       `- Rotation reason: ${reason}`,

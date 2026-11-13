@@ -1077,7 +1077,7 @@ export async function buildPaperclipRuntimeMcpServers(input: {
       const created = await access.createProfile(input.agent.companyId, {
         profileKey,
         name: `Native ${input.agent.id.slice(0, 8)} ${assignmentDigest.slice(0, 12)}`,
-        description: "Immutable Paperclip Runner MCP assignment profile.",
+        description: "Immutable PaperMarketing Runner MCP assignment profile.",
         status: "active",
         defaultAction: "deny",
         metadata: {
@@ -1159,7 +1159,7 @@ export async function buildPaperclipRuntimeMcpServers(input: {
         body: {
           name: `Native ${input.agent.name} ${assignmentDigest.slice(0, 8)}`,
           slug,
-          description: "Run-scoped Paperclip Runner MCP gateway.",
+          description: "Run-scoped PaperMarketing Runner MCP gateway.",
           profileId: profile!.id,
           defaultProfileMode: "gateway_only",
           agentId: input.agent.id,
@@ -1528,7 +1528,7 @@ export async function createManagedMcpRunConfig(input: {
         subjectType: "heartbeat_run",
         subjectId: input.runId,
         clientLabel: `${input.agent.name} managed local adapter`,
-        ownerNote: `Short-lived Paperclip-managed MCP token for heartbeat run ${input.runId}.`,
+        ownerNote: `Short-lived PaperMarketing-managed MCP token for heartbeat run ${input.runId}.`,
         allowedActions: ["tools/list", "tools/call"],
         expiresAt,
       },
@@ -1660,7 +1660,7 @@ function externalAttachmentOmissionNotice(
   const reasons = entries
     .map(([reason, count]) => `${reason.replaceAll("_", " ")}: ${count}`)
     .join(", ");
-  return `Paperclip could not import every attachment from this exact external message: ${omitted} attachment${omitted === 1 ? " was" : "s were"} omitted (${reasons}). Treat omitted attachments as unavailable; do not infer their contents or substitute an older workspace file.`;
+  return `PaperMarketing could not import every attachment from this exact external message: ${omitted} attachment${omitted === 1 ? " was" : "s were"} omitted (${reasons}). Treat omitted attachments as unavailable; do not infer their contents or substitute an older workspace file.`;
 }
 
 export function enrichWakeContextSnapshot(input: {
@@ -2392,7 +2392,7 @@ export async function buildPaperclipWakePayload(input: {
       deletedAt || input.exposeLowTrustRaw
         ? row
         : sanitizeQuarantinedCommentForHigherTrust(row);
-    const fullBody = deletedAt ? "" : row.origin === "fast_response" ? `[Paperclip acknowledgement; not agent work] ${safeRow.body}` : safeRow.body;
+    const fullBody = deletedAt ? "" : row.origin === "fast_response" ? `[PaperMarketing acknowledgement; not agent work] ${safeRow.body}` : safeRow.body;
     const allowedBodyChars = Math.min(
       MAX_INLINE_WAKE_COMMENT_BODY_CHARS,
       remainingBodyChars,

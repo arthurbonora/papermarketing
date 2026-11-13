@@ -220,7 +220,7 @@ export function githubReviewCheckService(db: Db, fetchImpl = fetch) {
                     : {}),
                   output: {
                     title,
-                    summary: `${title}. ${state === "manual_required" ? "An authorized person can mention the bot to request a review of this head. Automatic review was not authorized by the bot configuration." : "This check follows the assigned Paperclip agent's task execution. Only a validated assessment can produce a passing score."}\n\nCommit: ${event.headSha}`,
+                    summary: `${title}. ${state === "manual_required" ? "An authorized person can mention the bot to request a review of this head. Automatic review was not authorized by the bot configuration." : "This check follows the assigned PaperMarketing agent's task execution. Only a validated assessment can produce a passing score."}\n\nCommit: ${event.headSha}`,
                   },
                 },
               },

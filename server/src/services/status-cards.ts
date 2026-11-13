@@ -116,7 +116,7 @@ function updateDescription(input: {
     changes: input.changes.map(({ issueId, identifier, from, to, changeKind }) => ({ issueId, identifier, from, to, changeKind })),
     queryVersion: input.card.queryVersion,
   };
-  return `Update this Paperclip status card.\n\n${UNTRUSTED_PROMPT_RULE}\n\n${task}${promptBlock}\n\n${mechanical}\n\n## Previous summary\n\n${untrustedPromptBlock("previous-summary", input.previousSummary ?? null)}\n\n## Changed issues\n\n${untrustedPromptBlock("changed-issues", input.changes.map(({ issueId, identifier, title, from, to, changeKind }) => ({ issueId, identifier, title, from, to, changeKind })))}\n\n${input.kind === "full" ? `## Bounded snapshot\n\n${untrustedPromptBlock("bounded-snapshot", input.snapshot.map(({ id, identifier, title, status }) => ({ id, identifier, title, status })))}` : ""}\n\n\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\``;
+  return `Update this PaperMarketing status card.\n\n${UNTRUSTED_PROMPT_RULE}\n\n${task}${promptBlock}\n\n${mechanical}\n\n## Previous summary\n\n${untrustedPromptBlock("previous-summary", input.previousSummary ?? null)}\n\n## Changed issues\n\n${untrustedPromptBlock("changed-issues", input.changes.map(({ issueId, identifier, title, from, to, changeKind }) => ({ issueId, identifier, title, from, to, changeKind })))}\n\n${input.kind === "full" ? `## Bounded snapshot\n\n${untrustedPromptBlock("bounded-snapshot", input.snapshot.map(({ id, identifier, title, status }) => ({ id, identifier, title, status })))}` : ""}\n\n\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\``;
 }
 
 /**
@@ -157,7 +157,7 @@ Example \`PUT /api/status-cards/${card.id}/query\` body:
 
 export function compileDescription(card: StatusCardRow, generationIssueId: string | null, hash: string) {
   const payload = compilePayload(card, generationIssueId, hash);
-  return `Compile this status-card interest prompt into structured Paperclip company-search queries, then continue in the same run and write the first full summary.
+  return `Compile this status-card interest prompt into structured PaperMarketing company-search queries, then continue in the same run and write the first full summary.
 
 ${compileQueryGuidance(card, generationIssueId)}
 

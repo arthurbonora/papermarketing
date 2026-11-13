@@ -211,7 +211,7 @@ describe("chat setup and identity-link clipboard actions", () => {
     await settle();
     expect(peopleList()?.textContent).toContain("Test person");
     expect(peopleError()).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
 
@@ -242,7 +242,7 @@ describe("chat setup and identity-link clipboard actions", () => {
     await settle();
     expect(container.textContent).toContain("#general");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
 
   it.each(["slack", "microsoft-teams"] as const)(
@@ -713,7 +713,7 @@ describe("chat setup and identity-link clipboard actions", () => {
     expect(warning.textContent).toContain("Public HTTPS URL required");
     const link = warning.querySelector("a")!;
     expect(link.textContent).toBe("Learn how to set up HTTPS");
-    expect(link.href).toBe("https://docs.paperclip.ing/reference/deploy/https/");
+    expect(link.href).toBe("https://github.com/arthurbonora/papermarketing/blob/master/doc/DEPLOYMENT-MODES.md");
   });
 
   it("cancels the delayed Slack advance when returning to the agent step", async () => {

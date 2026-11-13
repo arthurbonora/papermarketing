@@ -303,7 +303,7 @@ describe("GitHub bot management", () => {
     });
     expect(container.querySelectorAll('[role="region"] [role="switch"]')).toHaveLength(1);
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
   it("saves repository task defaults with explicit, cleared, and inherited values without changing access", async () => {

@@ -10631,7 +10631,7 @@ export function issueRoutes(
         }
 
         if ((outcome === "restored" || outcome === "false_positive") && activeRecoveryAction.cause === "native_workspace_finalization_owner_unverified") {
-          throw conflict("Paperclip is still confirming that the previous server stopped. Saving resumes without repeating the agent's work.", { code: "workspace_owner_stop_required" });
+          throw conflict("PaperMarketing is still confirming that the previous server stopped. Saving resumes without repeating the agent's work.", { code: "workspace_owner_stop_required" });
         }
 
         if (outcome === "restored" && isNativeWorkspaceExportRepairCause(activeRecoveryAction.cause)) {
@@ -14557,13 +14557,13 @@ export function issueRoutes(
 
   async function assertMcpTaskParticipation(query: IssueQueueDb, issue: { id: string; companyId: string; checkoutRunId?: string | null; executionRunId?: string | null; status: string; executionState?: { status?: string } | null }) {
     if (issue.status === "in_review" || issue.executionState?.status === "pending") {
-      throw forbidden("Review decisions must be made in Paperclip", { code: "MCP_REVIEW_REQUIRED" });
+      throw forbidden("Review decisions must be made in PaperMarketing", { code: "MCP_REVIEW_REQUIRED" });
     }
     const [active] = await query.select({ id: heartbeatRuns.id }).from(heartbeatRuns).where(and(
       eq(heartbeatRuns.companyId, issue.companyId), inArray(heartbeatRuns.status, ["queued", "running", "scheduled_retry"]),
       sql`(${heartbeatRuns.id} = ${issue.checkoutRunId ?? null}::uuid or ${heartbeatRuns.id} = ${issue.executionRunId ?? null}::uuid or ${heartbeatRuns.nativeIssueId} = ${issue.id}::uuid or ${heartbeatRuns.contextSnapshot}->>'issueId' = ${issue.id})`,
     )).limit(1);
-    if (active) throw conflict("An agent currently owns execution. Wait for it to finish, or manage execution in Paperclip.", { code: "MCP_ACTIVE_EXECUTION" });
+    if (active) throw conflict("An agent currently owns execution. Wait for it to finish, or manage execution in PaperMarketing.", { code: "MCP_ACTIVE_EXECUTION" });
   }
 
   /**
@@ -14624,7 +14624,7 @@ export function issueRoutes(
     return conflict(
       "This run owns the task's execution, so it cannot change the task status directly; doing so would end its access to the task before it reports. " +
         "Report the outcome with paperclip_finish instead: reportedWorkDisposition \"needs_review\" for review, \"done\" when complete, or \"yielded\" with continuation.kind \"monitor\" to wait on a scheduled monitor. " +
-        "Use paperclip_block for a blocker. Paperclip sets the task status from that report.",
+        "Use paperclip_block for a blocker. PaperMarketing sets the task status from that report.",
       { code: "native_run_status_reported_by_finish", requestedStatus },
     );
   }

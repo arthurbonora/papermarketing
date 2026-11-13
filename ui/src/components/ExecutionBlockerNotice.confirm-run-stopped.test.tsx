@@ -11,7 +11,7 @@ const api = vi.hoisted(() => ({ confirmRunStopped: vi.fn() }));
 vi.mock("../api/issues", () => ({ issuesApi: { confirmRunStopped: api.confirmRunStopped } }));
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const message = "Paperclip can't confirm that the previous run stopped. If no agent is still working on this task, a board operator can confirm that it stopped, and your Retry starts right away. Your message is saved.";
+const message = "PaperMarketing can't confirm that the previous run stopped. If no agent is still working on this task, a board operator can confirm that it stopped, and your Retry starts right away. Your message is saved.";
 const presentation: TaskInterruptionPresentation = { intentId: "intent", responsibility: "user", state: "waiting_for_user",
   nextRetryAt: null, canRetry: false, userAction: "confirm_run_stopped", sourceRunIds: ["run-1"], observedRunId: "run-1",
   retryWait: { reason: "process_identity_missing", message } };

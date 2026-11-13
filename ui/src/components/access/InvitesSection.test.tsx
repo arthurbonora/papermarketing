@@ -28,7 +28,7 @@ vi.mock("@/api/access", () => ({
 vi.mock("@/context/CompanyContext", () => ({
   useCompany: () => ({
     selectedCompanyId: "company-1",
-    selectedCompany: { id: "company-1", name: "Paperclip", issuePrefix: "PAP" },
+    selectedCompany: { id: "company-1", name: "PaperMarketing", issuePrefix: "PAP" },
   }),
 }));
 
@@ -68,7 +68,7 @@ describe("InvitesSection", () => {
       acceptedAt: isActive ? null : "2026-04-11T00:00:00.000Z",
       createdAt: `2026-04-${String(inviteNumber).padStart(2, "0")}T00:00:00.000Z`,
       updatedAt: `2026-04-${String(inviteNumber).padStart(2, "0")}T00:00:00.000Z`,
-      companyName: "Paperclip",
+      companyName: "PaperMarketing",
       humanRole: isActive ? "operator" : "viewer",
       inviteMessage: null,
       state: isActive ? "active" : "accepted",
@@ -202,7 +202,7 @@ describe("InvitesSection", () => {
     });
     expect(clipboardWriteTextMock).toHaveBeenCalledWith("https://paperclip.local/invite/new-token");
     expect(container.textContent).toContain("Latest invite link");
-    expect(container.textContent).toContain("This URL includes the current Paperclip domain returned by the server.");
+    expect(container.textContent).toContain("This URL includes the current PaperMarketing domain returned by the server.");
     expect(container.querySelector('input[aria-label="Latest invite URL"]')).toHaveProperty(
       "value",
       "https://paperclip.local/invite/new-token",
@@ -365,7 +365,7 @@ describe("InvitesSection", () => {
     expect(container.textContent).toContain("Board User 25");
     expect(container.textContent).toContain("Invite a person");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
 
     await act(async () => root.unmount());

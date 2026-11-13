@@ -9,7 +9,7 @@ const manifest: PaperclipPluginManifestV1 = {
   version: PLUGIN_VERSION,
   displayName: "boxd Sandbox Provider",
   description:
-    "Sandbox provider plugin that runs Paperclip environments on boxd microVMs, with suspend and resume for reused leases.",
+    "Sandbox provider plugin that runs PaperMarketing environments on boxd microVMs, with suspend and resume for reused leases.",
   author: "boxd",
   categories: ["automation"],
   capabilities: ["environment.drivers.register"],
@@ -31,7 +31,7 @@ const manifest: PaperclipPluginManifestV1 = {
             type: "string",
             format: "secret-ref",
             description:
-              "Paste a boxd API key (`bxd_...`) or pick a saved Paperclip secret. Create one with `boxd auth keys create paperclip --org <org>`. The key decides which org the machines belong to.",
+              "Paste a boxd API key (`bxd_...`) or pick a saved PaperMarketing secret. Create one with `boxd auth keys create paperclip --org <org>`. The key decides which org the machines belong to.",
           },
           reuseLease: {
             type: "boolean",
@@ -69,7 +69,7 @@ const manifest: PaperclipPluginManifestV1 = {
           },
           timeoutMs: {
             type: "number",
-            description: "Default command timeout in milliseconds. Paperclip also uses it as the default run timeout for this environment.",
+            description: "Default command timeout in milliseconds. PaperMarketing also uses it as the default run timeout for this environment.",
             default: 3600000,
             "x-paperclip-advanced": true,
             "x-paperclip-group": "Runtime",

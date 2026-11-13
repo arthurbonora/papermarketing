@@ -60,7 +60,7 @@ export async function runNativeNewCompanyInPrivateBrowser(input: Input & {
   const provisional = setupAgents[0]!;
   await page.getByRole("dialog").locator("summary").filter({ hasText: /^Advanced$/ }).click();
   await page.getByRole("button", { name: "Experimental harness", exact: true }).click();
-  await page.getByRole("option", { name: "OpenCode (Paperclip Runner)", exact: true }).click();
+  await page.getByRole("option", { name: "OpenCode (PaperMarketing Runner)", exact: true }).click();
   await page.getByRole("button", { name: "Configure agent", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Configure your agent", exact: true })).toBeVisible();
   if (new URL(page.url()).searchParams.get("setupAgentId") !== provisional.id) throw new Error("Public setup route replaced the saved first-agent identity");

@@ -90,7 +90,7 @@ function capabilityForAgent(agent: AgentBinding): RunnerGoalCapability {
       ? "Unsupported by OpenCode."
       : provider === "acpx"
         ? "This ACP agent does not advertise a structured session goal extension."
-        : "This Paperclip runner provider does not expose a durable session goal lifecycle.";
+        : "This PaperMarketing runner provider does not expose a durable session goal lifecycle.";
     return {
       availability: "unsupported",
       verified: true,
@@ -111,7 +111,7 @@ function capabilityForAgent(agent: AgentBinding): RunnerGoalCapability {
   const reason = agent.adapterType === "opencode_local"
     ? "Unsupported by OpenCode."
     : directAcp
-      ? "This direct ACP adapter has no live session goal controller. Use Paperclip Runner with a supported provider."
+      ? "This direct ACP adapter has no live session goal controller. Use PaperMarketing Runner with a supported provider."
     : (agent.adapterType === "claude_local" || agent.adapterType === "codex_local") && sessionMode === "oneshot"
       ? "Session goals require a persistent ACP session."
     : agent.adapterType === "claude_local"

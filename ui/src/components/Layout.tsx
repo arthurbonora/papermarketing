@@ -36,6 +36,7 @@ import { SidebarShell } from "./SidebarShell";
 import { SecondarySidebar } from "./SecondarySidebar";
 import { ContextualSidebarFrame } from "./ContextualSidebarFrame";
 import { SidebarAccountMenu } from "./SidebarAccountMenu";
+import { ProductAttribution } from "./ProductAttribution";
 import { useDialogActions } from "../context/DialogContext";
 import { usePanel } from "../context/PanelContext";
 import { useCompany } from "../context/CompanyContext";
@@ -639,6 +640,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
               marketingNavigation={marketingNavigation}
               forceExpanded={replacesPrimarySidebar}
             />
+            <ProductAttribution />
           </div>
         ) : (
           <SidebarShell
@@ -671,6 +673,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
                 marketingNavigation={marketingNavigation}
                 forceExpanded={replacesPrimarySidebar}
               />
+              <ProductAttribution compact={!replacesPrimarySidebar && collapsed && !peeking} />
             </>}
           </SidebarShell>
         )}

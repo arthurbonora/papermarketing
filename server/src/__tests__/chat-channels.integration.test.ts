@@ -9983,7 +9983,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         await expect(f.service.sendSlackTestMessage(f.endpoint.id, actor, { requestId: randomUUID() })).rejects.toThrow("Enable direct messages");
         await db.update(chatEndpoints).set({ allowDirectMessages: true }).where(eq(chatEndpoints.id, f.endpoint.id));
         await db.update(companyMemberships).set({ status: "inactive" }).where(and(eq(companyMemberships.companyId, f.companyId), eq(companyMemberships.principalId, actor.userId)));
-        await expect(f.service.sendSlackTestMessage(f.endpoint.id, actor, { requestId: randomUUID() })).rejects.toThrow("active Paperclip account");
+        await expect(f.service.sendSlackTestMessage(f.endpoint.id, actor, { requestId: randomUUID() })).rejects.toThrow("active PaperMarketing account");
         expect(posts(f)).toHaveLength(0);
       });
       it("redacts provider failures and never retries an ambiguous send", async () => {
@@ -10494,7 +10494,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       await db.update(authUsers).set({ image: null }).where(eq(authUsers.id, actor.userId));
       const [, welcome] = f.provider.mock.calls.find(([url]) => String(url).endsWith("chat.postMessage"))!;
       expect(new URLSearchParams(String(welcome!.body)).get("channel")).toBe(f.installerId);
-      expect(new URLSearchParams(String(welcome!.body)).get("text")).toMatch(/^Hi, I’m .+\. Your Slack account is connected to Paperclip\.$/);
+      expect(new URLSearchParams(String(welcome!.body)).get("text")).toMatch(/^Hi, I’m .+\. Your Slack account is connected to PaperMarketing\.$/);
       const [row] = await db.select().from(chatSlackRegistrations).where(eq(chatSlackRegistrations.endpointId, f.endpoint.id));
       expect(Object.keys(row.secretIds)).toEqual(["clientSecret"]);
       await request(f.app).patch(`/api/chat-endpoints/${f.endpoint.id}`).send({ slackSetupMethod: "manual" }).expect(409);
@@ -10542,7 +10542,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       const messages = f.provider.mock.calls.filter(([url]) => String(url).endsWith("chat.postMessage"));
       expect(messages).toHaveLength(2);
       expect(new URLSearchParams(String(messages[0][1]!.body)).get("text")).not.toContain("/event-subscriptions");
-      expect(new URLSearchParams(String(messages[1][1]!.body)).get("text")).toBe("Your Slack connection is working! Now ask me a question about your Paperclip instance.");
+      expect(new URLSearchParams(String(messages[1][1]!.body)).get("text")).toBe("Your Slack connection is working! Now ask me a question about your PaperMarketing instance.");
     });
     it.each(["failManifestUpdate", "timeoutManifestUpdate"] as const)("recovers %s on the same saved app after restart without exposing provider echoes", async failure => {
       const f = await fixture();
@@ -11028,7 +11028,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       { authorType: "user", mirrorToSlack: true, clientRequestId })).id).toBe(comment.id);
     await service.processPendingPublications();
     expect(runtime.endpoints.get(endpoint.id)!.posts).toEqual([
-      { threadId: channel.thread.id, text: "**Owner User (via Paperclip)**\n\nPlease make the plan" },
+      { threadId: channel.thread.id, text: "**Owner User (via PaperMarketing)**\n\nPlease make the plan" },
     ]);
     const runId = randomUUID();
     await db.insert(heartbeatRuns).values({ id: runId, companyId: fixture.companyId, agentId: fixture.assignedAgentId,
@@ -11043,7 +11043,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await service.processPendingPublications();
     await service.processPendingPublications();
     expect(runtime.endpoints.get(endpoint.id)!.posts.map(post => post.text)).toEqual([
-      "**Owner User (via Paperclip)**\n\nPlease make the plan", "The plan is ready.",
+      "**Owner User (via PaperMarketing)**\n\nPlease make the plan", "The plan is ready.",
     ]);
     // The explicit Board composer uses the same mirror and a durable wakeup.
     workWake.mockClear();
@@ -11116,7 +11116,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await service.processPendingPublications();
     if (change === "later-cancelled") {
       expect(runtime.endpoints.get(endpoint.id)!.posts.map(post => post.text)).toEqual([
-        "**Owner User (via Paperclip)**\n\nQueued before access changed", "Queued final before access changed",
+        "**Owner User (via PaperMarketing)**\n\nQueued before access changed", "Queued final before access changed",
       ]);
     } else {
       expect(runtime.endpoints.get(endpoint.id)!.posts).toEqual([]);
@@ -11228,7 +11228,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     await worker.processPendingDeliveries();
     await worker.processPendingPublications();
     expect(smallWake).toHaveBeenCalledTimes(1);
-    expect(runtime.endpoints.get(endpoint.id)!.posts.map(post => post.text)).toEqual(["**Owner User (via Paperclip)**\n\nSmall pool work"]);
+    expect(runtime.endpoints.get(endpoint.id)!.posts.map(post => post.text)).toEqual(["**Owner User (via PaperMarketing)**\n\nSmall pool work"]);
   }, 15_000);
 
   it("refreshes Slack tool guidance without restoring disabled catalog policies", async () => {
@@ -14264,7 +14264,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
 
     const [reply] = await db.select().from(chatActions).where(and(eq(chatActions.endpointId, endpoint.id), eq(chatActions.kind, "github_review_publication")));
     await db.update(chatActions).set({ status: "processing" }).where(eq(chatActions.id, reply.id));
-    await expect(service.test(endpoint.id)).rejects.toThrow("Wait for the Paperclip agent to reply");
+    await expect(service.test(endpoint.id)).rejects.toThrow("Wait for the PaperMarketing agent to reply");
     await db.update(chatActions).set({ status: "processed" }).where(eq(chatActions.id, reply.id));
     const activated = await service.test(endpoint.id);
     expect(activated).toMatchObject({
@@ -49735,7 +49735,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(publications).toEqual([
       expect.objectContaining({
         state: "published",
-        payload: { text: "**Owner User (via Paperclip)**\n\nThe selected PNG should follow." },
+        payload: { text: "**Owner User (via PaperMarketing)**\n\nThe selected PNG should follow." },
       }),
       expect.objectContaining({
         id: failed.id,
@@ -49753,7 +49753,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(providerRuntime.posts).toEqual([
       {
         threadId: channel.thread.id,
-        text: "**Owner User (via Paperclip)**\n\nThe selected PNG should follow.",
+        text: "**Owner User (via PaperMarketing)**\n\nThe selected PNG should follow.",
       },
       {
         threadId: channel.thread.id,
@@ -50388,7 +50388,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect(publications).toEqual([
       expect.objectContaining({
         state: "published",
-        payload: { text: "**Owner User (via Paperclip)**\n\nVisible board update" },
+        payload: { text: "**Owner User (via PaperMarketing)**\n\nVisible board update" },
       }),
       expect.objectContaining({
         id: first.id,
@@ -50403,7 +50403,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         .where(eq(issueAttachments.id, attachment.id)),
     ).resolves.toEqual([{ issueCommentId: comments[0].id }]);
     expect(runtime.endpoints.get(endpoint.id)?.posts).toEqual([
-      { threadId: channel.thread.id, text: "**Owner User (via Paperclip)**\n\nVisible board update" },
+      { threadId: channel.thread.id, text: "**Owner User (via PaperMarketing)**\n\nVisible board update" },
       {
         threadId: channel.thread.id,
         text: "",
@@ -50667,7 +50667,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         ).toEqual([
           {
             threadId: "slack:C-BOARD-REJECTION:4410.1",
-            text: "**Owner User (via Paperclip)**\n\nCorrected separately keyed send",
+            text: "**Owner User (via PaperMarketing)**\n\nCorrected separately keyed send",
           },
         ]);
       } finally {
@@ -51680,7 +51680,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         ).toEqual([[], ...attachmentIds.map((id) => [id])]);
         expect(initialBatch[2]!.id).toBe(blocked.id);
         expect(initialRuntime.posts).toEqual([
-          { threadId: channel.thread.id, text: provider === "slack" ? `**Owner User (via Paperclip)**\n\n${text}` : text },
+          { threadId: channel.thread.id, text: provider === "slack" ? `**Owner User (via PaperMarketing)**\n\n${text}` : text },
           {
             threadId: channel.thread.id,
             text: provider === "slack" ? "" : "Shared selected-1.txt.",
@@ -52681,7 +52681,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(providerRuntime.posts).toEqual([
         {
           threadId: damagedChannel.thread.id,
-          text: "**Owner User (via Paperclip)**\n\nDamaged attachment send",
+          text: "**Owner User (via PaperMarketing)**\n\nDamaged attachment send",
         },
       ]);
 
@@ -52700,11 +52700,11 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(providerRuntime.posts).toEqual([
         {
           threadId: damagedChannel.thread.id,
-          text: "**Owner User (via Paperclip)**\n\nDamaged attachment send",
+          text: "**Owner User (via PaperMarketing)**\n\nDamaged attachment send",
         },
         {
           threadId: healthyChannel.thread.id,
-          text: "**Owner User (via Paperclip)**\n\nHealthy attachment send",
+          text: "**Owner User (via PaperMarketing)**\n\nHealthy attachment send",
         },
         {
           threadId: healthyChannel.thread.id,
@@ -52818,7 +52818,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(providerRuntime.posts).toEqual([
         {
           threadId: channel.thread.id,
-          text: "**Owner User (via Paperclip)**\n\nMissing storage attachment send",
+          text: "**Owner User (via PaperMarketing)**\n\nMissing storage attachment send",
         },
       ]);
 
@@ -56999,7 +56999,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     expect((await service.listPrincipals(other.id))[0]?.lastConnectAt).toBeNull();
     const notice = String((postEphemeral.mock.calls[0] as unknown[])[1]);
     const token = /token=([A-Za-z0-9_-]+)/.exec(notice)![1];
-    expect(notice).toContain("Connect your Paperclip account");
+    expect(notice).toContain("Connect your PaperMarketing account");
     expect((postEphemeral.mock.calls[0] as unknown[])[2]).toEqual({ fallbackToDM: false });
     expect(await service.previewIdentityLink(token, "owner-user")).toMatchObject({ selfService: true, canConfirm: true, externalLabel: "Connect Person" });
     expect(await service.setupTestStatus(endpoint.id, "owner-user")).toEqual({ messageReceivedAt: null });
@@ -84149,7 +84149,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           for (let drain = 0; drain < 20; drain++)
             await service.processPendingPublications();
           expect(publication?.commentId).toBeTruthy();
-          const expectedText = provider === "slack" && source === "new" ? `**Owner User (via Paperclip)**\n\n${body}` : body;
+          const expectedText = provider === "slack" && source === "new" ? `**Owner User (via PaperMarketing)**\n\n${body}` : body;
           const rows = await orderedBatch(publication!.commentId!);
           expect(rows.every((row) => row.state === "published")).toBe(true);
           expect(rows.map((row) => row.payload.text).join("") === expectedText).toBe(
@@ -84199,7 +84199,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
             "@here ".repeat(1_000) +
             "END-OF-RICH-BOARD";
           expect(body.length).toBeLessThanOrEqual(100_000);
-          const safe = projectSafeChatPublicationText(provider === "slack" ? `**Owner User (via Paperclip)**\n\n${body}` : body);
+          const safe = projectSafeChatPublicationText(provider === "slack" ? `**Owner User (via PaperMarketing)**\n\n${body}` : body);
           const publication = await service.publishBoardMessage(
             endpoint.id,
             conversation.id,
@@ -84290,7 +84290,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         let restarted: ChatChannelService | undefined;
         try {
           const body = "a".repeat(99_990) + "FINAL-TAIL";
-          const expectedText = provider === "slack" ? `**Owner User (via Paperclip)**\n\n${body}` : body;
+          const expectedText = provider === "slack" ? `**Owner User (via PaperMarketing)**\n\n${body}` : body;
           let attempts = 0;
           transport.postHook = async () => {
             if (++attempts === 2)

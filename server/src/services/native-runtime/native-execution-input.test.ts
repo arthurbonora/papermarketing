@@ -554,7 +554,7 @@ describe("native execution input external-chat framing", () => {
       : provider === "opencode" ? { kind: "opencode", permissionMode: "allow" }
       : { kind: "codex", approvalPolicy: "never" });
     expect(input.task.prompt).not.toContain("## Questions that need a user response");
-    expect(input.task.prompt).toContain("Use Paperclip's request_human_input for durable task questions.");
+    expect(input.task.prompt).toContain("Use PaperMarketing's request_human_input for durable task questions.");
     expect(input.task.prompt).not.toContain("payload.questionSet");
   });
 

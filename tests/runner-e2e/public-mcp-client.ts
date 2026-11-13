@@ -57,11 +57,11 @@ export async function connect(context: BrowserContext, team: Team, write = true,
   let redirectUrl: string;
   if (page) {
     await page.goto(request.consentUrl);
-    await expect(page.getByRole("heading", { name: /^Connect .+ to Paperclip$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Connect .+ to PaperMarketing$/ })).toBeVisible();
     await page.getByRole("radio", { name: team.name, exact: true }).check();
-    if (write || configure) await page.getByRole("checkbox", { name: "Write all of your Paperclip data", exact: true }).check();
+    if (write || configure) await page.getByRole("checkbox", { name: "Write all of your PaperMarketing data", exact: true }).check();
     if (!write && !configure && options.requestedWrite) {
-      const writes = page.getByRole("checkbox", { name: "Write all of your Paperclip data", exact: true });
+      const writes = page.getByRole("checkbox", { name: "Write all of your PaperMarketing data", exact: true });
       if (await writes.isEnabled()) await writes.uncheck();
     }
     await options.inspectConsent?.(page);

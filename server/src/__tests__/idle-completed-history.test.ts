@@ -958,7 +958,7 @@ const DELETE_METHOD = "DELETE" as never;
       runIdFromMilestonePublication: () => null, fetchImpl: unused, stageTerminalReceiptReactionRemovals: unused,
       runtimeContextForRecord: unused as never, scheduleMessageProcessing: unused, processReceiptReaction: unused });
     const text = await db.transaction(tx => policy.githubCurrentOmissionPreparedText(tx, publication, endpoint));
-    expect(text).toContain("Open this Paperclip task");
+    expect(text).toContain("Open this PaperMarketing task");
     const [receipt] = await db.select().from(tables.chatActions).where(eq(tables.chatActions.kind, "github_omission_navigation"));
     expect(receipt).toMatchObject({ status: "processed", result: null });
     expect(await blockedActionKind("github_omission_navigation")).toBe(true);

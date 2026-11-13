@@ -47,8 +47,8 @@ import { classifyChatPublicationError } from "../../chat-publication-errors.js";
 import type { EndpointRecord } from "../runtime-types.js";
 
 export const TELEGRAM_COMMANDS = [
-  { command: "task", description: "Start or continue a Paperclip task" },
-  { command: "status", description: "Show the active Paperclip task" },
+  { command: "task", description: "Start or continue a PaperMarketing task" },
+  { command: "status", description: "Show the active PaperMarketing task" },
   { command: "new", description: "Start a new task after the current one" },
   { command: "close", description: "Close the active chat conversation" },
 ] as const;

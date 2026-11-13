@@ -592,7 +592,7 @@ describe("AgentMail two-step setup", () => {
     expect(mocks.listInboxes).toHaveBeenCalledTimes(2);
     expect(button("Continue").disabled).toBe(false);
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
 

@@ -1,6 +1,6 @@
-# Self-host Papermarketing
+# Self-host PaperMarketing
 
-Use this setup to test Papermarketing with your own projects. The application and this fork's CI do not run deployment commands. The Compose setup uses the upstream Dockerfile's `production` stage, a separate PostgreSQL service, and persistent volumes. The core application runs without Paperclip Cloud, WordPress, GA4, or Composio accounts.
+Use this setup to test PaperMarketing with your own projects. The application and this fork's CI do not run deployment commands. The Compose setup uses the upstream Dockerfile's `production` stage, a separate PostgreSQL service, and persistent volumes. The core application runs without an upstream cloud, WordPress, GA4, or Composio account.
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ The interface uses US English. Create two workspaces with different names and co
 
 ## Persistence, updates, and recovery
 
-The `database` volume stores PostgreSQL data. The `application` volume stores files, instructions, settings, and authentication material managed by Paperclip. Back up both volumes and `.env` to capture the entire instance. The application applies migrations at startup. Marketing profiles use validated agent metadata. Migration 0467 adds the `company_user_ui_layouts` table for layouts by user and workspace. The database also stores saved notes and widgets.
+The `database` volume stores PostgreSQL data. The `application` volume stores files, instructions, settings, and authentication material managed by PaperMarketing. Back up both volumes and `.env` to capture the entire instance. The application applies migrations at startup. Marketing profiles use validated agent metadata. Migration 0467 adds the `company_user_ui_layouts` table for layouts by user and workspace. The database also stores saved notes and widgets.
 
 Before updating, stop the application and create a consistent backup. Run these commands in a Linux shell from `docker/papermarketing`:
 

@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { connectionGrants, toolConnections, type Db } from "@paperclipai/db";
 
 export const TOOL_APPROVAL_CONNECTION_REQUIRED = "approved_action_connection_required";
-export const TOOL_APPROVAL_CONNECTION_MESSAGE = "Your approval is saved. Reconnect the app to continue. Paperclip will check the account and action again before it runs.";
+export const TOOL_APPROVAL_CONNECTION_MESSAGE = "Your approval is saved. Reconnect the app to continue. PaperMarketing will check the account and action again before it runs.";
 
 export function isToolApprovalConnectionError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;

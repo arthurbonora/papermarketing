@@ -312,7 +312,7 @@ export function readWorkspaceFailureCause(value: unknown): string | null {
 function terminalFinalizationFailureMessage(failureCode: string, failureScope: "provider" | "workspace" | undefined,
   failureCause?: string | null) {
   if (failureCode === "native_workspace_sync_out_retry_exhausted" && isSandboxStorageExhausted(failureCause)) {
-    return "Saving the workspace stopped because the sandbox disk is full. The agent's result is kept, and Paperclip "
+    return "Saving the workspace stopped because the sandbox disk is full. The agent's result is kept, and PaperMarketing "
       + "saves the files again from the retained sandbox without repeating the agent's work; follow the run's recovery "
       + `action if that cannot free enough space. Last cause: ${failureCause}`;
   }

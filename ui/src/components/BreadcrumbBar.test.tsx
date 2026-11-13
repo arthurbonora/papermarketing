@@ -182,7 +182,7 @@ describe("BreadcrumbBar", () => {
     expect(button.getAttribute("aria-current")).toBe("page");
     expect(button.closest('[aria-disabled="true"]')).toBeNull();
     expect(button.querySelector("button, a")).toBeNull();
-    expect(document.title).toBe("CodexCoder • Papermarketing");
+    expect(document.title).toBe("CodexCoder • PaperMarketing");
     for (const selector of ['[data-slot="agent-avatar"]', "[data-agent-name]", "svg"]) {
       const target = button.querySelector<HTMLElement>(selector);
       expect(target).not.toBeNull();

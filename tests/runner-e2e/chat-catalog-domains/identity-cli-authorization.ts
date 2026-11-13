@@ -92,7 +92,7 @@ export const cliAuthorizationIdentityCases: readonly ChatCatalogCase[] = [identi
     const source = ctx.input.page.url();
     // Navigate without page.goto: its report step title would carry the challenge secret.
     await ctx.input.page.evaluate(target => { window.location.assign(target); }, approval!); await ctx.input.page.waitForURL(page => page.pathname === url.pathname, { waitUntil: "domcontentloaded" });
-    await expect(ctx.input.page.getByRole("heading", { name: "Approve Paperclip CLI access", exact: true })).toBeVisible();
+    await expect(ctx.input.page.getByRole("heading", { name: "Approve PaperMarketing CLI access", exact: true })).toBeVisible();
     await expect(ctx.input.page.getByText("paperclipai auth login", { exact: true })).toBeVisible(); state.reviewVisible = true;
     await expect(ctx.input.page.getByText(ctx.input.fixtures.company.name, { exact: true }).last()).toBeVisible(); state.reviewCompanyVisible = true;
     const approved = ctx.input.page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === `/api/cli-auth/challenges/${id}/approve`);

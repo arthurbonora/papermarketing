@@ -2,7 +2,7 @@ import { TabFilters } from "@/components/TabBar";
 
 export const CATALOG_SOURCES = ["paperclip", "composio", "arcade", "installed", "all"] as const;
 export type CatalogSource = typeof CATALOG_SOURCES[number] | "marketing";
-export const CATALOG_SOURCE_NAMES = { marketing: "Marketing", paperclip: "Paperclip", composio: "Composio", arcade: "Arcade", executor: "Executor", installed: "Installed", all: "All" };
+export const CATALOG_SOURCE_NAMES = { marketing: "Marketing", paperclip: "PaperMarketing", composio: "Composio", arcade: "Arcade", executor: "Executor", installed: "Installed", all: "All" };
 
 const MARKETING_SOURCES = ["marketing", "installed", "composio", "arcade", "all"] as const;
 

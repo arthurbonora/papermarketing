@@ -217,7 +217,7 @@ it("keeps loaded connections usable when a refetch fails during an outage", asyn
   await settle();
   expect(document.body.textContent).toContain("Reconnect account");
   expect(document.body.textContent).not.toContain("Retry connections");
-  expect(document.body.textContent).not.toContain("Paperclip is restarting.");
+  expect(document.body.textContent).not.toContain("PaperMarketing is restarting.");
   expect(document.querySelector('[data-query-view="error"]')).toBeNull();
 });
 

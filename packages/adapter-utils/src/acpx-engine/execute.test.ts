@@ -856,13 +856,13 @@ describe("shared ACPX engine runtime behavior", () => {
 
     const prompt = String(meta[0]?.prompt ?? "");
     const promptMetrics = meta[0]?.promptMetrics as Record<string, number> | undefined;
-    expect(prompt).toContain("Paperclip runtime note:");
+    expect(prompt).toContain("PaperMarketing runtime note:");
     expect(prompt).toContain("PAPERCLIP_AGENT_ID");
     expect(prompt).toContain("PAPERCLIP_API_KEY");
     expect(prompt).not.toContain("PAPERCLIP_WAKE_PAYLOAD_JSON");
     expect(prompt).toContain("## Paperclip Wake Payload");
     expect(prompt).toContain("TEST-1");
-    expect(prompt).toContain("Paperclip API access note:");
+    expect(prompt).toContain("PaperMarketing API access note:");
     expect(prompt).toContain('PAPERCLIP_API_BASE="${PAPERCLIP_API_URL%/}"; PAPERCLIP_API_BASE="${PAPERCLIP_API_BASE%/api}"');
     expect(prompt).toContain("$PAPERCLIP_API_BASE/api/agents/me");
     expect(prompt).toContain("$PAPERCLIP_API_BASE/api/issues/$PAPERCLIP_TASK_ID");
@@ -1021,9 +1021,9 @@ describe("shared ACPX engine runtime behavior", () => {
     const promptMetrics = meta[0]?.promptMetrics as Record<string, number> | undefined;
     expect(prompt).toContain("## External chat response contract");
     expect(prompt).toContain("# CHAT-1 — Answer the provider message");
-    expect(prompt).toContain("Make zero Paperclip API calls");
-    expect(prompt).not.toContain("Paperclip API access note:");
-    expect(prompt).not.toContain("Paperclip runtime note:");
+    expect(prompt).toContain("Make zero PaperMarketing API calls");
+    expect(prompt).not.toContain("PaperMarketing API access note:");
+    expect(prompt).not.toContain("PaperMarketing runtime note:");
     expect(prompt).not.toContain(
       "Leave durable progress in comments, documents, or work products",
     );
@@ -1073,7 +1073,7 @@ describe("shared ACPX engine runtime behavior", () => {
     const prompt = String(meta[0]?.prompt ?? "");
     expect(prompt).not.toContain("read_current_wake_comments");
     expect(prompt).not.toContain("## External chat response contract");
-    expect(prompt).toContain("Paperclip API access note:");
+    expect(prompt).toContain("PaperMarketing API access note:");
     expect(prompt).toContain("Only fetch the API thread");
   });
 
@@ -1125,7 +1125,7 @@ describe("shared ACPX engine runtime behavior", () => {
     );
 
     const prompt = String(meta[0]?.prompt ?? "");
-    expect(prompt).toContain("Paperclip API access note:");
+    expect(prompt).toContain("PaperMarketing API access note:");
     expect(prompt).toContain("Use a real issue id from the current context before making issue write requests.");
     expect(prompt).not.toContain("$PAPERCLIP_API_BASE/api/issues/$PAPERCLIP_TASK_ID");
   });
@@ -3886,7 +3886,7 @@ describe("ACP activity diagnostics", () => {
       acpSettledSameKindToolCount: 0,
       acpSettledSameKindToolPermissionRequestedCount: 0,
     });
-    expect(logs.join("")).toContain("Its permission request reached Paperclip.");
+    expect(logs.join("")).toContain("Its permission request reached PaperMarketing.");
   }, 15_000);
 
   it("leaves a turn alone while its long-running tool keeps receiving updates", async () => {

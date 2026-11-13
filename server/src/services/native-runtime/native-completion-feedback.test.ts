@@ -321,7 +321,7 @@ describe("native final-response feedback", () => {
     const report = { ...done, summary: "OK" };
     const feedback = await nativeCompletionFeedback(db, value.runId, report);
     expect(feedback).toContain("Follow the user's explicitly requested final-response format, including an exact response when requested");
-    expect(feedback).toContain("When compatible with the requested response format, present any created or updated Paperclip resources you cite");
+    expect(feedback).toContain("When compatible with the requested response format, present any created or updated PaperMarketing resources you cite");
     expect(report.summary).toBe("OK");
   });
   it("does not link stale saved revisions", async () => {
@@ -410,25 +410,25 @@ describe("native final-response feedback", () => {
     await db.update(issues).set({ status: "in_progress", executionRunId: newerRunId }).where(eq(issues.id, value.issueId));
     await expect(nativeCompletionFeedback(db, value.runId, report)).resolves.toContain("newer run owns");
   });
-  it("asks once to re-check Paperclip instead of resting blocked on its own stall", async () => {
+  it.each(["Paperclip", "PaperMarketing"])("asks once to re-check %s after its own stall", async (brand) => {
     // Chaos run 2b600576: a SIGSTOPped server left write_document/read_document
     // unanswered; the agent reported the Paperclip document service as an
     // external outage and the task rested blocked with no Retry.
     const value = await fixture();
     const report: PrpStructuredRunResult = { ...done, reportedWorkDisposition: "blocked",
       completionClaim: { ...done.completionClaim, objectiveSatisfied: false },
-      blocker: { reasonCode: "external_service_unavailable", owner: { kind: "system", name: "Paperclip document service" },
+      blocker: { reasonCode: "external_service_unavailable", owner: { kind: "system", name: `${brand} document service` },
         scope: "task_wide", unblockAction: "Restore document API responsiveness" } };
-    await expect(nativeCompletionFeedback(db, value.runId, report)).rejects.toThrow(/Paperclip answered this report[\s\S]*same idempotencyKey/);
+    await expect(nativeCompletionFeedback(db, value.runId, report)).rejects.toThrow(/PaperMarketing answered this report[\s\S]*same idempotencyKey/);
     // Once per run: a Paperclip failure that persists after the re-check rests blocked.
     await expect(nativeCompletionFeedback(db, value.runId, report)).resolves.toContain("Blocker report accepted");
     // Concatenated names such as "PaperclipAI document service" also name a Paperclip service.
     const concatenated = await fixture();
     await expect(nativeCompletionFeedback(db, concatenated.runId, { ...report, blocker: { ...report.blocker!, owner: { kind: "system", name: "PaperclipAI document service" } } }))
-      .rejects.toThrow("Paperclip answered this report");
+      .rejects.toThrow("PaperMarketing answered this report");
     const runnerNamed = await fixture();
     await expect(nativeCompletionFeedback(db, runnerNamed.runId, { ...report, blocker: { ...report.blocker!, owner: { kind: "system", name: "paperclip_runner" } } }))
-      .rejects.toThrow("Paperclip answered this report");
+      .rejects.toThrow("PaperMarketing answered this report");
     // A genuinely external service, a non-system owner, or a finished run is not re-checked.
     const other = await fixture();
     await expect(nativeCompletionFeedback(db, other.runId, { ...report, blocker: { ...report.blocker!, owner: { kind: "system", name: "GitHub API" } } }))

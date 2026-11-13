@@ -55,8 +55,8 @@ interface EnvironmentDescriptor {
 
 const localEnvironmentDescriptor: EnvironmentDescriptor = {
   label: "Local",
-  detail: "Paperclip host",
-  title: "Local - Paperclip host",
+  detail: "PaperMarketing host",
+  title: "Local - PaperMarketing host",
 };
 
 const loadingEnvironmentDescriptor: EnvironmentDescriptor = {
@@ -117,11 +117,11 @@ function describeEnvironment(
   capabilities?: EnvironmentCapabilities | null,
 ): EnvironmentDescriptor {
   const detail = isPlatformManagedEnvironment(environment)
-    ? "Managed by Paperclip"
+    ? "Managed by PaperMarketing"
     : environment.driver === "sandbox"
       ? `${getSandboxProviderLabel(environment, capabilities)} sandbox provider`
       : environment.driver === "local"
-        ? "Paperclip host"
+        ? "PaperMarketing host"
         : formatEnvironmentDriver(environment.driver);
 
   return {

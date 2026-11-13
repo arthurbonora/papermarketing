@@ -680,7 +680,7 @@ describeEmbeddedPostgres("generic remote MCP connections", () => {
     await expect(gateway.approveActionRequest({ companyId: company.id, actionRequestId: action!.id, actor: { userId: "board-user" } })).rejects.toMatchObject({ reasonCode: "tool_not_found" });
     const intents = connectionIntentService(db);
     const claims = { sub: agent!.id, company_id: company.id, run_id: run!.id, responsible_user_id: "board-user" };
-    expect((await intents.search(claims, "Paperclip Notebook")).results.some(item => item.service === "paperclip-notebook")).toBe(false);
+    expect((await intents.search(claims, "Notebook")).results.some(item => item.service === "paperclip-notebook")).toBe(false);
     await expect(intents.request(claims, "paperclip-notebook")).rejects.toMatchObject({ status: 404 });
     expect(fixture.requestsTo("/mcp")).toHaveLength(callsBeforeDisabledDispatch);
     const tokenRequestsWhileOff = fixture.requestsTo("/token").length;

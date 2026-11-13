@@ -54,7 +54,7 @@ export async function withOperationAccountingTransaction<T>(db: Db, companyId: s
   }
 }
 
-export const ACCOUNTING_CONTENTION_MESSAGE = "Paperclip could not save this run's budget or usage records because other "
+export const ACCOUNTING_CONTENTION_MESSAGE = "PaperMarketing could not save this run's budget or usage records because other "
   + "updates to the same run kept conflicting with them. Retry the run.";
 
 /** Bounded, SQL-free failure for exhausted serialization retries. `code`

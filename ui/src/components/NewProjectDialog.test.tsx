@@ -75,7 +75,7 @@ describe("new project colors", () => {
 });
 
 const groups = [
-  { storageProviderPluginId: null, environments: [{ id: "sandbox", name: "Paperclip Sandbox" }, { id: "ssh", name: "Build host" }] },
+  { storageProviderPluginId: null, environments: [{ id: "sandbox", name: "PaperMarketing Sandbox" }, { id: "ssh", name: "Build host" }] },
   { storageProviderPluginId: "computer-plugin", environments: [{ id: "computer", name: "Agent computers" }] },
 ];
 
@@ -100,7 +100,7 @@ describe("project environment selection", () => {
     await renderForm();
     const select = container.querySelector<HTMLSelectElement>("select")!;
     expect(select.options).toHaveLength(2);
-    expect(select.options[0].textContent).toBe("Paperclip Sandbox, Build host");
+    expect(select.options[0].textContent).toBe("PaperMarketing Sandbox, Build host");
     expect(select.value).toBe("sandbox");
     act(() => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
     await settle();

@@ -43,8 +43,8 @@ export function requestOwnerGoneConfirmation(kindId: string) {
       // the record is unchanged, so it can never release an owner that took the record over since.
       evidence: { kind: kindId, recordId: record.recordId, runId: record.runId, proof: context.proof.reason,
         recordUpdatedAt },
-      nextAction: "A resource from this task's earlier run was recorded before Paperclip stored which server held it, "
-        + "so Paperclip cannot verify that the server stopped. Confirm that the previous server process has stopped "
+      nextAction: "A resource from this task's earlier run was recorded before PaperMarketing stored which server held it, "
+        + "so PaperMarketing cannot verify that the server stopped. Confirm that the previous server process has stopped "
         + "(for example, its container was replaced), and recovery releases the resource.",
     }).onConflictDoNothing();
   };

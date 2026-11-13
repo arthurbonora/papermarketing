@@ -15,5 +15,5 @@ export function isRunnerRevisionMismatch(error: unknown): boolean {
 
 export function runnerRevisionMismatchTestResult(adapterType: string, testedAt = new Date().toISOString()): AdapterEnvironmentTestResult {
   return { adapterType, status: "fail", testedAt, checks: [{ code: RUNNER_REVISION_MISMATCH_CODE, level: "error", retryable: true,
-    message: "The remote Runner does not match this Paperclip version yet. Paperclip will check again after the Runner update." }] };
+    message: "The remote Runner does not match this PaperMarketing version yet. PaperMarketing will check again after the Runner update." }] };
 }

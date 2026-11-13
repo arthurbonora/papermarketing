@@ -91,7 +91,7 @@ test.describe("Announcement well (N-13)", () => {
     await expect(page.getByRole("button", { name: "Open account menu" })).toBeVisible();
     await page.waitForTimeout(SETTLE_WAIT_MS);
     await page.screenshot({ path: test.info().outputPath("onboarding-task.png") });
-    const well = page.getByRole("complementary", { name: "Paperclip announcements" });
+    const well = page.getByRole("complementary", { name: "PaperMarketing announcements" });
     await expect(well).toHaveCount(0);
 
     // Positive control on the same page: once onboarding finishes, the same

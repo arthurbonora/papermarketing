@@ -193,7 +193,7 @@ async function startPaperclipCloudConnectorEnrollmentUnlocked(input: {
       origin,
       returnUri,
       returnState,
-      label: input.label?.trim() || process.env.PAPERCLIP_INSTANCE_ID?.trim() || "Self-hosted Paperclip",
+      label: input.label?.trim() || process.env.PAPERCLIP_INSTANCE_ID?.trim() || "Self-hosted PaperMarketing",
       signPublicKey: identity.signPublicKey,
       sealPublicKey: identity.sealPublicKey,
     }),

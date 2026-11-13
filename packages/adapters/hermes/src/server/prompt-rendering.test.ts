@@ -29,7 +29,7 @@ function baseContext(overrides: Record<string, unknown> = {}) {
         fallbackFetchNeeded: false,
       },
       paperclipTaskMarkdown: [
-        "Paperclip task context:",
+        "PaperMarketing task context:",
         '- Issue: "PAP-3404"',
         '- Title: "Plan the Hermes prompt update"',
         "",
@@ -64,7 +64,7 @@ test("renders standard assignment wake with task authority and no backlog discov
       fallbackFetchNeeded: false,
     },
     paperclipTaskMarkdown: [
-      "Paperclip task context:",
+      "PaperMarketing task context:",
       '- Issue: "PAP-11750"',
       '- Title: "Add Hermes prompt rendering regression tests"',
       "",
@@ -79,7 +79,7 @@ test("renders standard assignment wake with task authority and no backlog discov
   expect(prompt).toContain("- reason: issue_assigned");
   expect(prompt).toContain("- issue: PAP-11750 Add Hermes prompt rendering regression tests");
   expect(prompt).toContain("- issue work mode: standard");
-  expect(prompt).toContain("Paperclip task context:");
+  expect(prompt).toContain("PaperMarketing task context:");
   expect(prompt).toContain("Add focused unit tests for assignment wake and custom prompt rendering.");
   expect(prompt).toContain("The harness already checked out this issue for the current run.");
   expect(prompt).not.toContain("clear final disposition");
@@ -105,7 +105,7 @@ test("keeps current wake comments in the wake owner and preserves assignment mar
       fallbackFetchNeeded: false,
     },
     paperclipTaskMarkdown: [
-      "Paperclip task context:",
+      "PaperMarketing task context:",
       '- Issue: "PAP-11751"',
     ].join("\n"),
     paperclipTurnContext: {
@@ -116,7 +116,7 @@ test("keeps current wake comments in the wake owner and preserves assignment mar
   }), {});
 
   expect(prompt.split(commentBody)).toHaveLength(2);
-  expect(prompt).toContain('Paperclip task context:\n- Issue: "PAP-11751"');
+  expect(prompt).toContain('PaperMarketing task context:\n- Issue: "PAP-11751"');
 });
 
 test("renders scoped planning wake authority before the Hermes default workflow", () => {
@@ -156,7 +156,7 @@ test("renders resume deltas instead of full scoped-wake boilerplate when continu
   }), {}, { resumedSession: true });
 
   expect(prompt).toContain("## Paperclip Resume Delta");
-  expect(prompt).toContain("You are resuming an existing Paperclip session.");
+  expect(prompt).toContain("You are resuming an existing PaperMarketing session.");
   expect(prompt).toContain("Focus on the new wake delta below");
   expect(prompt).toContain("Please add the resume-delta case.");
   expect(prompt).toContain("- fallback fetch needed: no");
@@ -220,7 +220,7 @@ test("renders accepted-plan continuation on the current issue without requiring 
 test("keeps authoritative parent and ancestor context from task markdown", () => {
   const prompt = buildPrompt(baseContext({
     paperclipTaskMarkdown: [
-      "Paperclip task context:",
+      "PaperMarketing task context:",
       '- Issue: "PAP-3404"',
       "",
       "Authoritative parent / ancestor context:",
@@ -268,12 +268,12 @@ test("preserves custom prompt templates while exposing runtime and wake variable
   expect(prompt).toContain("keyEnv=PAPERCLIP_API_KEY");
   expect(prompt).toContain("runEnv=PAPERCLIP_RUN_ID");
   expect(prompt).toContain("wakePrompt=## Paperclip Wake Payload");
-  expect(prompt).toContain("task=Paperclip task context:");
+  expect(prompt).toContain("task=PaperMarketing task context:");
   expect(prompt).toContain("wakeJson={\"reason\":\"issue_assigned\"");
   expect(prompt).toContain('"reason":"issue_assigned"');
   expect(prompt).toContain("## Paperclip Wake Payload");
   expect(prompt).toContain("Issue description:\n```text\nUse the wake payload as runtime authority.\n```");
-  expect(prompt).toContain("Paperclip runtime identity:");
+  expect(prompt).toContain("PaperMarketing runtime identity:");
 });
 
 test("keeps historical task markdown available to custom templates while automatic context uses assignment markdown", () => {

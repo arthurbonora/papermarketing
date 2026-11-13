@@ -62,9 +62,9 @@ export interface AdapterDisplayInfo {
 }
 
 const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
-  antigravity_runtime: { label: "Google Antigravity", description: "Antigravity through Paperclip Runner", icon: Gem, hideFromVisualSelection: true },
-  copilot_runtime: { label: "GitHub Copilot", description: "Copilot through Paperclip Runner", icon: Code, hideFromVisualSelection: true },
-  kimi_runtime: { label: "Kimi Code (Runner)", description: "Kimi Code through Paperclip Runner", icon: Moon, hideFromVisualSelection: true },
+  antigravity_runtime: { label: "Google Antigravity", description: "Antigravity through PaperMarketing Runner", icon: Gem, hideFromVisualSelection: true },
+  copilot_runtime: { label: "GitHub Copilot", description: "Copilot through PaperMarketing Runner", icon: Code, hideFromVisualSelection: true },
+  kimi_runtime: { label: "Kimi Code (Runner)", description: "Kimi Code through PaperMarketing Runner", icon: Moon, hideFromVisualSelection: true },
   acpx_local: {
     label: "ACPX (retired)",
     description: "Retired standalone ACPX adapter",
@@ -86,7 +86,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
     recommended: true,
   },
   paperclip_runner: {
-    label: "Paperclip Runner",
+    label: "PaperMarketing Runner",
     description: "Experimental Rust runner with a Codex provider",
     icon: Cpu,
     experimental: true,

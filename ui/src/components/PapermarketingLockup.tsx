@@ -12,7 +12,7 @@ export function PapermarketingLockup() {
   return (
     <span className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight">
       <PapermarketingMark className="h-5 w-auto shrink-0" />
-      Papermarketing
+      PaperMarketing
     </span>
   );
 }

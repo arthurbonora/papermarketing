@@ -116,7 +116,7 @@ describe("durable Dot Runner integration", () => {
     expect(resolveNativeRuntimeMode({ ...input, enabled: false, dotEnabled: true })).toMatchObject({ kind: "native", profile: { backend: "openai_dot_mcp" } });
     expect(() => resolveNativeRuntimeMode({ ...input, enabled: false, dotEnabled: true,
       adapterConfig: { provider: "acpx", acpxAgent: "grok", model: "anthropic/claude-sonnet-4-6" },
-    })).toThrow("Paperclip Runner is experimental and disabled");
+    })).toThrow("PaperMarketing Runner is experimental and disabled");
     expect(resolveHeartbeatNativeRuntimeMode({ ...input, enabled: false, dotEnabled: false,
       persisted: { runtimeMode: "native", runtimeModeReason: null, runtimeModeResolvedAt: new Date(), driverKind: "openai_dot_mcp" },
     })).toMatchObject({ kind: "native", profile: { backend: "openai_dot_mcp" } });
@@ -627,7 +627,7 @@ describe("durable Dot Runner integration", () => {
     const cancelRun = vi.fn().mockResolvedValue(null);
     const broker = dotRunnerBroker(db, { heartbeat: { wakeup: vi.fn(), cancelRun } });
     expect(await broker.stopGrokWork(f.company.id, f.agent.id, f.userId, run!.id)).toMatchObject({ stopped: true, remoteTerminationConfirmed: false });
-    expect(cancelRun).toHaveBeenCalledWith(run!.id, "Paperclip work stopped; Grok execution unconfirmed");
+    expect(cancelRun).toHaveBeenCalledWith(run!.id, "PaperMarketing work stopped; Grok execution unconfirmed");
     expect(await grokRoutineService(db).recoveryNeeded(f.company.id, f.agent.id)).toBe(status === "running");
     expect(await db.select().from(dotRunnerAssignments).where(eq(dotRunnerAssignments.runId, run!.id))).toHaveLength(0);
     const other = await fixture({ provider: "grok_bot" });
@@ -643,7 +643,7 @@ describe("durable Dot Runner integration", () => {
     const broker = dotRunnerBroker(db, { heartbeat: { wakeup: vi.fn(), cancelRun } });
     await broker.stopGrokWork(f.company.id, f.agent.id, f.userId, queued!.id);
     expect(cancelRun).toHaveBeenCalledTimes(1);
-    expect(cancelRun).toHaveBeenCalledWith(queued!.id, "Paperclip work stopped; Grok execution unconfirmed");
+    expect(cancelRun).toHaveBeenCalledWith(queued!.id, "PaperMarketing work stopped; Grok execution unconfirmed");
     expect((await db.select().from(dotRunnerAssignments).where(eq(dotRunnerAssignments.id, active.assignment.id)))[0]!.status).toBe("offered");
     expect(await grokRoutineService(db).recoveryNeeded(f.company.id, f.agent.id)).toBe(false);
     await f.events.stop();

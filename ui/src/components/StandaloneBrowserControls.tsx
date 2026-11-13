@@ -69,7 +69,7 @@ export function StandaloneBrowserControls({ mobile }: { mobile: boolean }) {
     const url = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: document.title || "Papermarketing", url });
+        await navigator.share({ title: document.title || "PaperMarketing", url });
         return;
       }
       await copyTextToClipboard(url);

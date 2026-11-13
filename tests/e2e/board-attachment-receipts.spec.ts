@@ -47,7 +47,7 @@ async function setup(page: Page, request: APIRequestContext, classic: boolean) {
   // Announcements can appear after navigation or reload and cover the classic
   // composer's attachment button. Dismiss through the same UI as a Board user.
   await page.addLocatorHandler(
-    page.getByRole("complementary", { name: "Paperclip announcements", exact: true })
+    page.getByRole("complementary", { name: "PaperMarketing announcements", exact: true })
       .getByRole("button", { name: "Dismiss announcement", exact: true }),
     async (dismiss) => dismissAnnouncement(page, dismiss),
   );
@@ -589,7 +589,7 @@ test("legacy failed upload can be removed before sending the retained text", asy
 
 test("announcement dismissal handler tolerates an already-removed announcement", async ({ page }) => {
   await page.setContent(`<aside aria-label="Paperclip announcements"><button aria-label="Dismiss announcement">Dismiss</button></aside><button id="continue" onclick="this.dataset.clicked='yes'">Continue</button>`);
-  const dismiss = page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("button", { name: "Dismiss announcement" });
+  const dismiss = page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement" });
   await page.addLocatorHandler(dismiss, async locator => {
     await page.locator("aside").evaluate(element => element.remove());
     await dismissAnnouncement(page, locator);
@@ -601,7 +601,7 @@ test("announcement dismissal handler tolerates an already-removed announcement",
 
 test("announcement dismissal handler preserves errors while the target remains", async ({ page }) => {
   await page.setContent('<aside aria-label="Paperclip announcements"><button disabled aria-label="Dismiss announcement">Dismiss</button></aside><button>Continue</button>');
-  const dismiss = page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("button", { name: "Dismiss announcement" });
+  const dismiss = page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement" });
   page.setDefaultTimeout(1000);
   await expect(dismissAnnouncement(page, dismiss)).rejects.toThrow(/Timeout|timeout/);
   await expect(dismiss).toBeVisible();
@@ -610,7 +610,7 @@ test("announcement dismissal handler preserves errors while the target remains",
 
 test("announcement dismissal handler tolerates detachment after its element snapshot", async ({ page }) => {
   await page.setContent('<aside aria-label="Paperclip announcements"><button aria-label="Dismiss announcement">Dismiss</button></aside>');
-  const dismiss = page.getByRole("complementary", { name: "Paperclip announcements" }).getByRole("button", { name: "Dismiss announcement" });
+  const dismiss = page.getByRole("complementary", { name: "PaperMarketing announcements" }).getByRole("button", { name: "Dismiss announcement" });
   const snapshot = await dismiss.elementHandles();
   expect(snapshot).toHaveLength(1);
   await snapshot[0]!.evaluate(element => (element as ChildNode).remove());

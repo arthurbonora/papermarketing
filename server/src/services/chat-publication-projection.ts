@@ -262,7 +262,7 @@ export function projectSafeChatPublicationText(input: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  if (!output) return "Update available in Paperclip.";
+  if (!output) return "Update available in PaperMarketing.";
   if (output.length > MAX_TEXT_OUTPUT_LENGTH) {
     throw new UnsafeChatPublicationError(
       "External chat text exceeds its projected processing limit",

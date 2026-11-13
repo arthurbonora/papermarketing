@@ -90,7 +90,7 @@ export const subscriptionIdentityCases: readonly ChatCatalogCase[] = [identityDe
     const accountRow = dialog.locator("div.space-y-2.border-b").filter({ has: dialog.getByText(sourceAccount.name, { exact: true }) });
     await accountRow.getByRole("button", { name: "Edit price", exact: true }).click();
     await expect(dialog.getByLabel("Plan", { exact: true })).toHaveValue(sourceAccount.price.plan);
-    await expect(dialog.getByText("Linking counts these accounts once, combines their Paperclip usage, and keeps the selected account’s price. Only link the same subscription or paid seat.", { exact: true })).toBeVisible(); state.linkDisclosureVisible = true;
+    await expect(dialog.getByText("Linking counts these accounts once, combines their PaperMarketing usage, and keeps the selected account’s price. Only link the same subscription or paid seat.", { exact: true })).toBeVisible(); state.linkDisclosureVisible = true;
     await dialog.getByLabel("Same subscription as another account?", { exact: true }).selectOption(targetAccount.id);
     const response = ctx.input.page.waitForResponse(result => result.request().method() === "POST" && new URL(result.url()).pathname === `${root}/costs/subscriptions/${sourceAccount.id}/link`
       && result.request().postDataJSON()?.targetId === targetAccount.id);

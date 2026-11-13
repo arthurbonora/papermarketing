@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Papermarketing",
-  "short_name": "Papermarketing",
+  "name": "PaperMarketing",
+  "short_name": "PaperMarketing",
   "description": "Workspace for AI marketing teams",
   "start_url": "/",
   "scope": "/",

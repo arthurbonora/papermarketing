@@ -34,7 +34,7 @@ vi.mock("@/context/BreadcrumbContext", () => ({
 
 vi.mock("@/context/CompanyContext", () => ({
   useCompany: () => ({
-    selectedCompany: { id: "company-1", name: "Paperclip", issuePrefix: "PAP" },
+    selectedCompany: { id: "company-1", name: "PaperMarketing", issuePrefix: "PAP" },
     selectedCompanyId: "company-1",
   }),
 }));
@@ -75,8 +75,8 @@ function basePlugin(overrides: Record<string, unknown> = {}) {
     manifestJson: {
       displayName: "E2B Sandbox Provider",
       version: "0.1.0",
-      description: "E2B environments for Paperclip.",
-      author: "Paperclip",
+      description: "E2B environments for PaperMarketing.",
+      author: "PaperMarketing",
       capabilities: ["environment.drivers.register"],
       environmentDrivers: [
         {
@@ -220,7 +220,7 @@ describe("PluginSettings", () => {
         displayName: "LLM Wiki",
         version: "0.1.0",
         description: "Local-file LLM Wiki plugin.",
-        author: "Paperclip",
+        author: "PaperMarketing",
         capabilities: ["local.folders"],
         localFolders: [declaration],
       },
@@ -256,7 +256,7 @@ describe("PluginSettings", () => {
         displayName: "LLM Wiki",
         version: "0.1.0",
         description: "Local-file LLM Wiki plugin.",
-        author: "Paperclip",
+        author: "PaperMarketing",
         capabilities: ["local.folders"],
         localFolders: [declaration],
       },
@@ -293,7 +293,7 @@ describe("PluginSettings", () => {
     expect(container.textContent).toContain("Wiki root");
     expect(container.textContent).toContain("No local folder path is configured.");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
 
     await act(async () => {
@@ -340,7 +340,7 @@ describe("PluginSettings", () => {
         displayName: "LLM Wiki",
         version: "0.1.0",
         description: "Local-file LLM Wiki plugin.",
-        author: "Paperclip",
+        author: "PaperMarketing",
         capabilities: ["local.folders"],
         localFolders: [declaration],
       },
@@ -370,7 +370,7 @@ describe("PluginSettings", () => {
         displayName: "LLM Wiki",
         version: "0.1.0",
         description: "Local-file LLM Wiki plugin.",
-        author: "Paperclip",
+        author: "PaperMarketing",
         capabilities: ["local.folders"],
         localFolders: [declaration],
       },
@@ -412,7 +412,7 @@ describe("PluginSettings", () => {
         displayName: "LLM Wiki",
         version: "0.1.0",
         description: "Local-file LLM Wiki plugin.",
-        author: "Paperclip",
+        author: "PaperMarketing",
         capabilities: ["local.folders"],
         localFolders: [declaration],
       },
@@ -451,7 +451,7 @@ describe("PluginSettings", () => {
         displayName: "LLM Wiki",
         version: "0.1.0",
         description: "Local-file LLM Wiki plugin.",
-        author: "Paperclip",
+        author: "PaperMarketing",
         capabilities: ["local.folders"],
         localFolders: [declaration],
       },

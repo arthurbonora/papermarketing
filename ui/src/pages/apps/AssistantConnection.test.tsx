@@ -175,7 +175,7 @@ describe("assistant setup from Connections", () => {
     expect(container.querySelector('[data-connected]')?.getAttribute("data-connected")).toBe("true");
     expect(container.textContent).toContain("Dotta’s OpenCode connection");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
   it("keeps connected assistants listed when the page's refetch fails transiently", async () => {
     mocks.connections.mockResolvedValue([grant]);
@@ -188,7 +188,7 @@ describe("assistant setup from Connections", () => {
     expect(container.querySelector('[aria-label="Revoke Dotta’s OpenCode connection"]')).not.toBeNull();
     expect(container.textContent).not.toContain("No assistants connected");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
   it("shows readable copy and a Retry when the connection list fails for real", async () => {
     mocks.connections.mockRejectedValueOnce(new ApiError("Boom", 500, { error: "Boom" }));

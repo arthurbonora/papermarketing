@@ -88,7 +88,7 @@ vi.mock("@/context/SidebarContext", () => ({
 vi.mock("@/context/CompanyContext", () => ({
   useCompany: () => ({
     selectedCompanyId: "company-1",
-    selectedCompany: { id: "company-1", name: "Paperclip" },
+    selectedCompany: { id: "company-1", name: "PaperMarketing" },
   }),
 }));
 
@@ -240,7 +240,7 @@ describe("CompanyAccess", () => {
     await flushReact();
     await flushReact();
 
-    expect(container.textContent).not.toContain("Manage the people who can work in Paperclip");
+    expect(container.textContent).not.toContain("Manage the people who can work in PaperMarketing");
     expect(container.textContent).not.toContain("Members can collaborate across the company by default");
     expect(container.textContent).not.toContain("Core keeps this page focused on membership");
     expect(container.textContent).not.toContain("Manage human company memberships and status here");
@@ -736,7 +736,7 @@ describe("CompanyAccess read resilience", () => {
     expect(listMembersMock).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain("Codex Coder");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
 
     await act(async () => root.unmount());

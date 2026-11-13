@@ -1577,7 +1577,7 @@ describe("MarkdownEditor", () => {
     expect(findMentionMatch("Ping @Paperclip App", "Ping @Paperclip App".length)).toEqual({
       trigger: "mention",
       marker: "@",
-      query: "Paperclip App",
+      query: "PaperMarketing App",
       atPos: 5,
       endPos: "Ping @Paperclip App".length,
     });
@@ -1739,12 +1739,12 @@ describe("MarkdownEditor", () => {
       {
         id: "project:project-123",
         kind: "project" as const,
-        name: "Paperclip App",
+        name: "PaperMarketing App",
         projectId: "project-123",
         projectColor: "#336699",
       },
     ],
-    matchText = "Paperclip App",
+    matchText = "PaperMarketing App",
     onSubmit?: () => void,
   ): Promise<{ option: HTMLButtonElement; root: ReturnType<typeof createRoot>; menu: HTMLElement }> {
     const root = createRoot(container);
@@ -1917,7 +1917,7 @@ describe("MarkdownEditor", () => {
     const mentions = Array.from({ length: 12 }, (_, index) => ({
       id: `project:project-${index}`,
       kind: "project" as const,
-      name: `Paperclip App ${index}`,
+      name: `PaperMarketing App ${index}`,
       projectId: `project-${index}`,
       projectColor: "#336699",
     }));
@@ -1945,7 +1945,7 @@ describe("MarkdownEditor", () => {
     const mentions = Array.from({ length: 12 }, (_, index) => ({
       id: `project:project-${index}`,
       kind: "project" as const,
-      name: `Paperclip App ${index}`,
+      name: `PaperMarketing App ${index}`,
       projectId: `project-${index}`,
       projectColor: "#336699",
     }));
@@ -2003,7 +2003,7 @@ describe("MarkdownEditor", () => {
     const mentions = Array.from({ length: 60 }, (_, index) => ({
       id: `project:project-${index}`,
       kind: "project" as const,
-      name: `Paperclip App ${index}`,
+      name: `PaperMarketing App ${index}`,
       projectId: `project-${index}`,
       projectColor: "#336699",
     }));
@@ -2029,7 +2029,7 @@ describe("MarkdownEditor", () => {
     const mentions = Array.from({ length: 12 }, (_, index) => ({
       id: `project:project-${index}`,
       kind: "project" as const,
-      name: `Paperclip App ${index}`,
+      name: `PaperMarketing App ${index}`,
       projectId: `project-${index}`,
       projectColor: "#336699",
     }));

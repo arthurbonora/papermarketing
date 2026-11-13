@@ -90,9 +90,9 @@ export function resolveHermesCommand(config: Record<string, unknown>): string {
 // ---------------------------------------------------------------------------
 
 const HERMES_RUNTIME_IDENTITY_TEMPLATE = [
-  'You are "{{agent.name}}", an AI agent employee in a Paperclip-managed company.',
+  'You are "{{agent.name}}", an AI agent employee in a PaperMarketing-managed company.',
   "",
-  "Paperclip runtime identity:",
+  "PaperMarketing runtime identity:",
   "- Agent ID: {{agent.id}}",
   "- Company ID: {{agent.companyId}}",
   "- Run ID: {{run.id}}",
@@ -102,8 +102,8 @@ const HERMES_RUNTIME_IDENTITY_TEMPLATE = [
 // Hermes applies this overlay at each API call, including after compaction,
 // without storing it in conversation history. Keep run/task deltas in -q.
 const HERMES_SYSTEM_PROMPT_TEMPLATE = [
-  "Paperclip API guidance:",
-  "- Use `curl` from the terminal for Paperclip API calls; browser/web extraction tools may not reach localhost.",
+  "PaperMarketing API guidance:",
+  "- Use `curl` from the terminal for PaperMarketing API calls; browser/web extraction tools may not reach localhost.",
   "- Use `$PAPERCLIP_API_URL`, `$PAPERCLIP_API_KEY`, and `$PAPERCLIP_RUN_ID`; do not hard-code local ports or copy secrets into comments.",
   "- Displayed command logs may redact secrets; rely on environment variables instead of printed token values.",
   "- Include `-H \"Authorization: Bearer $PAPERCLIP_API_KEY\"` on API requests.",
@@ -371,12 +371,12 @@ export async function execute(
       if (selectedSkills.length > 0) {
         await ctx.onLog(
           "stdout",
-          `[hermes] Reconciled ${selectedSkills.length} Paperclip-managed skill(s) into the Hermes skills home.\n`,
+          `[hermes] Reconciled ${selectedSkills.length} PaperMarketing-managed skill(s) into the Hermes skills home.\n`,
         );
       }
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
-      await ctx.onLog("stderr", `[hermes] Cannot start without the required Paperclip-managed skills: ${reason}\n`);
+      await ctx.onLog("stderr", `[hermes] Cannot start without the required PaperMarketing-managed skills: ${reason}\n`);
       throw err;
     }
   }

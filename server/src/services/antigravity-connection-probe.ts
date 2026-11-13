@@ -32,16 +32,16 @@ export function antigravityConnectionProbeFailure(companyId: string, error: unkn
     ...(admission ? { retryable: admission[1] === "true" } : {}),
   }, installation ? "Antigravity installation check failed before account verification" : "Antigravity runtime admission check failed");
   return { adapterType: "paperclip_runner", status: "fail", testedAt: new Date().toISOString(), checks: [{ code, level: "error",
-    message: installation ? "Paperclip could not complete the local Google Antigravity installation check."
+    message: installation ? "PaperMarketing could not complete the local Google Antigravity installation check."
       : "Google Antigravity could not complete its runtime check.",
     hint: installation ? "The instance operator needs to repair this runtime before Test can verify your Google connection."
-      : "Retry Test. If it still fails, ask your Paperclip operator to inspect the runtime check.",
+      : "Retry Test. If it still fails, ask your PaperMarketing operator to inspect the runtime check.",
   }] };
 }
 
 /** The ordinary Test uses the selected managed account and no model turn. */
 export async function testAntigravityConnection(context: AdapterEnvironmentTestContext, model: string): Promise<AdapterEnvironmentTestResult> {
-  if (context.executionTarget?.kind === "remote") throw new Error("Google Antigravity candidate testing requires the Paperclip host.");
+  if (context.executionTarget?.kind === "remote") throw new Error("Google Antigravity candidate testing requires the PaperMarketing host.");
   const admission = resolveAntigravityCandidateAdmission({ companyId: context.companyId, model });
   if (!admission) throw new Error("Google Antigravity is not available for this company.");
   const configured = context.config.env;

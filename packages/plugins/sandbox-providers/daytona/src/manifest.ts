@@ -23,7 +23,7 @@ const manifest: PaperclipPluginManifestV1 = {
   version: PLUGIN_VERSION,
   displayName: "Daytona Sandbox Provider",
   description:
-    "First-party sandbox provider plugin that provisions Daytona sandboxes as Paperclip execution environments.",
+    "First-party sandbox provider plugin that provisions Daytona sandboxes as PaperMarketing execution environments.",
   author: "Paperclip",
   categories: ["automation"],
   capabilities: ["environment.drivers.register"],
@@ -91,7 +91,7 @@ const manifest: PaperclipPluginManifestV1 = {
             type: "string",
             format: "secret-ref",
             description:
-              "Environment-specific Daytona API key. Paste a key or an existing Paperclip secret reference; saved environments store pasted values as company secrets. Falls back to DAYTONA_API_KEY if omitted.",
+              "Environment-specific Daytona API key. Paste a key or an existing PaperMarketing secret reference; saved environments store pasted values as company secrets. Falls back to DAYTONA_API_KEY if omitted.",
           },
           apiUrl: {
             type: "string",
@@ -160,7 +160,7 @@ const manifest: PaperclipPluginManifestV1 = {
           autoStopInterval: {
             type: "number",
             description:
-              "Daytona auto-stop interval in minutes. `0` disables auto-stop. Defaults to 15 when unset. A reusable sandbox that keeps a warm runner never auto-stops before the warm idle window plus 5 minutes, and a sandbox running a Paperclip runner never auto-stops before the host's runner reconnect grace plus 5 minutes.",
+              "Daytona auto-stop interval in minutes. `0` disables auto-stop. Defaults to 15 when unset. A reusable sandbox that keeps a warm runner never auto-stops before the warm idle window plus 5 minutes, and a sandbox running a PaperMarketing runner never auto-stops before the host's runner reconnect grace plus 5 minutes.",
             default: 15,
           },
           autoArchiveInterval: {

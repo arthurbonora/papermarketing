@@ -283,9 +283,9 @@ export async function resolveRemotePaperclipRunnerBinary(input: {
   // event loop on every remote run.
   let target: string | null;
   try { target = await binaryTargetFromHeader(binary, runnerBinaryTarget); }
-  catch (cause) { throw new Error(`runner_remote_artifact_unavailable: install the Paperclip release containing the ${platform}-${architecture} daemon or configure PAPERCLIP_RUNNER_REMOTE_BINARY_PATH`, { cause }); }
+  catch (cause) { throw new Error(`runner_remote_artifact_unavailable: install the PaperMarketing release containing the ${platform}-${architecture} daemon or configure PAPERCLIP_RUNNER_REMOTE_BINARY_PATH`, { cause }); }
   if (target !== `${platform}-${architecture}`) {
-    throw new Error(`runner_remote_artifact_platform_mismatch: the selected daemon does not match ${platform}-${architecture}; install the matching Paperclip release or configure PAPERCLIP_RUNNER_REMOTE_BINARY_PATH`);
+    throw new Error(`runner_remote_artifact_platform_mismatch: the selected daemon does not match ${platform}-${architecture}; install the matching PaperMarketing release or configure PAPERCLIP_RUNNER_REMOTE_BINARY_PATH`);
   }
   return binary;
 }

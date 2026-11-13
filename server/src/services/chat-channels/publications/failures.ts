@@ -68,7 +68,7 @@ export function createChatPublicationFailures(db: Db, options: PublicationFailur
       ? {
           kind: "delivery_unknown" as const,
           reason:
-            "Provider accepted the publication, but Paperclip could not confirm its durable result",
+            "Provider accepted the publication, but PaperMarketing could not confirm its durable result",
         }
       : waitingBeforeSend && preparationWait
         ? { kind: "retry" as const, retryAfterMs: preparationWait.retryAfterMs, reason: preparationWait.reason }
@@ -290,8 +290,8 @@ export function createChatPublicationFailures(db: Db, options: PublicationFailur
           );
           const noticeText =
             attachmentFailure.kind === "generated_response"
-              ? "Paperclip could not send the response attachment. The complete response remains on its Paperclip task for an operator to retry."
-              : "Paperclip could not send an attachment. The file remains on its Paperclip task for an operator to retry.";
+              ? "PaperMarketing could not send the response attachment. The complete response remains on its PaperMarketing task for an operator to retry."
+              : "PaperMarketing could not send an attachment. The file remains on its PaperMarketing task for an operator to retry.";
           const idempotencyKey = `${ATTACHMENT_FAILURE_NOTICE_PREFIX}${publication.id}:${attachmentFailureRuntimeContext.generation}:${attachmentFailureRuntimeContext.credentialFingerprint}`;
           await notifyChatPublicationWork(tx);
           await tx

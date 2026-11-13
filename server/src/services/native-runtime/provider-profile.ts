@@ -175,7 +175,7 @@ export function resolvePaperclipRunnerCursorCloudConfig(config: Record<string, u
   const unsupportedEnvironment = Object.keys(asRecord(config.env)).filter(key => key !== "CURSOR_API_KEY");
   if (unsupportedEnvironment.length) {
     throw new PaperclipRunnerProviderProfileError("paperclip_runner_cursor_cloud_config_invalid",
-      `Cursor Cloud with Paperclip Runner only supports CURSOR_API_KEY in agent environment settings. Configure hosted secrets in your Cursor Cloud environment instead of ${unsupportedEnvironment.join(", ")}.`);
+      `Cursor Cloud with PaperMarketing Runner only supports CURSOR_API_KEY in agent environment settings. Configure hosted secrets in your Cursor Cloud environment instead of ${unsupportedEnvironment.join(", ")}.`);
   }
   for (const [current, legacy] of [["cloudEnvType", "runtimeEnvType"], ["cloudEnvName", "runtimeEnvName"], ["repoRef", "repoStartingRef"], ["prUrl", "repoPullRequestUrl"]]) {
     if (config[current] !== undefined && config[legacy] !== undefined && config[current] !== config[legacy]) {
@@ -232,7 +232,7 @@ export function validatePaperclipRunnerGrokConfig(config: Record<string, unknown
       || config.allowUnmeteredProvider !== true || (config.lifecycleMode && config.lifecycleMode !== "per_turn")
       || optionalString(config.model) || config.dotWorkspaceAccess === true || config.dotAttachmentAccess === true
       || optionalString(config.cwd) || optionalString(config.command)) {
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_grok_config_invalid", "Grok Bot requires a bound per-turn work session and an explicit acknowledgement of unreported provider spending. Paperclip workspace, shell and third-party app tools are unavailable.");
+    throw new PaperclipRunnerProviderProfileError("paperclip_runner_grok_config_invalid", "Grok Bot requires a bound per-turn work session and an explicit acknowledgement of unreported provider spending. PaperMarketing workspace, shell and third-party app tools are unavailable.");
   }
   return bindingId;
 }
@@ -314,7 +314,7 @@ function assertPermissionMode(
     if (provider === "codex") {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_codex_permission_mode_unqualified",
-        "Paperclip Runner currently supports Codex only with codexPermissionMode set to never. Update the agent configuration before starting a new native run.",
+        "PaperMarketing Runner currently supports Codex only with codexPermissionMode set to never. Update the agent configuration before starting a new native run.",
       );
     }
     throw new PaperclipRunnerProviderProfileError(
@@ -455,7 +455,7 @@ export function resolvePaperclipRunnerProviderProfile(
   if (!isPaperclipRunnerProvider(candidate)) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_provider_unsupported",
-      "Paperclip Runner provider must be Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX.",
+      "PaperMarketing Runner provider must be Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX.",
     );
   }
 
@@ -480,7 +480,7 @@ export function resolvePaperclipRunnerProviderProfile(
   if (candidate === "acpx" && agentHarnessType("paperclip_runner", config) === "claude_local") {
     const unsupported = claudeRunnerUnsupportedSettings(config);
     if (unsupported.length) throw new PaperclipRunnerProviderProfileError("agent_runner_config_incompatible",
-      `Paperclip Runner cannot honor these settings: ${unsupported.join(", ")}. Remove them before retrying.`);
+      `PaperMarketing Runner cannot honor these settings: ${unsupported.join(", ")}. Remove them before retrying.`);
   }
   assertPermissionMode(candidate, config);
   try {
@@ -516,7 +516,7 @@ export function resolvePaperclipRunnerProviderProfile(
     if (!model || !model.includes("/") || model.endsWith("/")) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_opencode_model_invalid",
-        "Paperclip Runner OpenCode requires model in provider/model form.",
+        "PaperMarketing Runner OpenCode requires model in provider/model form.",
       );
     }
     return {
@@ -531,13 +531,13 @@ export function resolvePaperclipRunnerProviderProfile(
     if (!managedProfileId) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_profile_required",
-        "Paperclip Runner Claude Managed requires a company managed-agent profile.",
+        "PaperMarketing Runner Claude Managed requires a company managed-agent profile.",
       );
     }
     if (config.managedAgentsRetentionAcknowledged !== true) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_claude_managed_retention_required",
-        "Paperclip Runner Claude Managed requires acknowledgement of stateful beta retention.",
+        "PaperMarketing Runner Claude Managed requires acknowledgement of stateful beta retention.",
       );
     }
     if (model !== null && model !== CLAUDE_MANAGED_QUALIFIED_MODEL) {
@@ -554,7 +554,7 @@ export function resolvePaperclipRunnerProviderProfile(
       maxSessionListCostUsd: positiveNumberOrNull(
         config.maxSessionListCostUsd,
         "paperclip_runner_claude_managed_spend_cap_invalid",
-        "Paperclip Runner Claude Managed requires a positive session spend ceiling when overridden.",
+        "PaperMarketing Runner Claude Managed requires a positive session spend ceiling when overridden.",
       ),
     };
   }
@@ -564,13 +564,13 @@ export function resolvePaperclipRunnerProviderProfile(
     if (!agentCoreProfileId) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_profile_required",
-        "Paperclip Runner AWS AgentCore requires a company remote-agent profile.",
+        "PaperMarketing Runner AWS AgentCore requires a company remote-agent profile.",
       );
     }
     if (config.agentCoreRetentionAcknowledged !== true) {
       throw new PaperclipRunnerProviderProfileError(
         "paperclip_runner_aws_agentcore_retention_required",
-        "Paperclip Runner AWS AgentCore requires acknowledgement of 90-day Memory retention.",
+        "PaperMarketing Runner AWS AgentCore requires acknowledgement of 90-day Memory retention.",
       );
     }
     if (model !== null && model !== AGENTCORE_QUALIFIED_MODEL) {
@@ -587,7 +587,7 @@ export function resolvePaperclipRunnerProviderProfile(
       maxEstimatedSessionCostUsd: positiveNumberOrNull(
         config.maxEstimatedSessionCostUsd,
         "paperclip_runner_aws_agentcore_spend_cap_invalid",
-        "Paperclip Runner AWS AgentCore requires a positive estimated session spend ceiling when overridden.",
+        "PaperMarketing Runner AWS AgentCore requires a positive estimated session spend ceiling when overridden.",
       ),
     };
   }
@@ -636,7 +636,7 @@ export function resolvePaperclipRunnerProviderProfile(
   if (acpxAgent !== "claude" && acpxAgent !== "codex" && acpxAgent !== "grok" && acpxAgent !== "cursor" && acpxAgent !== "copilot" && acpxAgent !== "pi" && acpxAgent !== "kimi") {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_acpx_agent_unavailable",
-      "Paperclip Runner ACPX requires a qualified agent profile.",
+      "PaperMarketing Runner ACPX requires a qualified agent profile.",
     );
   }
   const selectedModel = acpxAgent === "grok" && model === "grok-build"
@@ -647,7 +647,7 @@ export function resolvePaperclipRunnerProviderProfile(
   } catch (error) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_acpx_model_unqualified",
-      error instanceof Error ? error.message : "Paperclip Runner ACPX requires an admitted model.",
+      error instanceof Error ? error.message : "PaperMarketing Runner ACPX requires an admitted model.",
     );
   }
   return {
@@ -706,7 +706,7 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
   if (profile.backend !== input.backend) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_provider_changed",
-      "Paperclip Runner provider changed after this run selected its native backend.",
+      "PaperMarketing Runner provider changed after this run selected its native backend.",
     );
   }
   if (profile.provider === "cursor_cloud") {
@@ -912,7 +912,7 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
   )) {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_codex_effort_invalid",
-      "Paperclip Runner Codex reasoning effort is not supported for this model.",
+      "PaperMarketing Runner Codex reasoning effort is not supported for this model.",
     );
   }
   return {

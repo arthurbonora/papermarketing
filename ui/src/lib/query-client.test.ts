@@ -238,7 +238,7 @@ describe("createAppQueryClient", () => {
     await observer.mutate().catch(() => undefined);
     expect(notifyMutationError).toHaveBeenCalledWith({
       title: "Connection interrupted",
-      body: "Paperclip is temporarily unavailable. Please try again in a moment.",
+      body: "PaperMarketing is temporarily unavailable. Please try again in a moment.",
     });
   });
 

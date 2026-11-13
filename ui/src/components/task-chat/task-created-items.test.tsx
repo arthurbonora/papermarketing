@@ -8,7 +8,7 @@ import { TaskChatTaskCreatedCard } from "./TaskChatTaskCreatedCard";
 vi.mock("@/lib/router", () => ({ Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => <a href={to} {...props}>{children}</a> }));
 
 const created = (overrides: Partial<Issue>): Issue => ({
-  id: "child", companyId: "company", identifier: "ONB-1", title: "Paperclip onboarding", parentId: "parent",
+  id: "child", companyId: "company", identifier: "ONB-1", title: "PaperMarketing onboarding", parentId: "parent",
   createdByAgentId: "agent", createdAt: new Date("2026-11-05T12:00:00Z"), status: "todo", ...overrides,
 }) as Issue;
 

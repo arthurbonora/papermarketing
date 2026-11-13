@@ -65,7 +65,7 @@
           "required": true,
           "placeholder": "sntryu_...",
           "secret": true,
-          "helperMd": "Create a user auth token with org:read, project:read, project:write, team:read, team:write and event:write. The token acts as its creator; Paperclip cannot increase an existing token's permissions."
+          "helperMd": "Create a user auth token with org:read, project:read, project:write, team:read, team:write and event:write. The token acts as its creator; PaperMarketing cannot increase an existing token's permissions."
         }
       ],
       "keyPlacement": {

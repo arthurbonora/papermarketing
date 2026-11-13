@@ -674,7 +674,7 @@ describe("exe.dev sandbox provider plugin", () => {
     });
 
     expect(result?.exitCode).toBe(1);
-    expect(String(result?.stderr ?? "")).toContain("the Paperclip host SSH key is not registered with exe.dev");
+    expect(String(result?.stderr ?? "")).toContain("the PaperMarketing host SSH key is not registered with exe.dev");
     expect(String(result?.stderr ?? "")).toContain("ssh exe.dev");
   });
 
@@ -770,7 +770,7 @@ describe("exe.dev sandbox provider plugin", () => {
       ok: false,
       summary: "exe.dev environment probe failed.",
     });
-    expect(String(result?.metadata?.error ?? "")).toContain("the Paperclip host SSH key is not registered with exe.dev");
+    expect(String(result?.metadata?.error ?? "")).toContain("the PaperMarketing host SSH key is not registered with exe.dev");
     expect(String(fetchMock.mock.calls[1]?.[1]?.body ?? "")).toBe("rm --json 'paperclip-probe'");
   });
 

@@ -115,7 +115,7 @@ export function buildPaperclipRunnerConfig(v: CreateConfigValues, context?: {
     const model = typeof config.model === "string" && config.model.trim()
       ? config.model.trim() : typeof schemaValues.model === "string" ? schemaValues.model.trim() : "";
     if (!model) throw new Error("Cursor Cloud requires an explicit model before saving.");
-    if (v.promptTemplate?.trim() || v.bootstrapPrompt?.trim()) throw new Error("Cursor Cloud with Paperclip Runner uses assigned instructions. Remove custom prompt templates before saving.");
+    if (v.promptTemplate?.trim() || v.bootstrapPrompt?.trim()) throw new Error("Cursor Cloud with PaperMarketing Runner uses assigned instructions. Remove custom prompt templates before saving.");
     const cloudKeys = ["repoUrl", "repoRef", "prUrl", "cloudEnvType", "cloudEnvName", "runtimeEnvType", "runtimeEnvName", "repoStartingRef", "repoPullRequestUrl", "workOnCurrentBranch", "autoCreatePR", "skipReviewerRequest", "cursorCloudTimeoutMs"];
     return { provider, model, lifecycleMode: "per_turn",
       ...(config.instructionsFilePath ? { instructionsFilePath: config.instructionsFilePath } : {}),
@@ -211,7 +211,7 @@ export function buildPaperclipRunnerConfig(v: CreateConfigValues, context?: {
     && configuredCodexPermissionMode !== "never"
   ) {
     throw new Error(
-      "Paperclip Runner currently supports Codex only with codexPermissionMode set to never. Select Full auto (never ask) before saving.",
+      "PaperMarketing Runner currently supports Codex only with codexPermissionMode set to never. Select Full auto (never ask) before saving.",
     );
   }
   for (const normalizedKey of [

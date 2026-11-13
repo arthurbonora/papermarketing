@@ -321,7 +321,7 @@ async function main() {
       throw new Error(
         "Actual ChatGPT client/company/write request does not match qualification",
       );
-    const consentLabel = consent.getByText("Write all of your Paperclip data", {
+    const consentLabel = consent.getByText("Write all of your PaperMarketing data", {
       exact: true,
     });
     await consentLabel.waitFor({ state: "visible" });

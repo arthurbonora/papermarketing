@@ -1741,7 +1741,7 @@ function applyDocumentFixups(document: any): any {
       in: "cookie",
       name: "paperclip_session",
       description:
-        "Board session cookie in authenticated mode. Paperclip uses Better Auth; cookie transport may vary by deployment.",
+        "Board session cookie in authenticated mode. PaperMarketing uses Better Auth; cookie transport may vary by deployment.",
     },
     [BOARD_API_KEY_AUTH_SCHEME]: {
       type: "http",
@@ -1755,7 +1755,7 @@ function applyDocumentFixups(document: any): any {
       scheme: "bearer",
       bearerFormat: "Agent API Key or Agent JWT",
       description:
-        "Agent API key or Paperclip-issued local agent JWT presented in the Authorization bearer header.",
+        "Agent API key or PaperMarketing-issued local agent JWT presented in the Authorization bearer header.",
     },
     [RUNTIME_TOOLS_BEARER_AUTH_SCHEME]: {
       type: "http",
@@ -1768,7 +1768,7 @@ function applyDocumentFixups(document: any): any {
       type: "http",
       scheme: "bearer",
       bearerFormat: "Task-bound agent JWT",
-      description: "Paperclip-issued JWT bound to an active task run. Agent API keys, board sessions, and connection-only tokens are rejected.",
+      description: "PaperMarketing-issued JWT bound to an active task run. Agent API keys, board sessions, and connection-only tokens are rejected.",
     },
   };
   document.security = AUTHENTICATED_SECURITY;
@@ -2381,7 +2381,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "Create a chat endpoint",
   description:
-    "Creates one provider bot endpoint bound permanently to one Paperclip agent. Provider setup and verification happen in later calls. "
+    "Creates one provider bot endpoint bound permanently to one PaperMarketing agent. Provider setup and verification happen in later calls. "
     + "Chat providers need Chat connectors, and GitHub needs GitHub review bots, turned on by an instance admin in Experimental settings at /<prefix>/company/settings/instance/experimental. "
     + "While that setting is off, connections_search shows the provider as unavailable and this call is refused; agents cannot change it. Link that page as [Experimental settings](/<prefix>/company/settings/instance/experimental) and reply.",
   request: {
@@ -2478,8 +2478,8 @@ const githubBotOperations: Array<{
     response: chatEndpointResponseSchema,
   },
   {
-    method: "get", suffix: "reviews", summary: "List review evidence attached to Paperclip tasks",
-    description: "Returns up to 100 newest review records for this endpoint. Each review references ordinary Paperclip tasks and runs; it is not an independent scheduler.",
+    method: "get", suffix: "reviews", summary: "List review evidence attached to PaperMarketing tasks",
+    description: "Returns up to 100 newest review records for this endpoint. Each review references ordinary PaperMarketing tasks and runs; it is not an independent scheduler.",
     response: z.array(githubReviewResponseSchema),
   },
   {
@@ -2517,7 +2517,7 @@ const githubBotOperations: Array<{
   },
   {
     method: "post", suffix: "repositories/refresh", summary: "Refresh repositories available to the bot installation",
-    description: "Fetches current installation access from GitHub and reconciles resources while preserving Paperclip repository enablement. Return parameters alone never prove installation access.",
+    description: "Fetches current installation access from GitHub and reconciles resources while preserving PaperMarketing repository enablement. Return parameters alone never prove installation access.",
     response: z.array(chatEndpointResourceResponseSchema),
   },
   {
@@ -2600,7 +2600,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "Configure or change chat endpoint lifecycle state",
   description:
-    "Runs a setup or lifecycle action. `configure` and `reconnect` accept provider credentials (Slack: `botToken`, `signingSecret`; GitHub: `appId`, `privateKey` after Paperclip generates the webhook secret; Discord: `applicationId`, `guildId`, `botToken`; Microsoft Teams: `clientId`, `tenantId`, `clientSecret`; Telegram: `botToken`; iMessage Photon: `projectSecret`, with nonsecret `photon.projectId` and `photon.lineId` configuration). Agent-supplied signing secrets, webhook secrets, private keys, client secrets, and project secrets return a saved human credential-entry handoff without changing credentials. Authorized write-only bot tokens and API keys remain supported. Credentials are stored as Paperclip secret references and are never returned. Other actions do not require credentials.",
+    "Runs a setup or lifecycle action. `configure` and `reconnect` accept provider credentials (Slack: `botToken`, `signingSecret`; GitHub: `appId`, `privateKey` after PaperMarketing generates the webhook secret; Discord: `applicationId`, `guildId`, `botToken`; Microsoft Teams: `clientId`, `tenantId`, `clientSecret`; Telegram: `botToken`; iMessage Photon: `projectSecret`, with nonsecret `photon.projectId` and `photon.lineId` configuration). Agent-supplied signing secrets, webhook secrets, private keys, client secrets, and project secrets return a saved human credential-entry handoff without changing credentials. Authorized write-only bot tokens and API keys remain supported. Credentials are stored as PaperMarketing secret references and are never returned. Other actions do not require credentials.",
   request: {
     params: z.object({ endpointId: z.string().uuid() }),
     body: jsonBody(configureChatEndpointSchema),
@@ -2672,7 +2672,7 @@ for (const action of ["registration", "install", "resume"] as const) {
 registry.registerPath({
   method: "get", path: "/api/chat-slack/oauth/callback", tags: ["chat-channels"],
   summary: "Complete Slack bot installation and return to the saved wizard",
-  description: "Authenticated, actor/session-bound OAuth callback. State is claimed once before exchanging the code. Installation links the Slack installer to the initiating Paperclip account; reauthorization preserves an established account link. Cross-site browser navigation may receive a same-origin continuation before exchange.",
+  description: "Authenticated, actor/session-bound OAuth callback. State is claimed once before exchanging the code. Installation links the Slack installer to the initiating PaperMarketing account; reauthorization preserves an established account link. Cross-site browser navigation may receive a same-origin continuation before exchange.",
   request: { query: z.object({ state: z.string(), code: z.string().optional(), error: z.string().optional() }) },
   responses: { 200: { description: "Same-origin continuation page" }, 303: { description: "Return to saved Slack setup" }, 400: r.badRequest, 401: r.unauthorized, 403: r.forbidden, 409: r.conflict },
 });
@@ -2768,7 +2768,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "Complete a chat endpoint setup test",
   description:
-    "Activates a verifying endpoint only after Paperclip has received a real provider event since the server-issued setup test boundary. iMessage Photon additionally requires a fresh linked sender's task and a successful outbound agent publication.",
+    "Activates a verifying endpoint only after PaperMarketing has received a real provider event since the server-issued setup test boundary. iMessage Photon additionally requires a fresh linked sender's task and a successful outbound agent publication.",
   request: { params: z.object({ endpointId: z.string().uuid() }) },
   responses: {
     200: r.ok(chatEndpointResponseSchema),
@@ -2829,7 +2829,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "List external identities seen by a chat endpoint",
   description:
-    "Lists provider identities and their explicit Paperclip identity-link status for this endpoint's provider account.",
+    "Lists provider identities and their explicit PaperMarketing identity-link status for this endpoint's provider account.",
   request: { params: z.object({ endpointId: z.string().uuid() }) },
   responses: {
     200: r.ok(z.array(chatPrincipalLinkResponseSchema)),
@@ -2847,7 +2847,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "Create an external identity-link intent",
   description:
-    "Creates a short-lived confirmation URL for a human external identity belonging to this endpoint. The signed-in Paperclip user must confirm the link separately.",
+    "Creates a short-lived confirmation URL for a human external identity belonging to this endpoint. The signed-in PaperMarketing user must confirm the link separately.",
   request: {
     params: z.object({
       endpointId: z.string().uuid(),
@@ -2914,7 +2914,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "Confirm an external identity link",
   description:
-    "Links the token's external identity to the currently signed-in Paperclip user after rechecking active company membership and canonical-link conflicts.",
+    "Links the token's external identity to the currently signed-in PaperMarketing user after rechecking active company membership and canonical-link conflicts.",
   request: { body: jsonBody(confirmChatIdentityLinkSchema) },
   responses: {
     200: r.ok(chatIdentityLinkConfirmationResponseSchema),
@@ -3038,7 +3038,7 @@ registry.registerPath({
   tags: ["chat-channels"],
   summary: "Resolve an unconfirmed provider action",
   description:
-    "After checking the provider, an operator may mark an ambiguous durable provider reply delivered, retry it while accepting duplicate risk, or cancel it. Slack slash-command task starts support explicit retry or cancel only. Paperclip never replays an ambiguous provider action automatically, and every resolution is audited.",
+    "After checking the provider, an operator may mark an ambiguous durable provider reply delivered, retry it while accepting duplicate risk, or cancel it. Slack slash-command task starts support explicit retry or cancel only. PaperMarketing never replays an ambiguous provider action automatically, and every resolution is audited.",
   request: {
     params: z.object({
       endpointId: z.string().uuid(),
@@ -3061,9 +3061,9 @@ registry.registerPath({
   method: "post",
   path: "/api/chat-endpoints/{endpointId}/conversations/{conversationId}/publications",
   tags: ["chat-channels"],
-  summary: "Publish a Paperclip task comment to an external conversation",
+  summary: "Publish a PaperMarketing task comment to an external conversation",
   description:
-    "Explicitly projects an eligible comment from the bound Paperclip task into the provider conversation. The endpoint, conversation, and comment must belong to the same binding. A Board send with an already-bound attachment returns 409 with code chat_board_send_attachments_already_bound and request-scoped details (endpointId, conversationId, idempotencyKey, attachmentIds). This durable rejection queues no publication and is replayed for the same key even if the file later becomes unbound. Correcting it requires an explicit new send identity. Other errors do not establish non-delivery.",
+    "Explicitly projects an eligible comment from the bound PaperMarketing task into the provider conversation. The endpoint, conversation, and comment must belong to the same binding. A Board send with an already-bound attachment returns 409 with code chat_board_send_attachments_already_bound and request-scoped details (endpointId, conversationId, idempotencyKey, attachmentIds). This durable rejection queues no publication and is replayed for the same key even if the file later becomes unbound. Correcting it requires an explicit new send identity. Other errors do not establish non-delivery.",
   request: {
     params: z.object({
       endpointId: z.string().uuid(),
@@ -3165,7 +3165,7 @@ registry.registerPath({
 /** Ready-made teams are found here, so these entries must match how people ask for them. */
 const TEAM_CATALOG_DESCRIPTIONS: Record<string, string> = {
   "/api/teams/catalog":
-    "Lists Paperclip's ready-made teams: installable team packages, not agents already in a company. Each entry gives its name, description, roles (agentSlugs), project and routine counts, required skills (requiredSkills) and configuration inputs (envInputs). This catalog is the only source of ready-made teams; choose by description and roles rather than an exact name. Optional q filters by text in names, descriptions and tags. The web app has no teams catalog page; people browse it with the paperclipai teams browse CLI command.",
+    "Lists PaperMarketing's ready-made teams: installable team packages, not agents already in a company. Each entry gives its name, description, roles (agentSlugs), project and routine counts, required skills (requiredSkills) and configuration inputs (envInputs). This catalog is the only source of ready-made teams; choose by description and roles rather than an exact name. Optional q filters by text in names, descriptions and tags. The web app has no teams catalog page; people browse it with the paperclipai teams browse CLI command.",
   "/api/companies/{companyId}/teams/catalog/{catalogId}/preview":
     "Shows what installing a catalog team would add to this company: planned agents, projects, routines and skills, and any name or slug conflicts with existing resources. Creates no resources, so it is also allowed in Ask and Plan modes. Company members and agents in the company can preview.",
 };
@@ -3242,7 +3242,7 @@ registry.registerPath({
   path: "/api/agent-avatars/{version}/{palette}/{file}",
   tags: ["agents"],
   summary: "Render or retrieve a public preset agent portrait",
-  description: "On-demand PNG artwork; no agent or company lookup. Logical size determines face detail independently of density. Background defaults to transparent; paperclip-dark supplies the opaque Paperclip dark-mode background for Slack exports. Successful URLs are immutable for one year and return a content-derived ETag. Cache entries regenerate after deletion.",
+  description: "On-demand PNG artwork; no agent or company lookup. Logical size determines face detail independently of density. Background defaults to transparent; paperclip-dark supplies the opaque PaperMarketing dark-mode background for Slack exports. Successful URLs are immutable for one year and return a content-derived ETag. Cache entries regenerate after deletion.",
   request: {
     params: z.object({
       version: z.literal("cap-v1"),
@@ -4140,7 +4140,7 @@ registry.registerPath({
   tags: ["agents"],
   summary: "Wake up an agent",
   description:
-    "Board failed-run retries supply failedRunId with reason retry_failed_run. Paperclip derives the exact request and current authorization; a chat retry may return a durable queued/deferred receipt before a run exists. Caller task/comment markers and fresh-session overrides do not authorize replay.",
+    "Board failed-run retries supply failedRunId with reason retry_failed_run. PaperMarketing derives the exact request and current authorization; a chat retry may return a durable queued/deferred receipt before a run exists. Caller task/comment markers and fresh-session overrides do not authorize replay.",
   request: {
     params: z.object({ id: z.string() }),
     body: jsonBody(wakeAgentSchema),
@@ -5422,7 +5422,7 @@ const PLUGIN_MANAGED_ROUTINE_GUIDANCE =
 const PLUGIN_MANAGED_ROUTINE_OPERATOR_GUIDANCE =
   "A routine with a non-null `managedByPlugin` is a plugin-managed routine: that plugin created it and owns its definition "
   + "(title, instructions, schedule, assignee), and the plugin can reset it to its manifest defaults. "
-  + "On this instance the hosting operator manages plugins, so no Paperclip page offers that change. "
+  + "On this instance the hosting operator manages plugins, so no PaperMarketing page offers that change. "
   + "Do not rewrite, detach or duplicate a plugin-managed routine to imitate a change, and do not search for another route: "
   + "reply now that the hosting operator controls this plugin's settings, with the routine's page link.";
 
@@ -5544,7 +5544,7 @@ registry.registerPath({
   request: {
     params: z.object({ publicId: z.string() }),
     headers: z.object({
-      "X-Paperclip-Source-Run-Token": z.string().optional().describe("Optional current Paperclip run JWT. It establishes creation provenance only; the trigger still requires its own authentication."),
+      "X-Paperclip-Source-Run-Token": z.string().optional().describe("Optional current PaperMarketing run JWT. It establishes creation provenance only; the trigger still requires its own authentication."),
       "X-Paperclip-Idempotency-Scope": z.enum(["trigger", "routine"]).optional().describe("Scope of a stable Idempotency-Key. Default: trigger. Timestamped HMAC always uses trigger scope."),
       "Idempotency-Key": z.string().optional().describe("Stable sender event identity, reused on retries."),
     }),
@@ -6394,7 +6394,7 @@ registry.registerPath({
   path: "/api/issues/{id}/context/compact",
   tags: ["issues"],
   summary: "Ask the assignee agent to compact its context window",
-  description: "Board only. Queues a short run that resumes the assignee's runner session and compacts it (Codex and Claude on the Paperclip runner). Unavailable while the agent is running on the task.",
+  description: "Board only. Queues a short run that resumes the assignee's runner session and compacts it (Codex and Claude on the PaperMarketing runner). Unavailable while the agent is running on the task.",
   request: { params: z.object({ id: z.string() }) },
   responses: { 202: r.ok(), 401: r.unauthorized, 403: r.forbidden, 404: r.notFound, 409: r.conflict, 422: r.unprocessable },
 });
@@ -7654,8 +7654,8 @@ registry.registerPath({
   method: "post",
   path: "/api/cli-auth/challenges",
   tags: ["access"],
-  summary: "Connect a person's terminal to Paperclip: create a CLI auth challenge for terminal login",
-  description: "Called by the Paperclip CLI in a person's own terminal, never by an agent on their behalf. To connect someone's terminal to Paperclip as themselves, tell them to run `npx paperclipai auth login --api-base <this Paperclip URL>` in that terminal (add `--company-id <companyId>` to name the company). The URL is the address the person already opens Paperclip at in their browser; leave it as that placeholder instead of looking it up, because addresses an agent can see (such as a runner-local API URL) may not be reachable from the person's machine. The CLI prints an approval link; they open it in a browser where they are signed in, review the requesting command, company and Board access, and approve. Only that CLI receives the resulting Board credential. `npx paperclipai auth whoami` confirms who it is signed in as and `npx paperclipai auth logout` revokes it. Agent API keys are a separate identity: never hand out an agent key, create or approve a challenge yourself, or ask for the person's password in chat.",
+  summary: "Connect a person's terminal to PaperMarketing: create a CLI auth challenge for terminal login",
+  description: "Called by the PaperMarketing CLI in a person's own terminal, never by an agent on their behalf. To connect someone's terminal to PaperMarketing as themselves, tell them to run `npx paperclipai auth login --api-base <this PaperMarketing URL>` in that terminal (add `--company-id <companyId>` to name the company). The URL is the address the person already opens PaperMarketing at in their browser; leave it as that placeholder instead of looking it up, because addresses an agent can see (such as a runner-local API URL) may not be reachable from the person's machine. The CLI prints an approval link; they open it in a browser where they are signed in, review the requesting command, company and Board access, and approve. Only that CLI receives the resulting Board credential. `npx paperclipai auth whoami` confirms who it is signed in as and `npx paperclipai auth logout` revokes it. Agent API keys are a separate identity: never hand out an agent key, create or approve a challenge yourself, or ask for the person's password in chat.",
   request: { body: jsonBody(createCliAuthChallengeSchema) },
   responses: { 200: r.ok(), 400: r.badRequest },
 });
@@ -8192,7 +8192,7 @@ registry.registerPath({
   method: "post",
   path: "/api/heartbeat-runs/{runId}/runtime-requests/{requestId}/resolve",
   tags: ["runs"],
-  summary: "Resolve a pending Paperclip runner runtime request",
+  summary: "Resolve a pending PaperMarketing runner runtime request",
   request: {
     params: z.object({ runId: heartbeatRunIdParamSchema, requestId: z.string() }),
     body: jsonBody(
@@ -10131,7 +10131,7 @@ registry.registerPath({
   path: "/api/instance/database-backups",
   tags: ["instance"],
   summary: "Trigger a database backup",
-  description: "Instance admins only: agent credentials receive 403, and cloud-managed instances run backups for you. Automatic gzip-compressed backups run about hourly by default; instance admins set how long they are kept in the Backup retention section of the company-prefixed /company/settings page. The web UI has no control that creates or restores a backup. For a backup now, an instance admin calls this endpoint, or an operator with shell access to the server runs `paperclipai db:backup` (add --json for metadata). The result names a gzip-compressed SQL file (backupFile) on the server host and its size. Paperclip has no restore endpoint or command: to check a backup, an operator restores the file with psql into a separate, empty PostgreSQL database, never over the live one, and then checks the restored data.",
+  description: "Instance admins only: agent credentials receive 403, and cloud-managed instances run backups for you. Automatic gzip-compressed backups run about hourly by default; instance admins set how long they are kept in the Backup retention section of the company-prefixed /company/settings page. The web UI has no control that creates or restores a backup. For a backup now, an instance admin calls this endpoint, or an operator with shell access to the server runs `paperclipai db:backup` (add --json for metadata). The result names a gzip-compressed SQL file (backupFile) on the server host and its size. PaperMarketing has no restore endpoint or command: to check a backup, an operator restores the file with psql into a separate, empty PostgreSQL database, never over the live one, and then checks the restored data.",
   responses: { 201: r.ok(), 401: r.unauthorized, 403: r.forbidden },
 });
 
@@ -10753,7 +10753,7 @@ registerCurrentRoute({
   path: "/api/health/dev-server/restart",
   tags: ["health"],
   summary: "Request a managed dev-server instance restart",
-  description: "Request a restart of this Paperclip instance through its managed development-server supervisor. In authenticated deployments this requires a board identity; an agent credential does not inherit board access from its responsible user or from a chat request. Hand that operation to an authorized board/operator when the route denies the current agent. Returns 404 when no managed supervisor is available and 409 when no restart is required. Acceptance is not proof that the restart completed. This operation does not delete stored conversations or task comments.",
+  description: "Request a restart of this PaperMarketing instance through its managed development-server supervisor. In authenticated deployments this requires a board identity; an agent credential does not inherit board access from its responsible user or from a chat request. Hand that operation to an authorized board/operator when the route denies the current agent. Returns 404 when no managed supervisor is available and 409 when no restart is required. Acceptance is not proof that the restart completed. This operation does not delete stored conversations or task comments.",
   responses: {
     202: r.ok(),
     403: r.forbidden,
@@ -13145,7 +13145,7 @@ registerCurrentRoute({
 });
 registerCurrentRoute({
   method: "delete", path: "/api/companies/{companyId}/agents/{agentId}/dot-binding", tags: ["agents"],
-  summary: "Revoke a Dot connection and fence its active Paperclip assignments",
+  summary: "Revoke a Dot connection and fence its active PaperMarketing assignments",
   responses: { 204: { description: "Dot connection revoked; external stop is unconfirmed" },
     400: r.badRequest, 401: r.unauthorized, 403: r.forbidden, 404: r.notFound },
 });
@@ -13199,7 +13199,7 @@ registerCurrentRoute({
 });
 registerCurrentRoute({
   method: "post", path: "/api/companies/{companyId}/agents/{agentId}/grok-binding/stop", tags: ["agents"],
-  summary: "Revoke Paperclip work-session authority without confirming remote termination",
+  summary: "Revoke PaperMarketing work-session authority without confirming remote termination",
   body: stopGrokWorkSchema,
   responses: { 200: r.ok(),
     400: r.badRequest, 401: r.unauthorized, 403: r.forbidden, 404: r.notFound, 409: r.conflict },
@@ -13220,7 +13220,7 @@ registerCurrentRoute({
 
 const ASSISTANT_CONNECTION_SETUP_PERSON_ONLY = "Person-only: a person connects their own assistant, such as Claude, ChatGPT or another MCP client, in their browser on "
   + "[Assistant connections](/<prefix>/apps/assistant-connection), with this conversation's company prefix as <prefix>. "
-  + "That page gives the invitation and server URL to paste into the assistant; the assistant then opens a Paperclip consent screen where the person picks the company and approves access. "
+  + "That page gives the invitation and server URL to paste into the assistant; the assistant then opens a PaperMarketing consent screen where the person picks the company and approves access. "
   + "The consent screen offers only access within that person's own role: a read-only member can grant read access but not writes. "
   + "An agent cannot read this setup or approve consent for anyone: these routes accept only the person's own signed-in browser session. "
   + "Do not search for another route; link that page, say the person approves access there themselves, and reply.";
@@ -13551,9 +13551,9 @@ export function buildOpenApiDocument(): any {
   return applyPluginSettingsVisibility(applyDocumentFixups({
     openapi: "3.0.0",
     info: {
-      title: "Paperclip API",
+      title: "PaperMarketing API",
       version: "1.0.0",
-      description: "REST API for the Paperclip AI agent management platform",
+      description: "REST API for the PaperMarketing AI agent management platform",
     },
     servers: [{ url: "/" }],
     components: registry.buildComponents(),

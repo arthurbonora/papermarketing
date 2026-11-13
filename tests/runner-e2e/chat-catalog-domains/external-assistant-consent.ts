@@ -60,7 +60,7 @@ export const assistantConsentExternalCases = [definition("assistant-connections.
           state.viewerSessionAtConsent = await signedInPerson();
           await expect(consent.getByRole("radio", { name: ctx.input.fixtures.company.name, exact: true })).toBeChecked(); state.companyVisible = true;
           await expect(consent.getByText("Your role in this organization is read-only.", { exact: true })).toBeVisible(); state.readOnlyRoleVisible = true;
-          const writes = consent.getByRole("checkbox", { name: "Write all of your Paperclip data", exact: true });
+          const writes = consent.getByRole("checkbox", { name: "Write all of your PaperMarketing data", exact: true });
           await expect(writes).toBeDisabled(); await expect(writes).not.toBeChecked(); state.writeCheckboxDisabled = true; state.writeCheckboxUnchecked = true;
           const requestId = new URL(consent.url()).pathname.split("/").at(-1)!;
           const requestResponse = await viewer.request(`/api/mcp/requests/${encodeURIComponent(requestId)}`);

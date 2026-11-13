@@ -404,7 +404,7 @@ describe("GitHub task message guidance", () => {
       i.policy.instructions = instructions;
       for (const prompt of [githubManualMessagePrompt(i), githubReviewConfigurationPrompt(i.policy, 1)]) {
         expect(prompt).toContain("summary is review body only");
-        expect(prompt).toContain("Paperclip adds the bot-name/score heading");
+        expect(prompt).toContain("PaperMarketing adds the bot-name/score heading");
         expect(prompt).toContain("Do not copy a previously published comment");
       }
     }

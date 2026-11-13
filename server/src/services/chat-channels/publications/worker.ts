@@ -545,7 +545,7 @@ export function createChatPublicationWorker(db: Db, options: PublicationWorkerOp
                 .update(chatPublications)
                 .set({
                   state: "cancelled",
-                  redactedError: "Direct messages are disabled in Paperclip",
+                  redactedError: "Direct messages are disabled in PaperMarketing",
                   updatedAt: new Date(),
                 })
                 .where(
@@ -580,7 +580,7 @@ export function createChatPublicationWorker(db: Db, options: PublicationWorkerOp
                 .update(chatPublications)
                 .set({
                   state: "cancelled",
-                  redactedError: "Destination is disabled in Paperclip",
+                  redactedError: "Destination is disabled in PaperMarketing",
                   updatedAt: new Date(),
                 })
                 .where(

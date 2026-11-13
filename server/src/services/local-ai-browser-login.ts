@@ -68,8 +68,8 @@ export function startLocalBrowserLogin(provider: "anthropic" | "openai" | "googl
           }
         } catch {
           state.error = legacyPlatform
-            ? "Codex browser sign-in requires the Codex CLI on this platform. Install Codex on this execution host and ensure codex is on Paperclip's PATH, then start sign-in again."
-            : "Codex browser sign-in requires an installed Codex CLI. Install Codex on this execution host or restore Paperclip's runtime dependencies, then start sign-in again.";
+            ? "Codex browser sign-in requires the Codex CLI on this platform. Install Codex on this execution host and ensure codex is on PaperMarketing's PATH, then start sign-in again."
+            : "Codex browser sign-in requires an installed Codex CLI. Install Codex on this execution host or restore PaperMarketing's runtime dependencies, then start sign-in again.";
           throw new Error("Browser login runtime unavailable");
         }
       }

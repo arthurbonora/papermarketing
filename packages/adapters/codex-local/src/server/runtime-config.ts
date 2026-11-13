@@ -369,7 +369,7 @@ export async function prepareCodexRuntimeConfig(input: {
         return {
           notes: [
             ...notes,
-            `Restored "${configTomlPath}" from its pre-run backup, removing stale Paperclip-managed model providers left by an interrupted run${reason}.`,
+            `Restored "${configTomlPath}" from its pre-run backup, removing stale PaperMarketing-managed model providers left by an interrupted run${reason}.`,
           ],
           cleanup: async () => {},
         };
@@ -383,7 +383,7 @@ export async function prepareCodexRuntimeConfig(input: {
           return {
             notes: [
               ...notes,
-              `Removed stale Paperclip-managed model provider blocks from "${configTomlPath}"${reason}.`,
+              `Removed stale PaperMarketing-managed model provider blocks from "${configTomlPath}"${reason}.`,
             ],
             cleanup: async () => {},
           };

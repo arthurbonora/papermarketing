@@ -80,7 +80,7 @@ async function firstTask(request: APIRequestContext, name: string) {
   );
   const issue = await json(
     await request.post(`/api/companies/${company.id}/issues`, {
-      data: { title: "Paperclip onboarding", status: "backlog", assigneeAgentId: lead.id },
+      data: { title: "PaperMarketing onboarding", status: "backlog", assigneeAgentId: lead.id },
     }),
   );
   return { company, issue };
@@ -97,7 +97,7 @@ test.describe("Announcement placement on a new company's first task", () => {
 
       const composer = page.getByTestId("task-chat-composer-dock");
       await expect(composer).toBeVisible({ timeout: 30_000 });
-      const announcement = page.getByRole("complementary", { name: "Paperclip announcements" });
+      const announcement = page.getByRole("complementary", { name: "PaperMarketing announcements" });
       await expect(announcement.getByRole("heading", { name: CONNECTORS_ANNOUNCEMENT.title })).toBeVisible({
         timeout: 15_000,
       });
@@ -145,7 +145,7 @@ test.describe("Announcement placement on a new company's first task", () => {
     await page.setViewportSize(viewport);
     await page.goto(`/${company.issuePrefix}/issues/${issue.identifier}`);
 
-    const announcement = page.getByRole("complementary", { name: "Paperclip announcements" });
+    const announcement = page.getByRole("complementary", { name: "PaperMarketing announcements" });
     await expect(announcement.getByRole("heading", { name: long.title })).toBeVisible({ timeout: 30_000 });
     await page.waitForTimeout(500);
 

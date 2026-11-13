@@ -30,10 +30,10 @@ it("requires remote workspace authority and native execution independently of pr
   expect(() => assertEphemeralWorkspaceExecution(remote)).not.toThrow();
   expect(() => assertEphemeralWorkspaceExecution({ ...remote, remoteAuthority: false, pluginTaskWorkspace: true })).not.toThrow();
   for (const patch of [{ remoteAuthority: false }, { adapterType: "process" }]) {
-    expect(() => assertEphemeralWorkspaceExecution({ ...remote, ...patch })).toThrow("native Paperclip Runner");
+    expect(() => assertEphemeralWorkspaceExecution({ ...remote, ...patch })).toThrow("native PaperMarketing Runner");
   }
   expect(() => assertEphemeralNativeRuntime(true)).not.toThrow();
-  expect(() => assertEphemeralNativeRuntime(false)).toThrow("native Paperclip Runner");
+  expect(() => assertEphemeralNativeRuntime(false)).toThrow("native PaperMarketing Runner");
   const agent = { id: "agent", companyId: "company", name: "Agent", adapterConfig: {} };
   expect(() => assertEphemeralAgentInstructions(agent)).not.toThrow();
   expect(() => assertEphemeralAgentInstructions({ ...agent, adapterConfig: { instructionsBundleMode: "external", instructionsRootPath: "/old-volume" } })).toThrow("managed agent instructions");

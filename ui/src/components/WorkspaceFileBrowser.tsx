@@ -1046,7 +1046,7 @@ export function WorkspaceFileBrowser({
         title={changedFilesTemporarilyUnavailable ? "Changed files temporarily unavailable" : "Couldn't load files"}
         body={
           changedFilesTemporarilyUnavailable
-            ? "Paperclip is limiting workspace scans to keep the server responsive. Try again in a moment."
+            ? "PaperMarketing is limiting workspace scans to keep the server responsive. Try again in a moment."
             : listErrorStatus === 404
             ? "Workspace browsing isn't available for this issue."
             : describeError(listQuery.error, { action: "load workspace files" }).body

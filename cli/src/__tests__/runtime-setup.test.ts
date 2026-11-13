@@ -57,5 +57,5 @@ it("rejects an Antigravity provisioner outside the installed server", async () =
   const f = await fixture("antigravity"); const other = await fixture("antigravity");
   await rm(f.provisioner); await symlink(other.provisioner, f.provisioner);
   await expect(resolveAntigravityProvisioner(f.url)).rejects.toThrow("escapes");
-  await expect(resolveAntigravityProvisioner(`${f.url}?redirect=1`)).rejects.toThrow("installed Paperclip server");
+  await expect(resolveAntigravityProvisioner(`${f.url}?redirect=1`)).rejects.toThrow("installed PaperMarketing server");
 });

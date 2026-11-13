@@ -1233,7 +1233,7 @@ describe("CompanyEnvironments — test provider button", () => {
       expect(dialog?.textContent).not.toContain("id 12345678-90a");
       expect(
         dialog?.querySelector(
-          "[title='Provider snapshot ref redacted-template-ref (Paperclip template 12345678-90ab-cdef-1234-567890abcdef)']",
+          "[title='Provider snapshot ref redacted-template-ref (PaperMarketing template 12345678-90ab-cdef-1234-567890abcdef)']",
         ),
       ).toBeTruthy();
       expect(findButton(dialog!, "Refresh")).toBeTruthy();
@@ -1851,7 +1851,7 @@ describe("CompanyEnvironments — test provider button", () => {
     expect(container.textContent).toContain("Alpha");
     expect(container.textContent).toContain("Beta");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
     expect(container.textContent).not.toContain("tenant_app_unavailable");
   });
 

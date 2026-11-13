@@ -281,7 +281,7 @@ describe("GatewaysTab", () => {
 
     expect(container.textContent).toContain("Dotta's MacBook");
     expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(container.textContent).not.toContain("Paperclip is restarting.");
+    expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   });
 
   it("shows readable copy and a Retry button for a real error", async () => {

@@ -219,7 +219,7 @@ test.describe("Board send delivery refresh", () => {
         request,
       }) => {
         await page.addLocatorHandler(
-          page.getByRole("complementary", { name: "Paperclip announcements", exact: true })
+          page.getByRole("complementary", { name: "PaperMarketing announcements", exact: true })
             .getByRole("button", { name: "Dismiss announcement", exact: true }),
           async (dismiss) => {
             const menuOpen = await page.getByRole("menu", { name: "Add to composer", exact: true }).isVisible();

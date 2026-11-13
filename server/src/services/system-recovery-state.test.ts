@@ -59,7 +59,7 @@ describe("durable system recovery budget", () => {
       message: "Automatic recovery of saved work stopped after 1 attempts (last failure: allocation_ownership_ambiguous). "
         + "Retry recovery to export and merge from the retained sandbox again; no provider turn is submitted. "
         + "If Retry keeps failing, inspect the run and its environment." } }, runId);
-    expect(display?.message).toContain("Paperclip refused to recover the saved files");
+    expect(display?.message).toContain("PaperMarketing refused to recover the saved files");
     expect(display?.message).not.toMatch(manual);
   });
 
@@ -69,7 +69,7 @@ describe("durable system recovery budget", () => {
     expect(refused).toMatchObject({ state: "exhausted", attempts: 1, retriesUsed: 0 });
     expect(isDeterministicRecoveryRefusal(refused)).toBe(true);
     const text = exhaustedSystemRecoveryAction(refused);
-    expect(text).toContain("Paperclip refused to recover the saved files");
+    expect(text).toContain("PaperMarketing refused to recover the saved files");
     expect(text).toContain("Paperclip cannot prove which runs used the sandbox that holds the saved files (allocation_ownership_ambiguous)");
     expect(text).toContain("Retry runs the check again. The agent's result is saved");
     // Recovery never waits on a person or a release, and never promises a

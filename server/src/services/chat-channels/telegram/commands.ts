@@ -123,10 +123,10 @@ export function telegramGuidanceResponse(
 
 export function telegramForumControlResponse(command: "new" | "close", taskLabel: string, hasIssue: boolean, hasConversation: boolean): string {
   if (command === "new") return hasIssue
-    ? `${taskLabel} stays bound to this forum topic. Open a new Telegram forum topic to start a new Paperclip task.`
-    : "Open a new Telegram forum topic to start a new Paperclip task.";
+    ? `${taskLabel} stays bound to this forum topic. Open a new Telegram forum topic to start a new PaperMarketing task.`
+    : "Open a new Telegram forum topic to start a new PaperMarketing task.";
   return hasConversation
-    ? "This chat conversation is closed. A later message here will continue the same Paperclip task."
+    ? "This chat conversation is closed. A later message here will continue the same PaperMarketing task."
     : "No task is active. Send a message to start one.";
 }
 

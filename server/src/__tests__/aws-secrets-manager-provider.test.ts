@@ -479,7 +479,7 @@ describe("awsSecretsManagerProvider", () => {
           "arn:aws:secretsmanager:us-east-1:123456789012:secret:paperclip/prod-use1/company-2/openai-api-key",
         providerVersionRef: "linked-version-7",
       }),
-    ).rejects.toThrow(/Paperclip-managed namespace/i);
+    ).rejects.toThrow(/PaperMarketing-managed namespace/i);
   });
 
   it("writes new values through to externally referenced AWS secrets as AWSCURRENT", async () => {
@@ -576,7 +576,7 @@ describe("awsSecretsManagerProvider", () => {
           "arn:aws:secretsmanager:us-east-1:123456789012:secret:paperclip/prod-use1/company-2/openai-api-key",
         value: "new-value",
       }),
-    ).rejects.toThrow(/Paperclip-managed namespace/i);
+    ).rejects.toThrow(/PaperMarketing-managed namespace/i);
   });
 
   it("restores the previous AWSCURRENT version when an external value write is rolled back", async () => {

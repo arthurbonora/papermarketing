@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "slack",
   "name": "Slack",
-  "description": "Give agents Slack tools or let people start and continue Paperclip work from Slack.",
+  "description": "Give agents Slack tools or let people start and continue PaperMarketing work from Slack.",
   "categories": [
     "communication"
   ],
@@ -23,9 +23,6 @@
         "customer"
       ],
       "whenToUse": "Give agents Slack tools through Slack's hosted MCP server. Slack requires an OAuth app you create in Slack app settings.",
-      "consoleLinks": {
-        "register": "https://api.slack.com/apps"
-      },
       "defaults": {
         "serverUrl": "https://mcp.slack.com/mcp",
         "authorizationEndpoint": "https://slack.com/oauth/v2/authorize",
@@ -67,6 +64,9 @@
       "riskTier": "S3",
       "label": "Use this connection as an agent tool",
       "purpose": "tool",
+      "consoleLinks": {
+        "register": "https://api.slack.com/apps"
+      },
       "requiredResourceFilters": [
         "workspace",
         "channel"
@@ -82,7 +82,7 @@
       "ownershipModes": [
         "customer"
       ],
-      "whenToUse": "Let people in Slack start and continue work with one Paperclip agent.",
+      "whenToUse": "Let people in Slack start and continue work with one PaperMarketing agent.",
       "credentialFields": [
         {
           "key": "botToken",
@@ -101,7 +101,7 @@
           "secret": true
         }
       ],
-      "guidanceMd": "Create and install one Slack App for this agent. Paperclip receives verified Events API requests and interactive callbacks, acknowledges with reactions, responds in direct messages, and starts one Paperclip task per new mentioned channel thread.",
+      "guidanceMd": "Create and install one Slack App for this agent. PaperMarketing receives verified Events API requests and interactive callbacks, acknowledges with reactions, responds in direct messages, and starts one PaperMarketing task per new mentioned channel thread.",
       "consoleLinks": {
         "register": "https://api.slack.com/apps",
         "docs": "https://api.slack.com/start/quickstart"

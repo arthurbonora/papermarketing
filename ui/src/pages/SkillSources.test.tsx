@@ -85,7 +85,7 @@ describe('GitHub skill source import', () => {
 
   it('groups the same repository and ref across projects and shows import progress until it is installed', async () => {
     context.sourceId = '';
-    const repository = { projectId: 'one', projectName: 'Paperclip', projectVisibility: 'open' as const,
+    const repository = { projectId: 'one', projectName: 'PaperMarketing', projectVisibility: 'open' as const,
       workspaceId: 'workspace-one', repositoryUrl: 'https://github.com/acme/skills', trackingRef: 'HEAD',
       bindingId: null, sourceId: null, status: 'available' as const, lastError: null };
     vi.mocked(skillSourcesApi.projectRepositories).mockResolvedValue([repository, { ...repository, projectId: 'two', projectName: 'Sentry', workspaceId: 'workspace-two' }]);
@@ -94,7 +94,7 @@ describe('GitHub skill source import', () => {
       .mockResolvedValue({ bindingId: 'binding-two' });
     await mount();
     expect(document.querySelectorAll('[aria-label="Project repositories"] section')).toHaveLength(1);
-    expect(document.body.textContent).toContain('Paperclip, Sentry');
+    expect(document.body.textContent).toContain('PaperMarketing, Sentry');
     await act(async () => button('Import skills').click()); await flush();
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
     expect(document.querySelector('[role="status"]')?.textContent).toContain('Starting import');
@@ -141,7 +141,7 @@ describe('GitHub skill source import', () => {
 
   it('keeps an existing source compact while project import is pending', async () => {
     context.sourceId = '';
-    vi.mocked(skillSourcesApi.list).mockResolvedValue([{ ...sourceFixture(), trackingRef: 'HEAD', projects: [{ id: 'paperclip', name: 'Paperclip', visibility: 'open', active: true }] }]);
+    vi.mocked(skillSourcesApi.list).mockResolvedValue([{ ...sourceFixture(), trackingRef: 'HEAD', projects: [{ id: 'paperclip', name: 'PaperMarketing', visibility: 'open', active: true }] }]);
     vi.mocked(skillSourcesApi.projectRepositories).mockResolvedValue([{ projectId: 'sentry', projectName: 'Sentry', projectVisibility: 'open',
       workspaceId: 'second-workspace', repositoryUrl: sourceFixture().repositoryUrl, trackingRef: 'HEAD', bindingId: 'binding', sourceId: null, status: 'pending', lastError: null }]);
     await mount();
@@ -150,14 +150,14 @@ describe('GitHub skill source import', () => {
     expect(document.querySelector('[aria-label="Skills from Sentry"]')).toBeNull();
     expect(document.body.textContent).not.toContain('Other projects with this repo');
     expect(document.body.textContent).not.toContain('Sentry');
-    expect(document.body.textContent).not.toContain('Paperclip');
+    expect(document.body.textContent).not.toContain('PaperMarketing');
     expect(document.querySelector('section a[href="/skills"]')).toBeNull();
     expect(document.querySelector('[role="status"]')?.textContent).toContain('Importing skills');
   });
 
   it('allows remaining project imports while another matching workspace is pending', async () => {
     context.sourceId = '';
-    const repository = { projectId: 'one', projectName: 'Paperclip', projectVisibility: 'open' as const, workspaceId: 'already-pending',
+    const repository = { projectId: 'one', projectName: 'PaperMarketing', projectVisibility: 'open' as const, workspaceId: 'already-pending',
       repositoryUrl: 'https://github.com/acme/skills', trackingRef: 'HEAD', bindingId: 'binding', sourceId: null, status: 'pending' as const, lastError: null };
     vi.mocked(skillSourcesApi.projectRepositories).mockResolvedValue([repository,
       { ...repository, projectId: 'two', projectName: 'Sentry', workspaceId: 'available-workspace', status: 'available', bindingId: null }]);
@@ -448,14 +448,14 @@ describe('Skill sources list read resilience', () => {
     await mount();
     expect(document.body.textContent).toContain('acme/team-skills');
 
-    vi.mocked(skillSourcesApi.list).mockRejectedValue(new ApiError('Paperclip is restarting.', 503, { error: 'tenant_app_unavailable' }));
+    vi.mocked(skillSourcesApi.list).mockRejectedValue(new ApiError('PaperMarketing is restarting.', 503, { error: 'tenant_app_unavailable' }));
     await act(async () => { await client.invalidateQueries(); });
     await flush(); await flush();
 
     expect(skillSourcesApi.list).toHaveBeenCalledTimes(2);
     expect(document.body.textContent).toContain('acme/team-skills');
     expect(document.querySelector('[data-query-view="error"]')).toBeNull();
-    expect(document.body.textContent).not.toContain('Paperclip is restarting.');
+    expect(document.body.textContent).not.toContain('PaperMarketing is restarting.');
   });
   it('shows readable copy and a Retry button when the sources list fails to load', async () => {
     context.sourceId = '';

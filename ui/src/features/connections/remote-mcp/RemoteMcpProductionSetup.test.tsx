@@ -78,7 +78,7 @@ it("keeps saved access on screen when a refetch fails during an outage", async (
 
   expect(container.querySelector('[data-testid="remote-mcp-setup"]')?.textContent).toBe("agent-1");
   expect(container.querySelector('[data-query-view="error"]')).toBeNull();
-  expect(container.textContent).not.toContain("Paperclip is restarting.");
+  expect(container.textContent).not.toContain("PaperMarketing is restarting.");
   expect(container.textContent).not.toContain("Loading saved access");
 });
 

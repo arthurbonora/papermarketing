@@ -158,7 +158,7 @@ async function buildHermesSkillSnapshot(config: Record<string, unknown>): Promis
       managed: true,
       state: desired ? "configured" : "available",
       origin: "company_managed",
-      originLabel: "Managed by Paperclip",
+      originLabel: "Managed by PaperMarketing",
       readOnly: false,
       sourcePath: entry.source,
       targetPath: null,
@@ -179,7 +179,7 @@ async function buildHermesSkillSnapshot(config: Record<string, unknown>): Promis
   for (const desiredSkill of desiredSkills) {
     if (availableByKey.has(desiredSkill) || hermesKeys.has(desiredSkill)) continue;
     warnings.push(
-      `Desired skill "${desiredSkill}" is not available in Paperclip or Hermes skills.`,
+      `Desired skill "${desiredSkill}" is not available in PaperMarketing or Hermes skills.`,
     );
     entries.push({
       key: desiredSkill,
@@ -193,7 +193,7 @@ async function buildHermesSkillSnapshot(config: Record<string, unknown>): Promis
       sourcePath: null,
       targetPath: null,
       detail:
-        "Cannot find this skill in Paperclip or ~/.hermes/skills/.",
+        "Cannot find this skill in PaperMarketing or ~/.hermes/skills/.",
     });
   }
 

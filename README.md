@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="ui/public/brands/papermarketing.svg" alt="Papermarketing logo" width="96" />
+  <img src="ui/public/brands/papermarketing.svg" alt="PaperMarketing logo" width="96" />
 </p>
 
-# Papermarketing
+# PaperMarketing
 
 **A marketing agency run by AI agents.**
 
-Papermarketing is an open source, self-hosted project for coordinating teams of marketing agents. Use the dashboard to turn a brief into tasks, assign work, and review deliverables. The project is a fork of [Paperclip](https://github.com/paperclipai/paperclip) and uses its orchestration platform.
+PaperMarketing is an open source, self-hosted project for coordinating teams of marketing agents. Use the dashboard to turn a brief into tasks, assign work, and review deliverables.
 
 ## How a campaign can work
 
@@ -40,7 +40,7 @@ You can set up this workflow with projects, tasks, documents, and approvals. Age
 
 Product announcements are disabled by default. Set `PAPERCLIP_ANNOUNCEMENTS_FEED_URL` to use your own feed. Set `PAPERCLIP_ANNOUNCEMENTS_ENABLED=false` to disable announcements even when a feed is configured.
 
-You need **Node.js 24.11 or later**, **pnpm 9.15.4**, and Git. Use the source code from this repository to run Papermarketing.
+You need **Node.js 24.11 or later**, **pnpm 9.15.4**, and Git. Use the source code from this repository to run PaperMarketing.
 
 ```sh
 git clone https://github.com/arthurbonora/papermarketing.git
@@ -57,13 +57,13 @@ Keep the local lockfile update out of commits. Open [localhost:3100](http://loca
 - [Scope of the first increment](doc/plans/2026-11-09-papermarketing-foundation.md)
 - [Visual integration and testing](doc/plans/2026-11-11-papermarketing-integration.md)
 - [Development guide](doc/DEVELOPING.md)
-- [Agent adapters](https://docs.paperclip.ing/reference/adapters/overview/)
-- [Open a Papermarketing issue](https://github.com/arthurbonora/papermarketing/issues)
+- [Agent connections](doc/connections/AI-CONNECTIONS.md)
+- [Open a PaperMarketing issue](https://github.com/arthurbonora/papermarketing/issues)
 
 ## Visual identity
 
-The [PM monogram](ui/public/brands/papermarketing.svg) uses a closed loop in the P and wire curves in the M as a reference to the original project's paperclip. The charcoal and white palette highlights the colored capsules that represent agents.
+The [PM monogram](ui/public/brands/papermarketing.svg) uses a closed loop in the P and wire curves in the M. The charcoal and white palette highlights the colored capsules that represent agents.
 
 ## Origin and license
 
-Papermarketing is based on [Paperclip](https://github.com/paperclipai/paperclip). The codebase and copyright notices are distributed under the [MIT License](LICENSE).
+PaperMarketing is based on [Paperclip](https://github.com/paperclipai/paperclip). The codebase and copyright notices are distributed under the [MIT License](LICENSE).

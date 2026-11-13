@@ -201,17 +201,6 @@ export function TrustPresetSection({
                   </p>
                 </div>
               )}
-              {!projectAccessEditor && <p className="text-xs text-muted-foreground">
-                Want to set more than one containment boundary?{" "}
-                <a
-                  className="underline underline-offset-2 hover:text-foreground"
-                  href="https://paperclip.ing/ee"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Get Paperclip EE.
-                </a>
-              </p>}
               <CollapsibleSection
                 title="View policy"
                 open={policyOpen}
@@ -286,7 +275,7 @@ export function TrustPresetSection({
     <div>
       <h3 className="mb-3 text-sm font-medium">Trust</h3>
       <div className="rounded-lg border border-border p-4 space-y-3">
-        <Field label="Trust preset" hint="Choose how broadly this agent can read and act on Paperclip work objects.">
+        <Field label="Trust preset" hint="Choose how broadly this agent can read and act on PaperMarketing work objects.">
           <select
             className={inputClass}
             value={preset}

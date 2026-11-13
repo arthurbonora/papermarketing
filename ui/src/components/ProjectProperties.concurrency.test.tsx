@@ -21,7 +21,7 @@ function act(callback: () => void) {
 const noop = vi.hoisted(() => () => undefined);
 
 const environmentOptions = vi.hoisted(() => ({ groups: [
-  { storageProviderPluginId: null, environments: [{ id: "local", name: "Local" }, { id: "sandbox", name: "Paperclip Sandbox" }] },
+  { storageProviderPluginId: null, environments: [{ id: "local", name: "Local" }, { id: "sandbox", name: "PaperMarketing Sandbox" }] },
   { storageProviderPluginId: "provider-one", environments: [{ id: "computer", name: "Agent computers" }] },
 ], defaultEnvironmentId: "local", error: null }));
 vi.mock("../api/projects", () => ({ projectsApi: { createWorkspace: vi.fn(), removeWorkspace: vi.fn(), updateWorkspace: vi.fn(),
@@ -167,7 +167,7 @@ describe("ProjectProperties — workspace storage availability", () => {
   it("lists the environments that share a core project's storage when a plugin is installed", () => {
     render(makeProject({ companyId: "company-1", executionWorkspacePolicy: null, workspaceProvider: core }), vi.fn());
     expect(note()?.textContent).toContain("Available in");
-    expect(note()?.textContent).toContain("Local, Paperclip Sandbox");
+    expect(note()?.textContent).toContain("Local, PaperMarketing Sandbox");
     expect(note()?.textContent).not.toContain("Agent computers");
     expect(note()?.textContent).toContain("Core / local workspace storage was chosen when this project was created");
   });
@@ -175,7 +175,7 @@ describe("ProjectProperties — workspace storage availability", () => {
     render(makeProject({ companyId: "company-1", executionWorkspacePolicy: { enabled: true, storageProviderPluginId: "provider-one" },
       workspaceProvider: { ...inherited, source: "project" as const, pluginId: "provider-one" } }), vi.fn());
     expect(note()?.textContent).toContain("Agent computers");
-    expect(note()?.textContent).not.toContain("Paperclip Sandbox");
+    expect(note()?.textContent).not.toContain("PaperMarketing Sandbox");
     expect(note()?.textContent).toContain("Managed storage workspace storage");
   });
   it("reports an uninstalled storage plugin instead of hiding the note", () => {

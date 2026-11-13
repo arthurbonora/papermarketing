@@ -137,7 +137,7 @@ export type ChatQuestionFormValidationResult =
     };
 
 const CHAT_QUESTION_FORM_DENIAL_MESSAGE =
-  "This form is no longer authorized. Close it and open the linked Paperclip task.";
+  "This form is no longer authorized. Close it and open the linked PaperMarketing task.";
 
 /**
  * Provider callbacks must be acknowledged after Paperclip has durably denied a

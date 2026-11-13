@@ -1,3 +1,4 @@
+import { PAPERMARKETING_DOCS_URL } from "@/lib/papermarketing-links";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -444,7 +445,7 @@ function generateReadmeFromSelection(
 
   lines.push("## What's Inside");
   lines.push("");
-  lines.push("This is an [Agent Company](https://paperclip.ing) package.");
+  lines.push("This is an Agent Company package.");
   lines.push("");
 
   const counts: Array<[string, number]> = [];
@@ -491,10 +492,10 @@ function generateReadmeFromSelection(
   lines.push("npx paperclipai company import this-github-url-or-folder");
   lines.push("```");
   lines.push("");
-  lines.push("See [Paperclip](https://paperclip.ing) for more information.");
+  lines.push(`See the [PaperMarketing documentation](${PAPERMARKETING_DOCS_URL}) for more information.`);
   lines.push("");
   lines.push("---");
-  lines.push(`Exported from [Paperclip](https://paperclip.ing) on ${new Date().toISOString().split("T")[0]}`);
+  lines.push(`Exported from [PaperMarketing](${PAPERMARKETING_DOCS_URL}) on ${new Date().toISOString().split("T")[0]}`);
   lines.push("");
 
   return lines.join("\n");

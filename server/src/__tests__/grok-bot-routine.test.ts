@@ -607,7 +607,7 @@ describe("Grok inspection of historical workspace-less Stop", () => {
       status: "running", invocationSource: "assignment", triggerDetail: "system" }).returning();
     await db.insert(dotRunnerAssignments).values({ ...f.work, id: randomUUID(), runId: other!.id,
       normalizedSessionId: randomUUID(), turnId: randomUUID(), status: "accepted" });
-    await expect(f.service.recover(f.company.id, f.agent.id, f.principal.grant.userId)).rejects.toThrow("current Paperclip work session");
+    await expect(f.service.recover(f.company.id, f.agent.id, f.principal.grant.userId)).rejects.toThrow("current PaperMarketing work session");
     const [run] = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, f.run.id));
     expect(hasRequiredWorkspaceRecovery(run!.resultJson)).toBe(true);
     expect(await f.service.recoveryNeeded(f.company.id, f.agent.id)).toBe(true);

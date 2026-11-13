@@ -68,18 +68,18 @@ const OAUTH_PROVIDER_ERROR_MESSAGES: Record<string, string> = {
     "The authorization server needs consent to be granted. Try connecting again.",
   interaction_required:
     "The authorization server needs to be signed in to interactively. Try connecting again.",
-  invalid_client: "The authorization server rejected Paperclip's OAuth client.",
+  invalid_client: "The authorization server rejected PaperMarketing's OAuth client.",
   invalid_client_metadata:
-    "The authorization server rejected Paperclip's client registration details.",
+    "The authorization server rejected PaperMarketing's client registration details.",
   invalid_grant:
     "The authorization server rejected the authorization code or refresh token.",
   invalid_redirect_uri:
-    "The authorization server rejected Paperclip's callback URL.",
+    "The authorization server rejected PaperMarketing's callback URL.",
   invalid_request:
     "The authorization server rejected the request as malformed.",
   invalid_scope: "The authorization server rejected the requested permissions.",
   invalid_software_statement:
-    "The authorization server rejected Paperclip's client registration details.",
+    "The authorization server rejected PaperMarketing's client registration details.",
   login_required:
     "The authorization server needs to be signed in to. Try connecting again.",
   server_error:
@@ -87,13 +87,13 @@ const OAUTH_PROVIDER_ERROR_MESSAGES: Record<string, string> = {
   temporarily_unavailable:
     "The authorization server is temporarily unavailable. Try again shortly.",
   unapproved_software_statement:
-    "The authorization server rejected Paperclip's client registration details.",
+    "The authorization server rejected PaperMarketing's client registration details.",
   unauthorized_client:
-    "The authorization server refused to authorize Paperclip's OAuth client.",
+    "The authorization server refused to authorize PaperMarketing's OAuth client.",
   unsupported_grant_type:
-    "The authorization server does not support the grant Paperclip uses.",
+    "The authorization server does not support the grant PaperMarketing uses.",
   unsupported_response_type:
-    "The authorization server does not support the sign-in flow Paperclip uses.",
+    "The authorization server does not support the sign-in flow PaperMarketing uses.",
 };
 
 /**

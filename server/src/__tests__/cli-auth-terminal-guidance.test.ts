@@ -13,7 +13,7 @@ describe("CLI terminal login guidance in the agent API catalog", () => {
     const { results } = searchRunnerApi({ query, limit: 5 });
     const challenge = results.find(operation => operation.operationId === "POST /api/cli-auth/challenges");
     expect(challenge, query).toBeDefined();
-    expect(challenge!.description).toContain("`npx paperclipai auth login --api-base <this Paperclip URL>`");
+    expect(challenge!.description).toContain("`npx paperclipai auth login --api-base <this PaperMarketing URL>`");
     expect(challenge!.description).toContain("never by an agent on their behalf");
     expect(challenge!.description).toContain("leave it as that placeholder instead of looking it up");
     expect(challenge!.description).toMatch(/never hand out an agent key, create or approve a challenge yourself, or ask for the person's password/);

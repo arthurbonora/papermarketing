@@ -323,7 +323,7 @@ function parseManagedEnvironmentsSection(
       // satisfied.
       if (sandbox.length > 0) {
         fail(
-          `"environments" supports at most one sandbox entry: each sandbox entry provisions the single Paperclip-managed sandbox environment (DB invariant environments_managed_sandbox_idx)`,
+          `"environments" supports at most one sandbox entry: each sandbox entry provisions the single PaperMarketing-managed sandbox environment (DB invariant environments_managed_sandbox_idx)`,
         );
       }
       const provider = requireTrimmedString(entry.provider, `${at}.provider`);

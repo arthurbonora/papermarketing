@@ -65,7 +65,7 @@ export function ExecutionBlockerNotice({ presentation, canRetry, onRetry, optimi
     // generic automatic-retry line while keeping the provider explanation.
     return <ProviderFailureNotice failure={presentation.providerFailure} className={className}
       actions={canRetry && presentation.canRetry ? <Button variant="outline" size="sm" onClick={onRetry} data-testid="task-execution-retry">Retry</Button> : undefined}>
-      {presentation.state === "retry_scheduled" && <p>{step ? `${step}. ${retryIn}` : "Paperclip will retry automatically."}</p>}
+      {presentation.state === "retry_scheduled" && <p>{step ? `${step}. ${retryIn}` : "PaperMarketing will retry automatically."}</p>}
       {isBudgetWait(presentation) && <p data-testid="task-execution-waiting">It is waiting for the budget to allow new work. Raise the budget in Costs.</p>}
     </ProviderFailureNotice>;
   }
@@ -96,7 +96,7 @@ export function ExecutionBlockerNotice({ presentation, canRetry, onRetry, optimi
     const runId = presentation.observedRunId;
     return <PreviousServerStopConfirmation key={`${issueId}:${runId}`} runId={runId} formId={runId} issueId={issueId} companyId={companyId}
       className={className} confirmStop={stopEvidence => issuesApi.confirmRunStopped(issueId, { runId, stopEvidence })}
-      copy={{ waiting: presentation.retryWait?.message ?? "Paperclip can't confirm that the previous run stopped. Your message is saved.",
+      copy={{ waiting: presentation.retryWait?.message ?? "PaperMarketing can't confirm that the previous run stopped. Your message is saved.",
         question: "How did you confirm that no agent is still working on this task?",
         placeholder: "For example: no codex or claude process for this task is running on the server host.",
         resuming: "Starting your Retry…", confirm: "Confirm it stopped" }} />;

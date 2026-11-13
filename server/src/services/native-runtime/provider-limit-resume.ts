@@ -106,7 +106,7 @@ export async function planProviderLimitResume(db: Pick<Db, "select">, runId: str
 
 export function providerLimitNextAction(plan: ProviderLimitResumePlan) {
   if (plan.automatic) {
-    return `The provider usage limit resets at ${plan.resetAt.toISOString()}. Paperclip will retry this task then; Retry starts it sooner if usage capacity is already restored.`;
+    return `The provider usage limit resets at ${plan.resetAt.toISOString()}. PaperMarketing will retry this task then; Retry starts it sooner if usage capacity is already restored.`;
   }
   return plan.resetAt
     ? `The provider usage limit resets at ${plan.resetAt.toISOString()}. Retry the task after that time, or sooner if usage capacity is restored.`
@@ -158,7 +158,7 @@ export async function requestProviderLimitResumeRetry(db: Db, input: {
   const done = async (reason: NotRetriedReason, extra: Record<string, unknown> = {}) => {
     // Replace a promise to retry with what the user can do now.
     const nextAction = action.evidence?.providerLimitResetAt
-      ? `Paperclip did not retry this task after the provider usage limit reset because ${NOT_RETRIED[reason]}. Retry the task when usage capacity is available.`
+      ? `PaperMarketing did not retry this task after the provider usage limit reset because ${NOT_RETRIED[reason]}. Retry the task when usage capacity is available.`
       : undefined;
     await settle(db, action.id, { state: "not_requested", reason, decidedAt: now.toISOString(), ...extra }, nextAction);
     return { requested: false as const, reason };

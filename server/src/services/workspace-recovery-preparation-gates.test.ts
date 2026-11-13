@@ -433,10 +433,10 @@ describe("automatic retained workspace recovery", () => {
         .toMatchObject({ runId: null, payload: { executionWait: { reason: "saved_work_recovery_refused" } } });
       const shown = await taskInterruptionPresentation(db, issue);
       expect(shown).toMatchObject({ state: "failed", canRetry: true, retryWait: { reason: "saved_work_recovery_refused" } });
-      expect(shown?.retryWait?.message).toContain("Paperclip refused to recover the saved files");
+      expect(shown?.retryWait?.message).toContain("PaperMarketing refused to recover the saved files");
       expect(shown?.retryWait?.message).not.toMatch(/after automatic retries/);
       expect((await getExecutionBlocker(db, f.companyId, f.issueId))?.nextAction)
-        .toContain("Paperclip cannot prove which runs used the sandbox that holds the saved files");
+        .toContain("PaperMarketing cannot prove which runs used the sandbox that holds the saved files");
     }
   }, 60_000);
 

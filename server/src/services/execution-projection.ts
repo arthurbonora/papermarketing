@@ -414,7 +414,7 @@ export function projectExecution(
   )) {
     projection.recoveryOwner = "agent";
     if (coordinator?.failureCode === "native_governed_wait_settlement_pending") {
-      projection.nextAction = "The work and waiting state are saved. Paperclip is confirming shutdown before continuing.";
+      projection.nextAction = "The work and waiting state are saved. PaperMarketing is confirming shutdown before continuing.";
       return set("finishing", "Finishing shutdown");
     }
     return set(

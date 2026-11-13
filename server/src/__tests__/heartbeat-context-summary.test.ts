@@ -335,9 +335,9 @@ describe("buildPaperclipTaskMarkdown", () => {
       expect(markdown).toContain("Access → Invite people");
       expect(markdown).toContain("expires after 15 minutes");
       expect(markdown).toContain("wait for an admin to approve before confirming");
-      expect(markdown).toContain("their own current Paperclip permissions");
+      expect(markdown).toContain("their own current PaperMarketing permissions");
       expect(markdown).toContain("does not send an invitation or grant access");
-      expect(markdown).toContain("does not authorize that person in Paperclip");
+      expect(markdown).toContain("does not authorize that person in PaperMarketing");
     }
   });
 

@@ -96,7 +96,7 @@ it.each([RunsTab, ProductionRunsTab].flatMap(Tab => states.map(state => ({ Tab, 
     return { stopped: true, remoteTerminationConfirmed: false };
   });
   const usesGrokStop = Tab === RunsTab && state.driverKind === "grok_bot_mcp";
-  const expectedLabel = label && usesGrokStop ? "Stop Paperclip work" : label;
+  const expectedLabel = label && usesGrokStop ? "Stop PaperMarketing work" : label;
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const element = document.createElement("div"); document.body.append(element);
   let root = createRoot(element);
@@ -106,7 +106,7 @@ it.each([RunsTab, ProductionRunsTab].flatMap(Tab => states.map(state => ({ Tab, 
   try {
     await act(async () => render());
     await vi.waitFor(async () => { await act(async () => {}); expect(element.textContent).toContain(status); });
-    const control = () => Array.from(element.querySelectorAll("button")).find(candidate => ["Stop", "Cancel", "Stop Paperclip work"].includes(candidate.textContent ?? ""));
+    const control = () => Array.from(element.querySelectorAll("button")).find(candidate => ["Stop", "Cancel", "Stop PaperMarketing work"].includes(candidate.textContent ?? ""));
     if (label) {
       expect(control()?.textContent).toBe(expectedLabel);
       await act(async () => control()!.click());

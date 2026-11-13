@@ -134,7 +134,7 @@ describe("lifecycle failure diagnostics", () => {
 
   it("does not treat prototype properties as allowed failure codes", () => {
     expect(lifecycleFailureMessage({ stage: "host", phase: "verifying" }, { code: "toString" }))
-      .toContain("Paperclip could not complete this step");
+      .toContain("PaperMarketing could not complete this step");
   });
 
   it.each(["host", "plugin", "claim", "renew", "scan", "defer"] as const)("reports %s failures with the available context", async stage => {

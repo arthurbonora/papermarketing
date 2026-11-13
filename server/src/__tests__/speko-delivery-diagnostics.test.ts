@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { parseSpekoDeliveryDiagnostics } from "../services/voice/speko-delivery-diagnostics.js";
 const acceptedAt = "2026-10-09T13:39:14.340Z";
 const deliveries = [{messageId: "msg_test", acceptedAt}];
-function fixture() {
-  const prompt = "Paperclip pushes approved task answers. private prompt credential";
+function fixture(brand = "PaperMarketing") {
+  const prompt = `${brand} pushes approved task answers. private prompt credential`;
   return {
     call: {id: "call_test", status: "ended", ended_at: "2026-10-09T13:39:36.000Z",
       recording_url: "https://private.example/recording", phone: "+12015551234", metadata: {token: "private-token"},
@@ -23,8 +23,8 @@ function fixture() {
   };
 }
 describe("Speko delivery diagnostics", () => {
-  it("correlates message acceptance, worker configuration and idle speech without claiming playback", () => {
-    const f = fixture(), result = parseSpekoDeliveryDiagnostics(f.call, f.events, "call_test", deliveries);
+  it.each(["Paperclip", "PaperMarketing"])("recognizes the %s prompt and correlates delivery without claiming playback", (brand) => {
+    const f = fixture(brand), result = parseSpekoDeliveryDiagnostics(f.call, f.events, "call_test", deliveries);
     expect(result).toMatchObject({transcriptComplete: true, agentTurnCount: 3,
       runtime: {model: "gpt-live-1", backendModel: "gpt-5.6-luna", sipInbound: true, fallbackObserved: false},
       configuration: {promptsMatch: true, automaticPushInstruction: true, topLevelTools: ["submit_request"], idleRepromptsEnabled: true, idleRepromptDelayMs: 5000},

@@ -16,11 +16,11 @@ export const NATIVE_SESSION_CLEANUP_QUARANTINED = "native_session_cleanup_quaran
 
 /** Plain wording for the cleanup gate. It names no person who must act. */
 export const NATIVE_CLEANUP_SETTLING_MESSAGE =
-  "The previous session is still shutting down. Your work is saved, and Paperclip finishes the cleanup automatically.";
+  "The previous session is still shutting down. Your work is saved, and PaperMarketing finishes the cleanup automatically.";
 
 /** Shown for a quarantined run whose provider turn had already completed. */
 export const NATIVE_COMPLETED_TURN_CLEANUP_MESSAGE =
-  "This run finished its work and saved it. Paperclip finishes the session cleanup automatically. Send a message to continue; it starts once the previous session has stopped.";
+  "This run finished its work and saved it. PaperMarketing finishes the session cleanup automatically. Send a message to continue; it starts once the previous session has stopped.";
 
 const record = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};

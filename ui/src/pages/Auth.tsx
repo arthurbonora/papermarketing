@@ -131,7 +131,7 @@ export function AuthPage() {
           </div>
 
           <h1 className="text-xl font-semibold">
-            {mode === "sign_in" ? "Sign in to Papermarketing" : "Create your Papermarketing account"}
+            {mode === "sign_in" ? "Sign in to PaperMarketing" : "Create your PaperMarketing account"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "sign_in"

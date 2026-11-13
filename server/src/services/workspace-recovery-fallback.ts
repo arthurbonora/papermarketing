@@ -70,7 +70,7 @@ export function retainedSourceFallbackNote(input: { runId: string; snapshotId: s
   const files = input.quarantine.state === "captured"
     ? `They are attached to this task as ${input.quarantine.filename} (attachment ${input.quarantine.attachmentId}), without secrets, repository metadata or dependency directories. Inspect them and re-apply anything still needed deliberately.`
     : "They could not be read, so they are not available.";
-  return `Paperclip could not verify the unsaved file changes of run ${input.runId}, so they were not applied. `
+  return `PaperMarketing could not verify the unsaved file changes of run ${input.runId}, so they were not applied. `
     + `This task continues from ${from}. ${files} Check which work from that run needs redoing. `
     + "Its completed external actions remain recorded and must not be repeated.";
 }
@@ -338,7 +338,7 @@ export async function continueFromLastSavedWorkspace(input: Source & {
       // The workspace repair that a restore failure requires before continuing:
       // the unverified epoch is abandoned and the next writer restores the last
       // committed save into a new root.
-      workspaceRepairEvidence: `Paperclip abandoned unverified workspace epoch ${reference.epoch} of run ${run.id}; `
+      workspaceRepairEvidence: `PaperMarketing abandoned unverified workspace epoch ${reference.epoch} of run ${run.id}; `
         + `the continuation restores ${reference.snapshotId ? `committed snapshot ${reference.snapshotId}` : "the workspace source"} into a new root.`,
       retainedSourceFallback: fallback };
     const now = new Date();
@@ -349,8 +349,8 @@ export async function continueFromLastSavedWorkspace(input: Source & {
     const ownsBlock = holdOwnsBlockedStatus(action, issue, run);
     const dispatchable = issue.status !== "blocked" || ownsBlock;
     const userText = quarantine.state === "captured"
-      ? "Paperclip could not verify the previous run's unsaved files, so the task continues from the last saved version. Those files are attached to the task, unapplied."
-      : "Paperclip could not verify the previous run's unsaved files, so the task continues from the last saved version. Those files could not be read.";
+      ? "PaperMarketing could not verify the previous run's unsaved files, so the task continues from the last saved version. Those files are attached to the task, unapplied."
+      : "PaperMarketing could not verify the previous run's unsaved files, so the task continues from the last saved version. Those files could not be read.";
     const evidence = { ...action.evidence, automaticRecovery: undefined, [RETAINED_SOURCE_FALLBACK_CHECK_KEY]: undefined,
       retainedSourceFallback: { ...fallback, failureCode: current.system.failure?.code ?? null, recordedAt: now.toISOString() },
       workspaceRecovery: { ...(readWorkspaceRecovery(action.evidence) ?? {}), message: userText, retryable: false },

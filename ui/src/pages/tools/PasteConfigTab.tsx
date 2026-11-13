@@ -374,7 +374,7 @@ export function PasteConfigTab({ companyId }: { companyId: string }) {
             })}
             {drafts.some((d) => draftConnectUrl(d)) ? (
               <p className="text-xs text-muted-foreground">
-                Checking a remote app creates a draft connection, stores any header replacements as Paperclip secrets,
+                Checking a remote app creates a draft connection, stores any header replacements as PaperMarketing secrets,
                 and runs health/catalog discovery before activation.
               </p>
             ) : (

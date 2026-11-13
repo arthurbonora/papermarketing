@@ -1625,8 +1625,8 @@ function RequestConfirmationResolution({
             </div>
             <p className="mt-1 leading-6">
               {resumeFailure.status === "retrying"
-                ? `Paperclip is retrying the agent resume after approval (attempt ${resumeFailure.attempt}/${resumeFailure.maxAttempts}).`
-                : "Paperclip needs attention before the agent can resume this approved work."}
+                ? `PaperMarketing is retrying the agent resume after approval (attempt ${resumeFailure.attempt}/${resumeFailure.maxAttempts}).`
+                : "PaperMarketing needs attention before the agent can resume this approved work."}
             </p>
             {resumeFailure.errorCode ? (
               <p className="mt-1 leading-6">
@@ -1765,7 +1765,7 @@ function ToolActionResolution({
     const appName = interaction.payload.toolAction?.appDisplayName || "app";
     return <div role="status" className="space-y-2 text-sm text-muted-foreground">
       <p className="font-medium text-foreground">Approved · Sign-in needed</p>
-      <p>Your approval is saved. Reconnect the app to continue. Paperclip will check the account and action again before it runs.</p>
+      <p>Your approval is saved. Reconnect the app to continue. PaperMarketing will check the account and action again before it runs.</p>
       {connectionId ? <Button asChild size="sm" variant="outline"><Link to={appTabHref(connectionId, "permissions")}>Reconnect {appName}</Link></Button> : null}
     </div>;
   }
@@ -1773,7 +1773,7 @@ function ToolActionResolution({
     const connectionId = interaction.payload.toolAction?.connectionId;
     return <div role="alert" className="space-y-2 rounded-lg bg-destructive/10 p-3 text-sm text-foreground">
       <p className="flex items-center gap-2 font-medium"><AlertTriangle className="size-4 shrink-0 text-destructive" aria-hidden="true" />GitHub access needed</p>
-      <p>This GitHub connection cannot access the requested account or repository. Check the connected account and Paperclip’s repository access, then ask the agent to continue.</p>
+      <p>This GitHub connection cannot access the requested account or repository. Check the connected account and PaperMarketing’s repository access, then ask the agent to continue.</p>
       {connectionId ? <Button asChild size="sm" variant="outline"><Link to={appTabHref(connectionId, "permissions")}>Manage GitHub access</Link></Button> : null}
       {detail ? <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Error details</summary><p className="mt-2 break-words">{detail}</p></details> : null}
     </div>;
@@ -2014,7 +2014,7 @@ function SecretProposalResolution({
         <div>
           <div className="font-medium">Approved by {who} — creating the binding</div>
           <p className="mt-1 text-amber-900/80 dark:text-amber-100/80">
-            Paperclip is re-checking authority and the proposal snapshot before writing.
+            PaperMarketing is re-checking authority and the proposal snapshot before writing.
           </p>
         </div>
       </div>
