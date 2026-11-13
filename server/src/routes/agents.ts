@@ -4530,6 +4530,9 @@ export function agentRoutes(
         === agentHarnessType(setupAgent.adapterType, setupAgent.adapterConfig)) {
         hireInput.adapterConfig = restoreRedactedAgentEnv(hireInput.adapterConfig, setupAgent.adapterConfig);
       }
+      if (!instructionsBundle && adapterConfigTouchesInstructionsConfig(setupAgent.adapterConfig)) {
+        hireInput.adapterConfig = preserveInstructionsBundleConfig(setupAgent.adapterConfig, hireInput.adapterConfig ?? {});
+      }
     }
     const hiredAgentId = setupAgentId ?? randomUUID();
     const requestedHireConfig = (hireInput.adapterConfig ?? {}) as Record<string, unknown>;

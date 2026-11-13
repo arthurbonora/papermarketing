@@ -38,35 +38,35 @@ export function WorkspaceOnboarding({ open, onClose }: { open: boolean; onClose:
       onClose();
       navigate(`/${workspace.issuePrefix}/agents/new`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Não foi possível criar o workspace.");
+      setError(cause instanceof Error ? cause.message : "Could not create the workspace.");
     } finally { busy.current = false; setSaving(false); }
   }
   return <Dialog open={open} onOpenChange={next => { if (!next && !saving) onClose(); }}>
     <DialogContent>
-      <DialogTitle>{existing ? `Equipe de ${existing.name}` : "Criar workspace"}</DialogTitle>
-      <DialogDescription>Organize marca, projetos, agentes e conexões em um workspace.
-        Você pode configurar as contas depois.</DialogDescription>
+      <DialogTitle>{existing ? `${existing.name} team` : "Create workspace"}</DialogTitle>
+      <DialogDescription>Organize your brand, projects, agents, and connections in a workspace.
+        You can connect accounts later.</DialogDescription>
       <form className="space-y-4" onSubmit={event => { event.preventDefault(); void submit(); }}>
         {missingWorkspace && <p role={loading ? "status" : "alert"} className="text-sm text-muted-foreground">
-          {loading ? "Carregando workspace…" : "Workspace indisponível para esta conta. Volte à lista de workspaces."}
+          {loading ? "Loading workspace…" : "This workspace is unavailable for your account. Return to the workspace list."}
         </p>}
         {!existing && !missingWorkspace && <>
           <div className="space-y-2">
-            <label htmlFor={`${id}-name`} className="text-sm font-medium">Nome do workspace</label>
+            <label htmlFor={`${id}-name`} className="text-sm font-medium">Workspace name</label>
             <Input id={`${id}-name`} autoFocus required maxLength={100} value={name} disabled={saving}
-              onChange={event => setName(event.target.value)} placeholder="Ex.: Minha marca" />
+              onChange={event => setName(event.target.value)} placeholder="e.g., My brand" />
           </div>
           <div className="space-y-2">
-            <label htmlFor={`${id}-description`} className="text-sm font-medium">Contexto inicial (opcional)</label>
+            <label htmlFor={`${id}-description`} className="text-sm font-medium">Initial context (optional)</label>
             <Textarea id={`${id}-description`} maxLength={5000} value={description} disabled={saving}
-              onChange={event => setDescription(event.target.value)} placeholder="Objetivos, público e informações da marca" />
+              onChange={event => setDescription(event.target.value)} placeholder="Goals, audience, and brand information" />
           </div>
         </>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <div className="flex items-center justify-between gap-4">
-          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>Cancelar</Button>
+          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={saving || missingWorkspace || (!existing && !name.trim())}>
-            {saving ? "Salvando…" : existing ? "Criar agente" : "Criar workspace"}
+            {saving ? "Saving…" : existing ? "Create agent" : "Create workspace"}
           </Button>
         </div>
       </form>

@@ -5,10 +5,13 @@ import { ConnectionFailure } from "./connection-config.js";
 /** Recent sidebar entries are bounded; the searchable roster contains every
  * agent. Scope the exact visible name to the main roster, not sidebar recency. */
 export async function openAntigravityAgentFromRoster(page: Page, agentName: string, timeout = 30_000) {
-  const navigation = page.locator("aside").getByRole("link", { name: /^(Equipe|Agents)$/ });
+  const navigation = page.locator("aside").getByRole("link", { name: /^(Team|Agents)$/ });
   await expect(navigation).toHaveCount(1, { timeout });
   await navigation.click({ timeout });
   const toolbar = page.getByRole("toolbar", { name: "Agents controls", exact: true });
+  await expect(toolbar).toBeVisible({ timeout });
+  const listView = toolbar.getByRole("button", { name: "List view", exact: true });
+  if (await listView.isVisible()) await listView.click({ timeout });
   await toolbar.getByRole("textbox", { name: "Search agents", exact: true }).fill(agentName, { timeout });
   const row = page.getByRole("main").getByRole("link").filter({ has: page.getByText(agentName, { exact: true }) });
   await expect(row).toHaveCount(1, { timeout });

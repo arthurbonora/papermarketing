@@ -317,14 +317,14 @@ test("production account menu fits profile, settings, Invite and theme actions",
   await openPage(page);
   const trigger = page.getByRole("button", { name: "Open account menu", exact: true });
   await trigger.click();
+  const account = page.getByRole("dialog", { name: "Account", exact: true });
   await expect(page.getByRole("link", { name: "View profile", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Settings", exact: true })).toBeVisible();
+  await expect(account.getByRole("link", { name: "Settings", exact: true })).toBeVisible();
   const invite = page.getByRole("link", { name: "Invite", exact: true });
   await expect(invite).toBeVisible();
   await expect(invite).toHaveAttribute("href", /\/company\/settings\/members\?tab=invites$/);
   await expect(page.getByRole("link", { name: "Documentation", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Switch to light mode", exact: true })).toBeVisible();
-  const account = page.getByRole("dialog", { name: "Account", exact: true });
   await expect(account.locator('[data-slot="avatar-fallback"]')).toHaveText("R");
   const content = await account.evaluate(menu => {
     const last = menu.querySelector('[data-flyout-options] > button:last-of-type')!;

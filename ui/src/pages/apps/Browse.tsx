@@ -1067,8 +1067,8 @@ export function Browse({
         <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground">
           {source === "marketing" && !trimmed ? (
             <>
-              <p>Nenhum conector disponível nesta seleção.</p>
-              <Button variant="outline" size="sm" onClick={() => { setSource("all"); setMarketingCategory(""); setPage(1); }}>Ver todos os conectores</Button>
+              <p>No connections are available for this selection.</p>
+              <Button variant="outline" size="sm" onClick={() => { setSource("all"); setMarketingCategory(""); setPage(1); }}>View all connections</Button>
             </>
           ) : (
             <>

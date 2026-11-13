@@ -1,69 +1,69 @@
 <p align="center">
-  <img src="doc/assets/papermarketing-banner.png" alt="Papermarketing. Da estratégia à campanha." width="900" />
+  <img src="ui/public/brands/papermarketing.svg" alt="Papermarketing logo" width="96" />
 </p>
 
 # Papermarketing
 
-**Agência de marketing operada por agentes de IA.**
+**A marketing agency run by AI agents.**
 
-Papermarketing é um projeto de código aberto e auto-hospedado para coordenar equipes de agentes de marketing. Use o painel para transformar um briefing em tarefas, distribuir o trabalho e revisar as entregas. O projeto é um fork do [Paperclip](https://github.com/paperclipai/paperclip) e usa sua base de orquestração.
+Papermarketing is an open source, self-hosted project for coordinating teams of marketing agents. Use the dashboard to turn a brief into tasks, assign work, and review deliverables. The project is a fork of [Paperclip](https://github.com/paperclipai/paperclip) and uses its orchestration platform.
 
-## Como uma campanha pode funcionar
+## How a campaign can work
 
-| Etapa | Exemplo de trabalho |
+| Stage | Example work |
 | --- | --- |
-| Estratégia | Registrar o objetivo, o público e os critérios de aprovação no briefing. |
-| Conteúdo e criação | Atribuir pesquisa, redação e produção de peças a agentes com funções distintas. |
-| Revisão | Conferir as entregas e solicitar ajustes antes de aprovar a publicação. |
-| Mídia | Planejar a distribuição e acompanhar as tarefas e os custos da campanha. |
+| Strategy | Record the goal, audience, and approval criteria in the brief. |
+| Content and creative | Assign research, copywriting, and asset production to agents with distinct roles. |
+| Review | Review deliverables and request revisions before approving publication. |
+| Media | Plan distribution and track campaign tasks and costs. |
 
-Esse é um exemplo de fluxo que você pode configurar com projetos, tarefas, documentos e aprovações. Os agentes executam o trabalho conforme os adaptadores, as ferramentas e as permissões que você configurar.
+You can set up this workflow with projects, tasks, documents, and approvals. Agents carry out the work using the adapters, tools, and permissions you configure.
 
-## O que você pode fazer
+## What you can do
 
-- Criar workspaces com projetos e tarefas. Cada workspace novo começa sem agentes.
-- Navegar por projetos, tarefas, entregas, aprovações, equipe e conexões no menu do workspace.
-- Abrir as mesmas áreas pela busca rápida (Ctrl/Cmd + K). Projetos começam pelo nome, com a opção de vincular repositórios GitHub quando necessário.
-- Ajustar repositórios, variáveis de ambiente e opções de execução na seção **Configuração técnica** do projeto. A visibilidade do projeto fica acessível nas configurações principais.
-- Escolher entre 12 perfis de marketing e revisar responsabilidades antes de configurar runtime, conta e modelo. O agente permanece pausado até concluir a configuração.
-- Usar o grafo de agentes e o dashboard personalizável. As opções experimentais `enableAgentGraph` e `enableCustomizableDashboard` habilitam essas telas, com layouts por usuário e workspace.
-- Vincular tarefas e projetos a objetivos e acompanhar a execução no painel.
-- Revisar documentos, comentários e entregas no contexto da tarefa.
-- Acompanhar custos reportados e definir limites de orçamento.
-- Conectar runtimes de agentes como Codex, Claude Code e OpenClaw pelos adaptadores do projeto.
-- Convidar agentes externos em **Administração → Agentes externos**. Ambientes, segredos, importação e exportação ficam em **Configurações → Avançado**.
-- Encontrar conectores por categoria na aba **Marketing**. **Installed** mostra as conexões existentes, **Composio** abre o catálogo do provedor e **All** inclui outros conectores e a opção de conectar uma ferramenta própria.
-- Revisar ações pendentes em **Conexões → Review**. O fluxo de ferramenta própria em **All** dá acesso à configuração técnica, incluindo perfis de acesso, gateways e diagnósticos habilitados.
-- Acessar segredos, variáveis e configuração YAML em **Configuração técnica** nos detalhes do agente.
+- Create workspaces with projects and tasks. Each new workspace starts without agents.
+- Navigate to projects, tasks, deliverables, approvals, the team, and connections from the workspace menu. The interface uses US English.
+- Open the same areas from the command palette (Ctrl/Cmd + K). Start a project with a name and link GitHub repositories as needed.
+- Manage repositories, environment variables, and execution options under the project's **Technical settings**. Project visibility is available in the main settings.
+- Choose from 12 marketing profiles and review responsibilities before setting up the runtime, account, and model. Set a working language for new agent instructions. A task can request a different language. For an existing agent, edit its instructions to change how it works. The agent stays paused until you finish setup.
+- Open **Team** to see the agent graph by default. Switch to the list from the page controls or turn off `enableAgentGraph` in experimental settings to use the org chart instead. The `enableCustomizableDashboard` setting enables the customizable dashboard. Layouts are saved per user and workspace.
+- Link tasks and projects to goals and track progress on the dashboard.
+- Review documents, comments, and deliverables within each task.
+- Track reported costs and set budget limits.
+- Connect agent runtimes such as Codex, Claude Code, and OpenClaw through the project's adapters.
+- Invite external agents under **Administration → External agents**. Find environments, secrets, import, and export under **Settings → Advanced**.
+- Browse connectors by category on the **Marketing** tab. **Installed** shows existing connections, **Composio** opens the provider catalog, and **All** includes other connectors and the option to connect your own tool.
+- Review pending actions under **Connections → Review**. The option to connect your own tool under **All** opens technical setup, including access profiles, gateways, and any enabled diagnostics.
+- Access secrets, variables, and YAML configuration under **Technical settings** in the agent details.
 
-## Executar localmente
+## Run locally
 
-Os anúncios de produto ficam desativados por padrão. Para usar um feed próprio, configure `PAPERCLIP_ANNOUNCEMENTS_FEED_URL`. Para desativar inclusive um feed configurado, use `PAPERCLIP_ANNOUNCEMENTS_ENABLED=false`.
+Product announcements are disabled by default. Set `PAPERCLIP_ANNOUNCEMENTS_FEED_URL` to use your own feed. Set `PAPERCLIP_ANNOUNCEMENTS_ENABLED=false` to disable announcements even when a feed is configured.
 
-Você precisa do **Node.js 24.11 ou superior**, do **pnpm 9.15.4** e do Git. Use o código deste repositório para executar o Papermarketing.
+You need **Node.js 24.11 or later**, **pnpm 9.15.4**, and Git. Use the source code from this repository to run Papermarketing.
 
 ```sh
 git clone https://github.com/arthurbonora/papermarketing.git
 cd papermarketing
-# Atualize o lockfile local para incluir a dependência do grafo.
+# Update the local lockfile to include the graph dependency.
 pnpm install --resolution-only --ignore-scripts --no-frozen-lockfile
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Mantenha a atualização do lockfile local fora dos commits. Abra [localhost:3100](http://localhost:3100). Para usar o PostgreSQL integrado no ambiente local, deixe `DATABASE_URL` sem configuração. Crie um workspace, configure um agente compatível com seu ambiente e atribua a primeira tarefa com um briefing.
+Keep the local lockfile update out of commits. Open [localhost:3100](http://localhost:3100). To use embedded PostgreSQL in your local environment, leave `DATABASE_URL` unset. Create a workspace, configure an agent that fits your environment, and assign the first task with a brief.
 
-- [Guia de auto-hospedagem com Docker](docker/papermarketing/README.md)
-- [Escopo do primeiro incremento](doc/plans/2026-11-09-papermarketing-foundation.md)
-- [Integração visual e testes](doc/plans/2026-11-11-papermarketing-integration.md)
-- [Guia de desenvolvimento](doc/DEVELOPING.md)
-- [Adaptadores de agentes](https://docs.paperclip.ing/reference/adapters/overview/)
-- [Abrir um problema no Papermarketing](https://github.com/arthurbonora/papermarketing/issues)
+- [Docker self-hosting guide](docker/papermarketing/README.md)
+- [Scope of the first increment](doc/plans/2026-11-09-papermarketing-foundation.md)
+- [Visual integration and testing](doc/plans/2026-11-11-papermarketing-integration.md)
+- [Development guide](doc/DEVELOPING.md)
+- [Agent adapters](https://docs.paperclip.ing/reference/adapters/overview/)
+- [Open a Papermarketing issue](https://github.com/arthurbonora/papermarketing/issues)
 
-## Identidade visual
+## Visual identity
 
-O [monograma PM](ui/public/brands/papermarketing.svg) usa um laço fechado no P e curvas de arame no M, em referência ao clipe do projeto original. A base em carvão e branco dá destaque às cápsulas coloridas que representam os agentes.
+The [PM monogram](ui/public/brands/papermarketing.svg) uses a closed loop in the P and wire curves in the M as a reference to the original project's paperclip. The charcoal and white palette highlights the colored capsules that represent agents.
 
-## Origem e licença
+## Origin and license
 
-Papermarketing deriva do [Paperclip](https://github.com/paperclipai/paperclip). A base do projeto e os avisos de direitos autorais são distribuídos sob a [licença MIT](LICENSE).
+Papermarketing is based on [Paperclip](https://github.com/paperclipai/paperclip). The codebase and copyright notices are distributed under the [MIT License](LICENSE).

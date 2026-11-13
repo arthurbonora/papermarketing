@@ -174,7 +174,7 @@ test("Advanced YAML persists settings and commands through their real resource A
   await page.goto(`${url}/overview`);
   const advanced = page.getByRole("link", { name: "Advanced", exact: true });
   await expect(advanced).toBeHidden();
-  await page.getByText("Configuração técnica", { exact: true }).click();
+  await page.getByText("Technical settings", { exact: true }).click();
   await advanced.click();
   await expect(advanced).toBeVisible();
   await edit(page, value => {

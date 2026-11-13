@@ -196,7 +196,7 @@ describe("New agent setup", () => {
   it("requires explicit type selection before creating an agent from a direct URL", async () => {
     state.params = new URLSearchParams({ name: "Atlas", adapterType: "codex_local" });
     await renderCurrentParams();
-    expect(document.body.textContent).toContain("Tipo de agente");
+    expect(document.body.textContent).toContain("Agent type");
     expect(api.create).not.toHaveBeenCalled();
     expect(api.testEnvironment).not.toHaveBeenCalled();
   });

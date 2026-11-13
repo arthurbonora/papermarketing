@@ -866,7 +866,7 @@ export function ProjectDetail() {
             { value: "list", label: "Tasks" },
 
             ...(project.managedByPlugin ? [{ value: "plugin-operations", label: "Plugin operations" }] : []),
-            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Ambientes de execução" }] : []),
+            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Execution environments" }] : []),
             { value: "configuration", label: "Configuration" },
             { value: "budget", label: "Budget" },
             ...pluginTabItems.map((item) => ({

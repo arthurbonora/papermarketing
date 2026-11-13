@@ -224,7 +224,7 @@ function ProjectTechnicalSettings({ compact, children }: { compact: boolean; chi
       }}
     >
       <summary className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        Configuração técnica
+        Technical settings
       </summary>
       {visited ? children : null}
     </details>

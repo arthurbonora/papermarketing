@@ -276,7 +276,7 @@ export function normalizeExperimentalSettings(raw: unknown): InstanceExperimenta
       enableLegacyComposerSubmit: parsed.data.enableLegacyComposerSubmit ?? false,
       enableIssuePlanDecompositions: parsed.data.enableIssuePlanDecompositions ?? false,
       enableExperimentalFileViewer: parsed.data.enableExperimentalFileViewer ?? false,
-      enableAgentGraph: parsed.data.enableAgentGraph ?? false,
+      enableAgentGraph: parsed.data.enableAgentGraph ?? true,
       enableCustomizableDashboard: parsed.data.enableCustomizableDashboard ?? false,
       enableExternalObjects: parsed.data.enableExternalObjects ?? false,
       enableSmokeLab: parsed.data.enableSmokeLab ?? false,
@@ -337,7 +337,11 @@ export function normalizeExperimentalSettings(raw: unknown): InstanceExperimenta
     enableLegacyComposerSubmit: false,
     enableIssuePlanDecompositions: false,
     enableExperimentalFileViewer: false,
-    enableAgentGraph: false,
+    // Unrelated malformed settings must not erase an explicit graph opt-out.
+    enableAgentGraph: !(
+      raw !== null && typeof raw === "object" && !Array.isArray(raw)
+      && "enableAgentGraph" in raw && raw.enableAgentGraph === false
+    ),
     enableCustomizableDashboard: false,
     enableExternalObjects: false,
     enableSmokeLab: false,

@@ -60,7 +60,7 @@ test("two cached tasks keep separate title saves while the browser is offline", 
     const second = await json(await request.post(`/api/companies/${company.id}/issues`, { data: { title: "Second queued task", status: "todo" } }));
     await page.goto(`/${company.issuePrefix}/issues/${second.id}`);
     await expect(page.getByRole("heading", { name: second.title, exact: true })).toBeVisible();
-    await page.getByRole("link", { name: "Tarefas", exact: true }).first().click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Tasks", exact: true }).click();
     await page.getByRole("link").filter({ hasText: first.title }).first().click();
     await expect(page.getByTestId("task-chat-history-content")).toBeVisible({ timeout: 30_000 });
     const header = page.getByTestId("issue-detail-header");

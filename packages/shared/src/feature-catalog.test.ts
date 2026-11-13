@@ -30,6 +30,11 @@ function schemaBooleanFlagKeys(): string[] {
 }
 
 describe("INSTANCE_FEATURE_CATALOG", () => {
+  it("enables the agent graph by default for Cloud and self-hosted instances while retaining the preference", () => {
+    expect(INSTANCE_FEATURE_CATALOG.enableAgentGraph).toMatchObject({
+      tier: "preference", cloudDefault: true, selfHostedDefault: true,
+    });
+  });
   it("keeps Notebook a managed rollout disabled for Cloud and self-hosted instances", () => {
     expect(INSTANCE_FEATURE_CATALOG.enablePaperclipNotebook).toMatchObject({
       tier: "managed", cloudDefault: false, selfHostedDefault: false,

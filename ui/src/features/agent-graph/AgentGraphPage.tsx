@@ -25,7 +25,7 @@ export function AgentGraphPage() {
   }, [setBreadcrumbs]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Network} message="Select an workspace to view the agent graph." />;
+    return <EmptyState icon={Network} message="Select a workspace to view the agent graph." />;
   }
   if (view.kind === "error") {
     return (

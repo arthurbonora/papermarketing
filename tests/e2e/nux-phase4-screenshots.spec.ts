@@ -35,7 +35,7 @@ function shot(name: string) {
 
 async function openWizard(page: import("@playwright/test").Page) {
   await page.goto("/onboarding");
-  const startBtn = page.getByRole("button", { name: /Criar workspace|Criar agente/ });
+  const startBtn = page.getByRole("button", { name: /Create workspace|Create agent/ });
   if (await startBtn.count()) {
     await startBtn.first().click();
   }
@@ -62,15 +62,15 @@ test.describe("NUX Phase 4 visual QA", () => {
     // ── Section A: create-company path (name → hire) ──────────────────────
     await openWizard(page);
     await expect(
-      page.getByRole("heading", { name: "Criar workspace" }),
+      page.getByRole("heading", { name: "Create workspace" }),
     ).toBeVisible({ timeout: 15_000 });
-    await page.getByPlaceholder("Ex.: Minha marca").fill("QA Robotics");
+    await page.getByPlaceholder("e.g., My brand").fill("QA Robotics");
     await page.screenshot({ path: shot("02-create-name.png") });
 
-    await page.getByRole("button", { name: "Criar workspace", exact: true }).click();
+    await page.getByRole("button", { name: "Create workspace", exact: true }).click();
     // Step 1's "Next" creates the company and goes straight to the team lead.
     // The mission screenshot that sat here is gone with the step it captured.
-    await expect(page.getByRole("heading", { name: "Crie seu agente de marketing" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Create your marketing agent" })).toBeVisible();
     await page.screenshot({ path: shot("04-hire-team-lead.png") });
 
     // The company just created anchors the route-scoped sections below.

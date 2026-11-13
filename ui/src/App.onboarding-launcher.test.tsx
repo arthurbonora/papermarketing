@@ -124,7 +124,7 @@ describe("the onboarding launcher", () => {
 
   function addAgentButton(): HTMLButtonElement {
     const button = [...container.querySelectorAll("button")].find((b) =>
-      b.textContent?.includes("Criar agente"),
+      b.textContent?.includes("Create agent"),
     );
     // Asserted rather than optional-chained: a lookup that silently matches
     // nothing turns the click below into a no-op and the test into decoration.
@@ -168,7 +168,7 @@ describe("the onboarding launcher", () => {
 
   it("goes to the agent step whatever the goals lookup says", async () => {
     // Two tests lived here — company with no mission, and a lookup that failed —
-    // and both sent "Criar agente" to the mission step first. Onboarding no longer
+    // and both sent "Create agent" to the mission step first. Onboarding no longer
     // asks for the mission, so neither goal state can divert a button whose
     // whole purpose is adding an agent.
     for (const goals of [
@@ -197,7 +197,7 @@ describe("the onboarding launcher", () => {
     await settle();
 
     const start = [...container.querySelectorAll("button")].find((b) =>
-      b.textContent?.includes("Criar workspace"),
+      b.textContent?.includes("Create workspace"),
     );
     expect(start).toBeDefined();
     await act(async () => {

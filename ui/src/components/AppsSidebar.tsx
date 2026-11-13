@@ -63,7 +63,7 @@ export function AppsSidebar({ marketingNavigation = false }: { marketingNavigati
               data-slot="contextual-sidebar-section-label"
               className={contextualSidebarStyles.sectionLabel}
             >
-              {marketingNavigation ? "Configuração técnica" : "Developer"}
+              {marketingNavigation ? "Technical settings" : "Developer"}
             </div>
             {!marketingNavigation && (
               <p

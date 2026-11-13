@@ -246,7 +246,7 @@ describe("AppsSidebar", () => {
     expect(Boolean(container.querySelector('[data-to="/apps/advanced/profiles"]'))).toBe(technical);
     expect(Boolean(container.querySelector('[data-to="/apps/advanced/gateways"]'))).toBe(technical);
     expect(Boolean(container.querySelector('[data-to="/apps/advanced/smoke-lab"]'))).toBe(technical && smokeLabEnabled);
-    expect(container.textContent?.includes("Configuração técnica")).toBe(technical);
+    expect(container.textContent?.includes("Technical settings")).toBe(technical);
     await act(() => root.unmount());
     client.clear();
   });

@@ -196,7 +196,7 @@ export function filterOrgTree(nodes: OrgNode[], tab: FilterTab, builtInAgentIds:
 
 export type AgentsView = "list" | "org";
 
-export function Agents({ initialView = "list" }: { initialView?: AgentsView } = {}) {
+export function Agents({ initialView = "org" }: { initialView?: AgentsView } = {}) {
   const agentChatPins = useAgentChatPins();
   const [query, setQuery] = useState("");
   const agentChat = useAgentChatEnabled();

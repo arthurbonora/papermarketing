@@ -6,9 +6,8 @@
 - Hosting account: https://papermarketing.cloud/console
 - First tenant: https://bonorasw.papermarketing.cloud
 - Host: `179.66.143.84`, Ubuntu 26.04.1, 2 CPUs, 7.7 GiB RAM.
-- Application source: `f5e25d0f96afa3fea5931b369d8e397959d16fae`.
-- Application image: `papermarketing:f5e25d0f`.
-- Image ID: `sha256:4ab086cb01907a811073d53aa0660bb0266b1bdbf00ff6927192a4c3398a2a87`.
+- Application source after the hosted Claude login fix: `d86db09f3b525812058714a795062753e31fb021`.
+- Application image: `papermarketing:d86db09f`.
 - Hosting source and review: https://github.com/arthurbonora/papermarketing/pull/8.
 
 The portal and provisioning worker are separate systemd services. Caddy is
@@ -34,8 +33,11 @@ retains its previous parking destination. This task did not create its website.
   transport still connects through the tenant's loopback host port.
 - Both tenant containers reached healthy state. The registry reports `ready`.
 - Public workspace returned HTTPS 200. Anonymous company API returned 403.
-- The portal displayed the running workspace. Browser sign-in form loaded.
-  Owner browser login was requested; it is not counted as passed here yet.
+- The portal displayed the running workspace. The owner confirmed workspace
+  sign-in on another device and a new server session was observed.
+- The owner confirmed successful Claude subscription connection after the
+  isolated provider login opt-in fix. The public instance keeps trusted MCP
+  disabled; anonymous company API access still returns 403.
 - Dark official site was reviewed in Chrome using the repository logo, Inter,
   charcoal colors and capsule gradients.
 - Local backup `20261112T234849Z` completed. All checksum entries passed.
@@ -47,7 +49,7 @@ retains its previous parking destination. This task did not create its website.
 ## Operating limits
 
 This is an invite-only pilot with no billing and a two-account admission cap.
-No AI providers have been connected and no agent execution has been qualified.
+Claude subscription connection passed; agent task execution has not been qualified.
 Portal and workspace passwords are independent after their initial setup.
 There is no automated password recovery or public signup for this pilot.
 

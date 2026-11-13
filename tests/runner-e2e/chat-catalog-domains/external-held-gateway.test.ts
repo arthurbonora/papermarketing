@@ -42,7 +42,7 @@ describe("finite held external diagnostics and visible entry correction", () => 
     const { page, actions } = pageFixture();
     await enterGenericMcpThroughCatalog(page, "RUN");
     expect(actions).toEqual([
-      "Conexões",
+      "Connections",
       "All",
       "Connect",
       "Connect your own MCP server",
@@ -51,7 +51,7 @@ describe("finite held external diagnostics and visible entry correction", () => 
   });
   it("does not rescue a missing catalog entry with direct navigation", async () => {
     for (const name of [
-      "Conexões",
+      "Connections",
       "All",
       "Connect",
       "Connect your own MCP server",

@@ -598,13 +598,13 @@ export function OnboardingRoutePage() {
   }
 
   const title = matchedCompany
-    ? `Equipe de ${matchedCompany.name}`
+    ? `${matchedCompany.name} team`
     : companies.length > 0
-      ? "Criar outro workspace"
-      : "Criar seu primeiro workspace";
+      ? "Create another workspace"
+      : "Create your first workspace";
   const description = matchedCompany
-    ? "Escolha um cargo de marketing e configure a conta e o modelo do agente."
-    : "Crie um workspace para organizar a marca, os projetos e a equipe.";
+    ? "Choose a marketing role and connect the agent's account and model."
+    : "Create a workspace to organize your brand, projects, and team.";
 
   return (
     <div className="mx-auto max-w-xl py-10">
@@ -636,7 +636,7 @@ export function OnboardingRoutePage() {
                     : openOnboarding()
               }
             >
-              {matchedCompany ? "Criar agente" : "Criar workspace"}
+              {matchedCompany ? "Create agent" : "Create workspace"}
             </Button>
           )}
         </div>

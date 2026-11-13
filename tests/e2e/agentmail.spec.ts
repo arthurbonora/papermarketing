@@ -264,7 +264,7 @@ test("AgentMail setup and email work through the normal task conversation", asyn
   await expect(page.getByText("Internal server error", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Your agent’s email is ready" })).toHaveCount(0);
   await page.screenshot({ path: test.info().outputPath("agentmail-permission-denied.png"), fullPage: true });
-  await page.getByRole("link", { name: "Conexões", exact: true }).click();
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Connections", exact: true }).click();
   await page.getByRole("button", { name: "Finish setup", exact: true }).click();
   await expect(page.getByText("mail-agent-free@verified.example.test", { exact: true })).toBeVisible();
   await expect(addressField).toHaveCount(0);

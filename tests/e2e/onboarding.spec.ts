@@ -21,18 +21,20 @@ test.describe("Marketing workspace onboarding", () => {
     await expect(page.getByRole("button", { name: "Create one here", exact: true })).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await page.goto(`/${workspace.issuePrefix}/agents/new`);
-    await page.getByLabel("Nome do agente", { exact: true }).fill("Sofia");
+    await page.getByLabel("Agent name", { exact: true }).fill("Sofia");
     await expect(page.getByRole("button", { name: "Choose adapter", exact: true })).toBeDisabled();
-    await page.getByLabel("Tipo de agente", { exact: true }).click();
+    await page.getByLabel("Agent type", { exact: true }).click();
     await expect(page.getByRole("option")).toHaveCount(12);
     await page.getByRole("option", { name: "Designer", exact: true }).click();
-    await page.getByLabel("Responsabilidades", { exact: true }).fill("Criar a identidade visual da nossa marca.");
+    await expect(page.getByLabel("Working language", { exact: true })).toHaveValue("en-US");
+    await page.getByLabel("Working language", { exact: true }).selectOption("pt-BR");
+    await page.getByLabel("Responsibilities", { exact: true }).fill("Criar a identidade visual da nossa marca.");
     const created = page.waitForResponse(response => response.request().method() === "POST"
       && response.url().endsWith(`/api/companies/${workspace.id}/agents`));
     await page.getByRole("button", { name: "Choose adapter", exact: true }).click();
     const draft = await (await created).json();
     expect(draft).toMatchObject({ name: "Sofia", pauseReason: "setup", metadata: {
-      setupAdapterPending: true, marketingAgent: { typeId: "designer", responsibilities: "Criar a identidade visual da nossa marca." },
+      setupAdapterPending: true, marketingAgent: { typeId: "designer", workingLanguage: "pt-BR", responsibilities: "Criar a identidade visual da nossa marca." },
     } });
     expect(draft.role).not.toBe("ceo");
     expect(draft.runtimeConfig.heartbeat.enabled).toBe(false);
@@ -60,7 +62,7 @@ test.describe("Marketing workspace onboarding", () => {
     expect(response.ok()).toBe(true);
     const workspace = await response.json();
     await page.goto(`/${workspace.issuePrefix}/agents/new?name=Unreviewed&adapterType=codex_local`);
-    await expect(page.getByRole("heading", { name: "Crie seu agente de marketing" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Create your marketing agent" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Choose adapter", exact: true })).toBeDisabled();
     expect(await (await page.request.get(`/api/companies/${workspace.id}/agents`)).json()).toEqual([]);
   });
@@ -74,7 +76,7 @@ test.describe("Marketing workspace onboarding", () => {
       const company = await response.json();
       await page.goto(`/${company.issuePrefix}/agents/all`);
       await page.getByRole("toolbar", { name: "Agents controls" }).getByRole("button", { name: "New Agent", exact: true }).click();
-      await page.getByLabel("Nome do agente", { exact: true }).fill("Galen");
+      await page.getByLabel("Agent name", { exact: true }).fill("Galen");
       await chooseMarketingType(page);
       const setupResponse = page.waitForResponse(result => result.request().method() === "POST"
         && result.url().endsWith(`/api/companies/${company.id}/agents`));
@@ -102,7 +104,7 @@ test.describe("Marketing workspace onboarding", () => {
     let duplicate: { id: string; name: string };
     for (let attempt = 0; attempt < 2; attempt++) {
       await page.getByRole("toolbar", { name: "Agents controls" }).getByRole("button", { name: "New Agent", exact: true }).click();
-      await page.getByLabel("Nome do agente", { exact: true }).fill("Echo");
+      await page.getByLabel("Agent name", { exact: true }).fill("Echo");
       await chooseMarketingType(page);
       const setupResponse = page.waitForResponse(result => result.request().method() === "POST" && result.url().endsWith(`/api/companies/${company.id}/agents`));
       await page.getByRole("button", { name: "Choose adapter", exact: true }).click();

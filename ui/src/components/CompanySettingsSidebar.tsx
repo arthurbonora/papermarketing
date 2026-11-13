@@ -166,11 +166,11 @@ export function CompanySettingsSidebar({ marketingNavigation = false }: { market
         className={primarySidebarStyles.nav}
       >
         <div data-slot="contextual-sidebar-group" className={primarySidebarStyles.group}>
-          <SidebarNavItem to="/company/settings" label={marketingNavigation ? "Geral" : "General"} icon={SlidersHorizontal} end />
+          <SidebarNavItem to="/company/settings" label="General" icon={SlidersHorizontal} end />
           {showPage("instance.profile") && (
             <SidebarNavItem
               to={`${INSTANCE_SETTINGS_PATH_PREFIX}/profile`}
-              label={marketingNavigation ? "Perfil" : "Profile"}
+              label="Profile"
               icon={UserRoundPen}
               end
             />
@@ -178,19 +178,19 @@ export function CompanySettingsSidebar({ marketingNavigation = false }: { market
           {showPage("company.members") && (
             <SidebarNavItem
               to="/company/settings/members"
-              label={marketingNavigation ? "Membros" : "Members"}
+              label="Members"
               icon={Users}
               badge={badges?.joinRequests ?? 0}
               end
             />
           )}
-          <SidebarNavItem to="/company/settings/connections" label={marketingNavigation ? "Conexões" : "Connections"} icon={Link2} end />
+          <SidebarNavItem to="/company/settings/connections" label="Connections" icon={Link2} end />
           {marketingNavigation ? (
             <>
-              <SidebarNavItem to="/company/settings/agent-invitations" label="Agentes externos" icon={UserRoundPlus} end />
+              <SidebarNavItem to="/company/settings/agent-invitations" label="External agents" icon={UserRoundPlus} end />
               <details key={pathname} open={advancedActive || undefined}>
                 <summary className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  Avançado
+                  Advanced
                 </summary>
                 <div className={primarySidebarStyles.group}>{advancedLinks}</div>
               </details>

@@ -304,7 +304,7 @@ test("secondary chat navigation preserves layout, unique conversations, history,
       data: { enableStreamlinedUi: true },
     }));
     await page.goto(`/${f.company.issuePrefix}/dashboard`);
-    await page.getByRole("link", { name: /^Conversas(?:[,\s]|$)/ }).click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: /^Chats(?:[,\s]|$)/ }).click();
     // With no recent conversation, Chat opens the first human-created primary.
     // Navigation alone must not create a conversation or start execution.
     expect(await json(await request.get(`/api/companies/${f.company.id}/primary-agent/me`))).toMatchObject({
@@ -361,7 +361,7 @@ test("secondary chat navigation preserves layout, unique conversations, history,
     await expect(editor).toContainText("Unsent draft for Alpha");
     await expect(nav.getByRole("link")).toHaveCount(6);
 
-    await page.getByRole("link", { name: /^Conversas(?:[,\s]|$)/ }).click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: /^Chats(?:[,\s]|$)/ }).click();
     await expect(alphaLink).toHaveAttribute("aria-current", "page");
     await expect(editor).toContainText("Unsent draft for Alpha");
     expect(await sidebar.boundingBox()).toEqual(landingBounds);
@@ -374,7 +374,7 @@ test("secondary chat navigation preserves layout, unique conversations, history,
       },
     }));
     await idle(request, betaPath);
-    await page.getByRole("link", { name: /^Conversas(?:[,\s]|$)/ }).click();
+    await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: /^Chats(?:[,\s]|$)/ }).click();
     await expect(alphaLink).toHaveAttribute("aria-current", "page");
     await betaLink.click();
     await expect(betaLink).toHaveAttribute("aria-current", "page");

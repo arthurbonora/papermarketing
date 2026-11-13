@@ -118,7 +118,7 @@ test.describe.serial("dark-mode Apps surfaces", () => {
   test("sidebar says Connectors and links to /apps", async ({ page }) => {
     await forceDark(page);
     await page.goto(`/${seed.prefix}/issues`);
-    const connectorsLink = page.getByRole("link", { name: "Conexões", exact: true });
+    const connectorsLink = page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Connections", exact: true });
     await expect(connectorsLink).toBeVisible({ timeout: 30_000 });
     await expect(connectorsLink).toHaveAttribute("href", new RegExp(`/${seed.prefix}/apps$`));
   });
@@ -131,7 +131,7 @@ test.describe.serial("dark-mode Apps surfaces", () => {
     const navigation = page.getByRole("navigation", { name: "Connectors", exact: true });
     await expect(navigation.getByRole("link", { name: "Browse", exact: true })).toBeVisible();
     await expect(navigation.getByRole("link", { name: "Review", exact: true })).toBeVisible();
-    await expect(navigation.getByText("Configuração técnica", { exact: true })).toHaveCount(0);
+    await expect(navigation.getByText("Technical settings", { exact: true })).toHaveCount(0);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-01-apps-dark.png`, fullPage: true });
   });
 
@@ -148,7 +148,7 @@ test.describe.serial("dark-mode Apps surfaces", () => {
     await page.goto(`/${seed.prefix}/apps/advanced`);
     await expect(page.getByRole("heading", { name: "Advanced setup" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/Paste the MCP config snippet/i).first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole("link", { name: "Conexões" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("link", { name: "Connections", exact: true })).toBeVisible();
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-03-advanced-run-dark.png`, fullPage: true });
 
     await page.getByRole("link", { name: "Paste a config" }).click();
@@ -166,10 +166,10 @@ test.describe.serial("dark-mode Apps surfaces", () => {
     await expect(navigation.getByRole("link", { name: "Profiles", exact: true })).toHaveAttribute("aria-current", "page");
     await expect(navigation.getByRole("link", { name: "Browse", exact: true })).toHaveAttribute("href", `/${seed.prefix}/apps`);
     await expect(page.locator('a[href$="/apps/advanced/audit"]', { hasText: "Activity" })).toHaveCount(0);
-    await expect(page.locator('a[href$="/activity"]', { hasText: "Auditoria" })).toBeVisible();
+    await expect(page.locator('a[href$="/activity"]', { hasText: "Activity log" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);
     // Apps section lives in the same sidebar now.
-    await expect(page.locator('a[href$="/apps"]', { hasText: "Conexões" })).toBeVisible();
+    await expect(page.locator('a[href$="/apps"]', { hasText: "Connections" })).toBeVisible();
     await page.screenshot({ path: `${SCREENSHOT_DIR}/apps-nav-05-developer-overview-dark.png`, fullPage: true });
   });
 

@@ -123,7 +123,7 @@ export function AgentContextualSidebar({
             {marketingNavigation && section.label === "Agent" ? (
               <details key={pathname} open={technicalViews.has(currentView) || undefined} className="mt-2">
                 <summary className="cursor-pointer rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  Configuração técnica
+                  Technical settings
                 </summary>
                 <div className={contextualSidebarStyles.group}>{technicalItems.map(renderItem)}</div>
               </details>

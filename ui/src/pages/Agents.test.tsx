@@ -337,11 +337,11 @@ describe("agent search", () => {
     expect(orgTreeAgentIds([])).toEqual([]);
   });
 });
-function renderAgentsView(root: ReturnType<typeof createRoot> | null, queryClient: QueryClient) {
+function renderAgentsView(root: ReturnType<typeof createRoot> | null, queryClient: QueryClient, props: { initialView?: "list" | "org" } = { initialView: "list" }) {
   root!.render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider><ToastProvider>
-        <Agents />
+        <Agents {...props} />
       </ToastProvider></TooltipProvider>
     </QueryClientProvider>,
   );
@@ -384,6 +384,7 @@ describe("Agents", () => {
     ]);
     mockEnvironmentsApi.capabilities.mockResolvedValue(environmentCapabilities);
     mockInstanceSettingsApi.get.mockResolvedValue(makeInstanceSettings());
+    mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableAgentGraph: false });
     mockHeartbeatsApi.liveRunsForCompany.mockResolvedValue([]);
     mockResourceMembershipsApi.listMine.mockResolvedValue({
       projectMemberships: {},
@@ -412,13 +413,43 @@ describe("Agents", () => {
     vi.clearAllMocks();
   });
 
+  it.each([true, false])("opens the org view by default and respects the graph preference (%s)", async enabled => {
+    mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableAgentGraph: enabled });
+    root = createRoot(container);
+    await act(async () => renderAgentsView(root, queryClient, {}));
+    await vi.waitFor(async () => {
+      await flushReact();
+      expect(container.querySelector('[aria-label="Org chart view"]')?.getAttribute("aria-pressed")).toBe("true");
+      expect(container.querySelector(enabled ? '[data-testid="agent-graph-stub"]' : '[data-testid="org-chart-viewport"]')).not.toBeNull();
+    });
+    expect(container.querySelector(enabled ? '[data-testid="org-chart-viewport"]' : '[data-testid="agent-graph-stub"]')).toBeNull();
+    await act(() => container.querySelector<HTMLButtonElement>('[aria-label="List view"]')!.click());
+    expect(container.querySelector("tbody")?.textContent).toContain("Alpha");
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.instance.experimentalSettings });
+    });
+    expect(container.querySelector('[aria-label="List view"]')?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("honors an explicit initial list view when the graph is enabled", async () => {
+    mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableAgentGraph: true });
+    root = createRoot(container);
+    await act(async () => renderAgentsView(root, queryClient, { initialView: "list" }));
+    await vi.waitFor(async () => {
+      await flushReact();
+      expect(container.querySelector("tbody")?.textContent).toContain("Alpha");
+    });
+    expect(container.querySelector('[aria-label="List view"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(container.querySelector('[data-testid="agent-graph-stub"]')).toBeNull();
+  });
+
   it("filters the rendered roster and clears search without changing its status route", async () => {
     mockAgentsApi.list.mockResolvedValue([
       makeAgent({ id: "alpha", name: "Alpha", role: "engineer" }),
       makeAgent({ id: "beta", name: "Beta", role: "designer" }),
     ]);
     root = createRoot(container);
-    await act(async () => root!.render(<QueryClientProvider client={queryClient}><TooltipProvider><ToastProvider><Agents /></ToastProvider></TooltipProvider></QueryClientProvider>));
+    await act(async () => root!.render(<QueryClientProvider client={queryClient}><TooltipProvider><ToastProvider><Agents initialView="list" /></ToastProvider></TooltipProvider></QueryClientProvider>));
     await flushReact();
     await flushReact();
     const input = container.querySelector<HTMLInputElement>('input[aria-label="Search agents"]')!;
@@ -984,7 +1015,7 @@ describe("Agents", () => {
 
     root = createRoot(container);
     await act(async () => {
-      root!.render(<QueryClientProvider client={queryClient}><TooltipProvider><ToastProvider><AgentList /></ToastProvider></TooltipProvider></QueryClientProvider>);
+      root!.render(<QueryClientProvider client={queryClient}><TooltipProvider><ToastProvider>{AgentList === Agents ? <Agents initialView="list" /> : <ProductionAgents />}</ToastProvider></TooltipProvider></QueryClientProvider>);
     });
     await flushReact();
     await flushReact();

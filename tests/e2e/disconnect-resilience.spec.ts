@@ -237,7 +237,7 @@ test("a reload during a 20-second outage restores settings, sidebar and a recent
     await expect(page.getByTestId("issue-detail-header").getByRole("heading", { name: data.issue.title, exact: true })).toBeVisible();
     await expectCachedTask(page, data.issue);
     await page.getByRole("button", { name: "Open account menu", exact: true }).click();
-    await page.getByRole("link", { name: "Settings", exact: true }).click();
+    await page.getByLabel("Account", { exact: true }).getByRole("link", { name: "Settings", exact: true }).click();
     await expect(page.getByRole("heading", { name: "General", exact: true })).toBeVisible();
     await expect(page.locator('input[type="text"]').first()).toHaveValue(data.company.name);
     await expect.poll(() => page.evaluate(() => Object.keys(localStorage).some(key => key.startsWith("paperclip:query-cache:v1:") && key.endsWith(":root")))).toBe(true);
@@ -326,7 +326,7 @@ test("signing out clears saved query data before a later outage reload", async (
     await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter(key =>
       key.startsWith("paperclip:query-cache:v1:") && !key.endsWith(":active")).length)).toBeGreaterThanOrEqual(8);
     await page.getByRole("button", { name: "Open account menu", exact: true }).click();
-    await page.getByRole("link", { name: "Settings", exact: true }).click();
+    await page.getByLabel("Account", { exact: true }).getByRole("link", { name: "Settings", exact: true }).click();
     await expect(page.getByRole("heading", { name: "General", exact: true })).toBeVisible();
     await outage(page);
     await page.route("**/api/auth/get-session", route => signedOut ? route.fulfill({ status: 200, json: null }) : route.fallback());

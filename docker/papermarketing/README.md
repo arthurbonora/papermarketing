@@ -1,23 +1,17 @@
-# Auto-hospedagem do papermarketing
+# Self-host Papermarketing
 
-Preparação para testes nos próprios projetos. Nenhum comando de deploy é
-executado pela aplicação ou pela CI deste fork. Esta composição usa o estágio
-`production` do Dockerfile upstream, PostgreSQL separado e volumes persistentes.
-O núcleo não exige conta Paperclip Cloud, WordPress, GA4 ou Composio.
+Use this setup to test Papermarketing with your own projects. The application and this fork's CI do not run deployment commands. The Compose setup uses the upstream Dockerfile's `production` stage, a separate PostgreSQL service, and persistent volumes. The core application runs without Paperclip Cloud, WordPress, GA4, or Composio accounts.
 
-## Pré-requisitos
+## Prerequisites
 
-- Host Linux x64, Docker Engine e plugin Docker Compose v2.
-- O build usa Node 24 e compila o Runner em Rust dentro do contêiner Debian
-  Trixie, compatível com a exigência de glibc do Runner.
-- Reservar inicialmente 4 CPUs, 8 GB de RAM e 20 GB de disco para o build;
-  esta é uma estimativa de partida, não uma medição de capacidade.
-- Acesso à internet para dependências de build e, quando configurados,
-  provedores LLM e conectores.
+- A Linux x64 host with Docker Engine and the Docker Compose v2 plugin.
+- The build uses Node 24 and compiles the Rust Runner in a Debian Trixie container to meet the Runner's glibc requirement.
+- Start with 4 CPUs, 8 GB of RAM, and 20 GB of disk space for the build. These are estimates.
+- Internet access for build dependencies and any LLM providers and connectors you configure.
 
-## Preparar sem iniciar serviços
+## Prepare the build without starting services
 
-Na raiz do repositório, com Node 24 disponível:
+From the repository root with Node 24 available, run:
 
 ```sh
 node docker/papermarketing/init-env.mjs
@@ -25,42 +19,24 @@ docker compose --env-file docker/papermarketing/.env -f docker/papermarketing/co
 docker compose --env-file docker/papermarketing/.env -f docker/papermarketing/compose.yaml build app
 ```
 
-O gerador cria três segredos independentes e não sobrescreve `.env` existente.
-Não publicar esse arquivo. O Compose não recebe chaves LLM globais. Modelo,
-conta e método de autenticação são configurados por agente na interface.
-O código mantém os nomes internos `PAPERCLIP_*` por compatibilidade.
+The generator creates three independent secrets and leaves an existing `.env` file intact. Keep the file private. Compose receives no global LLM keys. Set the model, account, and authentication method for each agent in the interface. Internal variables retain the `PAPERCLIP_*` names for compatibility.
 
-## Iniciar futuramente, quando autorizado
+## Start services when authorized
 
 ```sh
 docker compose --env-file docker/papermarketing/.env -f docker/papermarketing/compose.yaml up -d
 docker compose --env-file docker/papermarketing/.env -f docker/papermarketing/compose.yaml ps
 ```
 
-Abrir `http://localhost:3100`, criar a conta local e concluir **Claim this instance**
-na primeira instalação autenticada privada. O serviço fica ligado somente a
-`127.0.0.1`; para testar em uma VPS, usar túnel SSH até o navegador. Uma futura
-exposição pública requer URL pública, TLS no proxy e o fluxo de bootstrap
-descrito em [Deployment modes](../../doc/DEPLOYMENT-MODES.md). Não trocar
-para `local_trusted` para disponibilizar pela internet.
+Open `http://localhost:3100`, create a local account, and complete **Claim this instance** when setting up the private authenticated instance for the first time. The service listens only on `127.0.0.1`. To test on a VPS, use an SSH tunnel to access it in your browser. Public access requires a public URL, TLS at the proxy, and the bootstrap flow in [Deployment modes](../../doc/DEPLOYMENT-MODES.md). Keep the authenticated deployment mode for public access.
 
-Criar dois workspaces com nomes e conteúdos distintos. Em cada um, cadastrar
-agentes por tipo, revisar o perfil e configurar contas separadamente. Fechar
-o cadastro antes de conectar uma conta mantém o agente em configuração, sem
-execução. Criar projetos e tarefas não exige CMS ou plataforma de publicação.
+The interface uses US English. Create two workspaces with different names and content. In each workspace, add agents by type, review their profiles, choose a working language for their new instructions, and configure their accounts separately. If you exit setup before connecting an account, the agent stays in setup and cannot run. The **Team** page opens the agent graph by default. Turn off `enableAgentGraph` in experimental settings to use the org chart instead. You can create projects and tasks without a CMS or publishing platform.
 
-## Persistência, atualização e recuperação
+## Persistence, updates, and recovery
 
-O volume `database` guarda o PostgreSQL. O volume `application` guarda arquivos,
-instruções, configurações e material de autenticação gerenciado pelo upstream.
-Preservar ambos e `.env`; um dump do banco sozinho não é um backup completo.
-As migrações são aplicadas no início. O perfil de marketing usa metadados
-validados do agente; a integração visual adiciona a tabela
-`company_user_ui_layouts` na migração 0467 para os layouts de cada usuário e
-workspace. Preservar o banco também preserva as notas e os widgets salvos.
+The `database` volume stores PostgreSQL data. The `application` volume stores files, instructions, settings, and authentication material managed by Paperclip. Back up both volumes and `.env` to capture the entire instance. The application applies migrations at startup. Marketing profiles use validated agent metadata. Migration 0467 adds the `company_user_ui_layouts` table for layouts by user and workspace. The database also stores saved notes and widgets.
 
-Antes de atualizar, pausar o aplicativo e produzir um conjunto consistente.
-Exemplo para shell Linux, a partir de `docker/papermarketing`:
+Before updating, stop the application and create a consistent backup. Run these commands in a Linux shell from `docker/papermarketing`:
 
 ```sh
 umask 077
@@ -71,9 +47,7 @@ docker compose run --rm --no-deps --entrypoint sh app -c 'tar -C /paperclip -czf
 cp .env backups/instance.env
 ```
 
-Guardar esse conjunto cifrado fora do host. Para testar restauração, usar outra
-instalação vazia, copiar o `.env` do backup e restaurar o volume da aplicação e
-o dump antes de iniciar o aplicativo. Não restaurar sobre dados em uso.
+Encrypt the backup and store it off the host. To test recovery, use a separate empty installation, copy `.env` from the backup, and restore the application volume and database dump before starting the application. Restore only into an empty installation.
 
 ```sh
 docker compose up -d db
@@ -82,45 +56,20 @@ docker compose run --rm --no-deps -T --entrypoint sh app -c 'tar -C /paperclip -
 docker compose up -d app
 ```
 
-Confirmar login, workspaces, agentes, instruções e arquivos após a restauração.
-Para uma atualização, registrar o commit, fazer backup, atualizar
-`PAPERCLIP_BUILD_COMMIT` em `.env`, reconstruir e iniciar. Uma reversão que
-envolva migrações exige a imagem anterior e o conjunto de backup correspondente.
+After restoring, verify login, workspaces, agents, instructions, and files. To update, record the commit, make a backup, update `PAPERCLIP_BUILD_COMMIT` in `.env`, rebuild, and start the application. Rolling back across migrations requires the previous image and its matching backup.
 
-## Limites desta primeira composição
+## Limits of this Compose setup
 
-O banco separado e as permissões por `companyId` não isolam processos de agentes.
-Runtimes locais podem executar no mesmo contêiner da aplicação, que possui acesso
-ao banco e ao volume. Não usar este pacote para agentes de usuários não confiáveis.
-O isolamento de trabalhadores por workspace, sem credenciais do servidor e sem
-acesso a diretórios de outros workspaces, continua uma etapa de qualificação antes
-de declarar o MVP completo. Não há montagem do socket Docker nesta composição.
+A separate database and permissions scoped by `companyId` do not isolate agent processes. Local runtimes can execute in the application container, which can access the database and application volume. Use this setup only with trusted agent users. Before declaring the MVP complete, verify that workers are isolated by workspace and cannot access server credentials or directories from other workspaces. This setup leaves the Docker socket unmounted.
 
-O caminho comum de subprocessos remove `DATABASE_URL` e `BETTER_AUTH_SECRET`
-herdados do servidor. Isso evita a transmissão implícita dessas duas credenciais;
-não impede acesso ao sistema de arquivos ou a outros processos do mesmo host.
-Uma conexão explicitamente configurada para o agente continua sendo transmitida.
+The common subprocess launcher strips inherited `DATABASE_URL` and `BETTER_AUTH_SECRET` values. Agent processes can still access files and other processes on the same host. The launcher still passes connections explicitly configured for an agent.
 
-Contas de assinatura devem ser conectadas apenas pelos métodos suportados pelo
-provedor e pelo harness. A existência de uma opção de login não comprova consumo
-pela assinatura. Validar isso com as próprias contas no teste posterior. OpenRouter
-e DeepSeek podem cobrar créditos de API; não há promessa de assinatura de chat
-equivalente. Geração de imagem e vídeo depende das ferramentas conectadas.
+Connect subscription accounts only through methods supported by the provider and harness. Verify with your own accounts that requests are covered by the subscription. OpenRouter and DeepSeek may charge API credits. An equivalent chat subscription is not guaranteed. Image and video generation require connected tools.
 
-O build de imagem, o primeiro boot e a restauração devem ser homologados em Linux.
-Consultar o relatório do incremento para distinguir verificações executadas de
-passos preparados. A telemetria upstream fica desabilitada nesta composição.
+Verify the image build, first startup, and recovery on Linux. See the increment report for which checks have been run and which steps are prepared. Upstream telemetry is disabled in this Compose setup.
 
-## Qualificação automatizada, sem deploy
+## Automated qualification without deployment
 
-O workflow `papermarketing qualification` executa a suíte Vitest completa em
-partições, typecheck, build e a imagem `production`. A imagem é carregada apenas
-no runner temporário do GitHub; não há publicação em registro nem deploy.
+The `papermarketing qualification` workflow runs the full Vitest suite in shards, type-checks the code, and builds the project and the `production` image. CI loads the image only on a temporary GitHub runner, without publishing it to a registry or deploying it.
 
-O teste `scripts/papermarketing/image-smoke.mjs` exige explicitamente o projeto
-Compose `papermarketing-qualification` e `PAPERMARKETING_TEST_ONLY=1`. Cria dados
-artificiais, usuários, dois workspaces, chaves de agente e os 12 tipos de marketing;
-verifica permissões, referências a segredos e persistência após reiniciar o banco
-e o aplicativo. Os usuários de workspace não são administradores da instância.
-Nenhuma conta LLM é conectada e nenhum modelo é invocado. Ao terminar, a CI
-remove somente os contêineres e volumes desse projeto de teste.
+The `scripts/papermarketing/image-smoke.mjs` test explicitly requires the Compose project `papermarketing-qualification` and `PAPERMARKETING_TEST_ONLY=1`. It creates synthetic data, users, two workspaces, agent keys, and all 12 marketing types. It verifies permissions, secret references, and persistence after restarting the database and application. Workspace users have no instance admin privileges. The test connects no LLM accounts and invokes no models. CI removes only this test project's containers and volumes when it finishes.

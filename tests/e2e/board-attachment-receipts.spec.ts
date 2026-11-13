@@ -139,7 +139,7 @@ async function openAttachmentChooser(page: Page, composer: Locator) {
 
 test("new-task images survive reload, retain bytes, and clear after creation", async ({ page, request }) => {
   const fixture = await setup(page, request, false);
-  await page.getByRole("button", { name: "Nova tarefa", exact: true }).first().click();
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "New task", exact: true });
   const editor = dialog.getByRole("textbox", { name: "editable markdown", exact: true });
   await editor.fill("Keep the caption and image after reload.");
@@ -164,7 +164,7 @@ test("new-task images survive reload, retain bytes, and clear after creation", a
   await expect.poll(() => page.evaluate(() => Object.entries(localStorage)
     .some(([key, value]) => key.startsWith("paperclip:issue-draft:") && value.includes("Keep the caption")))).toBe(true);
   await page.reload();
-  await page.getByRole("button", { name: "Nova tarefa", exact: true }).first().click();
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
   await expect(editor).toContainText("Keep the caption and image after reload.");
   await expect(dialog.getByRole("img", { name: "board-fresh.png", exact: true })).toBeVisible();
   const upload = page.waitForResponse((response) => response.request().method() === "POST"
@@ -176,7 +176,7 @@ test("new-task images survive reload, retain bytes, and clear after creation", a
   expect(await content.body()).toEqual(files[1]!.buffer);
   await expect(dialog).toBeHidden();
   await page.reload();
-  await page.getByRole("button", { name: "Nova tarefa", exact: true }).first().click();
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
   await expect(dialog.getByRole("img")).toHaveCount(0);
 });
 
@@ -201,7 +201,7 @@ test("two open tabs retain their staged images when either tab saves or creates 
   await second.goto(page.url());
   const dialogs = [page, second].map((tab) => tab.getByRole("dialog", { name: "New task", exact: true }));
   for (const [index, tab] of [page, second].entries()) {
-    await tab.getByRole("button", { name: "Nova tarefa", exact: true }).first().click();
+    await tab.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
     await dialogs[index]!.getByRole("textbox", { name: "editable markdown", exact: true }).fill(`Keep tab ${index + 1}'s image.`);
     await expect(dialogs[index]!.getByRole("button", { name: "Create task", exact: true })).toBeEnabled();
   }
@@ -230,7 +230,7 @@ test("two open tabs retain their staged images when either tab saves or creates 
   await expect(dialogs[0]!).toBeHidden();
   await expect.poll(savedNames).toEqual(["tab-2.png"]);
   await second.reload();
-  await second.getByRole("button", { name: "Nova tarefa", exact: true }).first().click();
+  await second.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "New task", exact: true }).click();
   await expect(dialogs[1]!.getByRole("img", { name: "tab-2.png", exact: true })).toBeVisible();
   await dialogs[1]!.getByRole("textbox", { name: "editable markdown", exact: true }).fill("Create the remaining tab's image.");
   await dialogs[1]!.getByRole("button", { name: "Create task", exact: true }).click();

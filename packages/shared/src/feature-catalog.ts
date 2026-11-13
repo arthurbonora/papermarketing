@@ -264,8 +264,8 @@ export const INSTANCE_FEATURE_CATALOG: Record<InstanceFeatureKey, FeatureCatalog
     description:
       "Replace the static org chart with an editable graph canvas: drag, multi-select, auto-layout, sticky notes, copy and paste as hire drafts, and reporting-line changes.",
     tier: "preference",
-    cloudDefault: false,
-    selfHostedDefault: false,
+    cloudDefault: true,
+    selfHostedDefault: true,
   },
   enableCustomizableDashboard: {
     title: "Customizable Dashboard",

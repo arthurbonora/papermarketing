@@ -96,7 +96,7 @@ export function AgentBasicsDialog({
       setMarketingProfile(profile);
       if (!profile) setStep("name");
     }).catch(cause => {
-      if (!cancelled) setSaveError(cause instanceof Error ? cause.message : "Não foi possível carregar o agente.");
+      if (!cancelled) setSaveError(cause instanceof Error ? cause.message : "Could not load the agent.");
     }).finally(() => { if (!cancelled) setProfileLoading(false); });
     return () => { cancelled = true; };
   }, [setupAgentId, companyId]);
@@ -144,7 +144,7 @@ export function AgentBasicsDialog({
     setSaving(true);
     setSaveError(null);
     try {
-      if (!companyId) throw new Error("Selecione um workspace para criar um agente.");
+      if (!companyId) throw new Error("Select a workspace to create an agent.");
       const profile = marketingAgentProfileSchema.parse(marketingProfile);
       const template = MARKETING_AGENT_TEMPLATES.find(item => item.id === profile.typeId)!;
       let agent = saved.current;
@@ -237,7 +237,7 @@ export function AgentBasicsDialog({
           <span
             className={cn(step === "name" && "font-medium text-foreground")}
           >
-            1. Tipo e perfil
+            1. Type and profile
           </span>
           <ChevronRight className="size-3" />
           <span
@@ -259,12 +259,12 @@ export function AgentBasicsDialog({
               <div className="space-y-2">
                 <DialogTitle className="text-3xl font-semibold tracking-tight">
                   {step === "name"
-                    ? "Crie seu agente de marketing"
+                    ? "Create your marketing agent"
                     : "Choose an adapter"}
                 </DialogTitle>
                 <DialogDescription className="text-base">
                   {step === "name"
-                    ? "Escolha o cargo, personalize o perfil e depois configure o modelo."
+                    ? "Choose a role, customize the profile, and then connect a model."
                     : `How should ${name.trim()} work?`}
                 </DialogDescription>
               </div>
@@ -273,14 +273,14 @@ export function AgentBasicsDialog({
               <div className="space-y-4">
                 <MarketingAgentFields value={marketingProfile} onChange={setMarketingProfile} disabled={saving || profileLoading} />
                 <label htmlFor={id} className="text-sm font-medium">
-                  Nome do agente
+                  Agent name
                 </label>
                 <Input
                   id={id}
                   autoFocus
                   disabled={saving}
                   maxLength={100}
-                  placeholder="Ex.: Sofia — Estratégia"
+                  placeholder="e.g., Sofia — Strategy"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   className="h-12 text-base"

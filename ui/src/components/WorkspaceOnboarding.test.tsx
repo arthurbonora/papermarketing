@@ -34,7 +34,7 @@ it("creates only the workspace and proceeds to explicit agent selection", async 
 it("does not create a replacement for an inaccessible workspace", async () => {
   state.onboardingOptions = { companyId: "other-workspace" };
   await act(async () => root.render(<WorkspaceOnboarding open onClose={close} />));
-  expect(document.querySelector('[role="alert"]')?.textContent).toContain("indisponível");
+  expect(document.querySelector('[role="alert"]')?.textContent).toContain("unavailable");
   expect(document.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
   expect(state.createCompany).not.toHaveBeenCalled();
 });

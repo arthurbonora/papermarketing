@@ -18,6 +18,17 @@ The workspace reuses existing `companyId` boundaries. `metadata.marketingAgent`
 stores a validated profile snapshot with stable type ID and template version.
 Legacy agents and imports stay compatible. Setup completion materializes profile
 instructions through managed bundles without overwriting explicit custom bundles.
+The interface and new marketing templates use US English. New profiles default
+to `workingLanguage: "en-US"`; users can choose another working language before
+finishing setup. Generated instructions use that choice, with explicit task or
+user requests taking priority. Legacy profiles without this field retain their
+existing instructions. Existing custom bundles remain authoritative; update their
+Instructions directly to change language. Remote gateways that do not support
+managed bundles use their own runtime instructions.
+
+The agent graph is enabled by default and Team opens in the organization view.
+An explicit instance or managed configuration that disables the graph remains
+effective. Users can switch to the list; saved graph positions are preserved.
 See [the fork increment](plans/2026-11-09-papermarketing-foundation.md) for scope
 and remaining qualification work. Upstream product behavior below is retained
 where this fork addendum does not replace it.
