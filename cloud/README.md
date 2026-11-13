@@ -43,6 +43,11 @@ flowchart LR
   authenticated/public mode, disables application signup, checks anonymous
   denial and publishes the proxy route. No agent or provider account is
   created automatically. Existing task, budget and approval rules are intact.
+- Tenant containers opt in to `PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN=true`.
+  This enables the existing browser login flow in a fresh, private directory
+  for each user's provider connection. It does not enable trusted local MCP,
+  import the operator's CLI credentials, or bypass company/user permissions.
+  Public deployments without this explicit setting continue to reject it.
 
 The root worker is a privileged trust boundary. The current portal is for
 invited, trusted pilot customers. It is not a hostile-code sandbox. Customers

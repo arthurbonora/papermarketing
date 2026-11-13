@@ -534,6 +534,28 @@ describe("GET /health", () => {
     });
   });
 
+  it.each([undefined, "false", "true"])("reports isolated provider login capability to authenticated public clients: %s", async optIn => {
+    vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", optIn);
+    vi.stubEnv("PAPERCLIP_TRUSTED_MCP_RUNTIME_HOST", undefined);
+    vi.stubEnv("PAPERCLIP_TOOL_RUNTIME_TRUSTED_HOST", undefined);
+    const db = {
+      execute: vi.fn().mockResolvedValue([{ "?column?": 1 }]),
+      select: vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn().mockResolvedValue([{ count: 1 }]) })) })),
+    } as unknown as Db;
+    const app = express();
+    app.use((req, _res, next) => {
+      req.actor = { type: "board", userId: "user-1", source: "session" };
+      next();
+    });
+    app.use("/health", healthRoutes(db, {
+      deploymentMode: "authenticated", deploymentExposure: "public", authReady: true,
+      companyDeletionEnabled: false, serverInfo: testServerInfo,
+    }));
+    const res = await request(app).get("/health");
+    expect(res.status).toBe(200);
+    expect(res.body.localAiLoginSupported).toBe(optIn === "true");
+  });
+
   it("reports bootstrap_pending in authenticated mode when no instance admin exists", async () => {
     const { healthRoutes } = await import("../routes/health.js");
     const db = {

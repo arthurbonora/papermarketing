@@ -315,6 +315,37 @@ describe("AgentProviderConnection reuse", () => {
     await vi.waitFor(() => expect(onComplete).toHaveBeenCalled());
     expect(managedApi.connectLocal).toHaveBeenCalledWith("c1", { ...intent, localSessionId: "local-attempt" });
   });
+  it("connects a new Claude agent through opted-in public host login without sandbox login", async () => {
+    const authorizationUrl = "https://claude.ai/oauth/authorize?state=fixture";
+    const signInRequired = { status: "sign_in_required" as const, authorizationUrl };
+    managedApi.checkLocalLogin.mockResolvedValue(signInRequired);
+    const { test, connected } = await mount("claude_local", false, false, false, false, false, undefined, true, "authenticated", true);
+    client.setQueryData(["health"], { deploymentMode: "authenticated", deploymentExposure: "public", localAiLoginSupported: true });
+    openProvider();
+    const intent = { provider: "anthropic", method: "subscription", name: "My Claude subscription", ownership: "personal", agentIds: [], allAgents: true };
+    await vi.waitFor(() => expect(host.querySelector(`a[href="${authorizationUrl}"]`)).not.toBeNull());
+    expect(managedApi.startLocalLogin).toHaveBeenCalledExactlyOnceWith("c1", intent);
+    expect(managedApi.checkLocalLogin).toHaveBeenCalledWith("c1", { ...intent, localSessionId: "local-attempt" });
+    expect(host.textContent).not.toContain("This environment does not support browser sign-in");
+    expect(mocks.loginPanel).not.toHaveBeenCalled();
+    const connectButton = [...host.querySelectorAll("button")].find(button => button.textContent?.trim() === "Connect")!;
+    expect(connectButton.disabled).toBe(true);
+    click("Connect");
+    expect(managedApi.connectLocal).not.toHaveBeenCalled();
+    expect(test).not.toHaveBeenCalled();
+    expect(connected).not.toHaveBeenCalled();
+
+    managedApi.checkLocalLogin.mockResolvedValue({ status: "ready" });
+    window.dispatchEvent(new Event("focus"));
+    await vi.waitFor(() => expect(host.textContent).toContain("is signed in"));
+    click("Connect");
+    const binding = { env: {}, aiConnection: { provider: "anthropic", method: "subscription", mode: "responsible_user" } };
+    await vi.waitFor(() => expect(connected).toHaveBeenCalledExactlyOnceWith(binding));
+    expect(managedApi.connectLocal).toHaveBeenCalledExactlyOnceWith("c1", { ...intent, localSessionId: "local-attempt" });
+    expect(test).toHaveBeenCalledExactlyOnceWith(binding);
+    expect(managedApi.connectLocal.mock.invocationCallOrder[0]).toBeLessThan(test.mock.invocationCallOrder[0]);
+    expect(mocks.loginPanel).not.toHaveBeenCalled();
+  });
   it.each(["claude_local", "codex_local"] as const)("connects a local subscription without a sandbox and supports retry: %s", async (adapterType) => {
     const onComplete = vi.fn();
     managedApi.checkLocalLogin.mockResolvedValue({ status: "ready" });

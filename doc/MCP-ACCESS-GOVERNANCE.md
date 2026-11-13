@@ -432,6 +432,12 @@ In all modes:
 - Never set `PAPERCLIP_TRUSTED_MCP_RUNTIME_HOST` on the same worker that serves public HTTP traffic.
 - Treat the approved-template list as a code-review surface: a PR that adds a new template ships a new code-execution path.
 
+Provider subscription login is a separate capability. An operator may set
+`PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN=true` to enable the existing isolated,
+company/user-owned login lifecycle on a public deployment. It remains disabled
+by default. This setting does not designate a trusted MCP host or enable local
+stdio tools; all of the restrictions above still apply.
+
 For deployment mode and bind semantics generally, see [DEPLOYMENT-MODES.md](./DEPLOYMENT-MODES.md).
 
 ## Known limitations

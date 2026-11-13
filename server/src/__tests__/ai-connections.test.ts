@@ -2582,6 +2582,8 @@ console.log(JSON.stringify({ type: "result", subtype: "success", result: "hello"
     } finally { reader.mockRestore(); }
   });
   it.each(["anthropic", "openai"] as const)("blocks server-host %s login on a public deployment without a trusted host", async provider => {
+    const previousOptIn = process.env.PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN;
+    vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", undefined);
     const reader = vi.spyOn(localCredentials, "readVerifiedLocalAiCredentialDetails");
     const app = express();
     app.use(express.json());
@@ -2600,10 +2602,17 @@ console.log(JSON.stringify({ type: "result", subtype: "success", result: "hello"
         expect(result.body.error).toContain("unavailable on this hosted instance");
       }
       expect(reader).not.toHaveBeenCalled();
-    } finally { reader.mockRestore(); }
+    } finally { reader.mockRestore(); vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", previousOptIn); }
   });
-  it.each(["anthropic", "openai"] as const)("lets authenticated users connect only their own isolated %s login", async provider => {
-    const owner = `self-hosted-${provider}`;
+  it.each([
+    { provider: "anthropic", exposure: "private" },
+    { provider: "openai", exposure: "private" },
+    { provider: "anthropic", exposure: "public" },
+    { provider: "openai", exposure: "public" },
+  ] as const)("lets authenticated $exposure users connect only their own isolated $provider login", async ({ provider, exposure }) => {
+    const previousOptIn = process.env.PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN;
+    vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", exposure === "public" ? "true" : undefined);
+    const owner = `self-hosted-${exposure}-${provider}`;
     await db.insert(companyMemberships).values({ companyId, principalId: owner, principalType: "user", status: "active", membershipRole: "member" });
     const reader = vi.spyOn(localCredentials, "readVerifiedLocalAiCredentialDetails").mockResolvedValue({ credential: "isolated-fixture-token", accountLabel: undefined });
     const app = express();
@@ -2612,7 +2621,7 @@ console.log(JSON.stringify({ type: "result", subtype: "success", result: "hello"
       req.actor = { type: "board", source: "session", userId: String(req.headers["x-test-user"] ?? owner), companyIds: [companyId], memberships: [{ companyId, status: "active", membershipRole: req.headers["x-viewer"] ? "viewer" : "member" }] };
       next();
     });
-    app.use("/api", aiConnectionRoutes(db));
+    app.use("/api", aiConnectionRoutes(db, { deploymentMode: "authenticated", deploymentExposure: exposure, trustedLocalStdioRuntimeHost: "" }));
     app.use((error: { status?: number; message: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => { res.status(error.status ?? 500).json({ error: error.message }); });
     const base = `/api/companies/${companyId}/ai-connections/local`;
     const intent = { provider, method: "subscription", ownership: "personal", name: `Self-hosted ${provider}`, allAgents: false, agentIds: [] };
@@ -2643,7 +2652,7 @@ console.log(JSON.stringify({ type: "result", subtype: "success", result: "hello"
       expect((await request(app).post(base).send(input)).body).toEqual(saved.body);
       expect(JSON.stringify(saved.body)).not.toContain("isolated-fixture-token");
       expect((await service.list(companyId, owner)).filter(c => c.name === intent.name)).toHaveLength(1);
-    } finally { reader.mockRestore(); }
+    } finally { reader.mockRestore(); vi.stubEnv("PAPERCLIP_ALLOW_ISOLATED_PROVIDER_LOGIN", previousOptIn); }
   });
   it("rejects invalid credentials without exposing the provider response", async () => {
     const request = vi.fn().mockResolvedValue(new Response("secret-provider-body", { status: 401 }));
