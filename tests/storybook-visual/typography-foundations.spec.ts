@@ -49,7 +49,8 @@ test("shared sidebar and portaled account menu use the simplified weights and xs
   await expect(header).toBeVisible();
   await expect(header.locator("p")).toHaveCSS("font-size", "12px");
   await expect(header.locator("p")).toHaveCSS("line-height", "16px");
-  await expect(page.getByRole("link", { name: "Settings", exact: true })).toHaveCSS("font-weight", "400");
+  const account = page.getByRole("dialog", { name: "Account", exact: true });
+  await expect(account.getByRole("link", { name: "Settings", exact: true })).toHaveCSS("font-weight", "400");
 });
 
 test("leaving a proposal restores the ordinary foundation typography", async ({ page }) => {
