@@ -10,8 +10,8 @@
   ],
   "featured": true,
   "branding": {
-    "logoUrl": "/brands/apps/paperclip-notebook.svg",
-    "darkLogoUrl": "/brands/apps/paperclip-notebook-dark.svg"
+    "logoUrl": "/brands/apps/papermarketing.svg",
+    "darkLogoUrl": "/brands/apps/papermarketing.svg"
   },
   "urlPatterns": [
     "https://notebook.paperclip.app/*"

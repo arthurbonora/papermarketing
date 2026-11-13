@@ -431,7 +431,7 @@ describe("AppDefinition catalog", () => {
       "installation_repositories",
     );
     expect(channel("github-code-review-bot")?.guidanceMd).toContain(
-      "Generate the webhook secret in Paperclip",
+      "Generate the webhook secret in PaperMarketing",
     );
     expect(channel("github-code-review-bot")?.guidanceMd).toContain("SSL-verified");
     expect(channel("microsoft-teams")?.guidanceMd).toContain(
@@ -875,7 +875,7 @@ describe("AppDefinition catalog", () => {
         "https://developers.google.com/workspace/preview",
       );
       expect(prerequisite?.description, slug).toContain(
-        "does not enable unrelated Paperclip customers",
+        "does not enable unrelated customers",
       );
       expect(prerequisite?.steps?.join(" "), slug).toContain(
         "final project-registration email",

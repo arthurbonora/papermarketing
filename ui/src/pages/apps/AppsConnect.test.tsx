@@ -766,7 +766,7 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
     getConnectionMock.mockResolvedValue({ id: "existing-notebook", status: "active", config: { sourceTemplateKey: "paperclip-notebook" } });
     listGalleryMock.mockResolvedValue({ apps: [getAppStoreDefinition("paperclip-notebook")] });
     await render();
-    expect(container.textContent).toContain("PaperMarketing Notebook is not available on this instance");
+    expect(container.textContent).toContain("Notebook is not available on this instance");
     expect(connectAppMock).not.toHaveBeenCalled();
     expect(startOAuthMock).not.toHaveBeenCalled();
     expect(finishAppMock).not.toHaveBeenCalled();
@@ -776,7 +776,7 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
     getConnectionMock.mockResolvedValue({ id: "existing-notebook", status: "active", config: { sourceTemplateKey: "paperclip-notebook" } });
     mockParams.appKey = route === "path" ? "paperclip-notebook" : undefined;
     await render(undefined, false, route === "inline" ? <ConnectionSetupFlow host="dialog" serviceSlug="paperclip-notebook" configuredConnection={{ id: "existing-notebook", applicationId: "notebook-app", name: "Notebook", enabled: true, status: "active" }} /> : undefined);
-    expect(container.textContent).toContain("PaperMarketing Notebook is not available on this instance");
+    expect(container.textContent).toContain("Notebook is not available on this instance");
     expect(connectAppMock).not.toHaveBeenCalled();
     expect(startOAuthMock).not.toHaveBeenCalled();
   });
@@ -787,7 +787,7 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
     listConnectionsMock.mockResolvedValue({ connections: [{ id: "existing-notebook", applicationId: "notebook-app", status: "active", config: { sourceTemplateKey: "notion" } }] });
     listApplicationsMock.mockResolvedValue({ applications: [{ id: "notebook-app", applicationKey: "app-gallery:paperclip-notebook:11111111-1111-4111-8111-111111111111", metadata: { sourceTemplateKey: "notion" } }] });
     await render();
-    expect(container.textContent).toContain("PaperMarketing Notebook is not available on this instance");
+    expect(container.textContent).toContain("Notebook is not available on this instance");
     expect(connectAppMock).not.toHaveBeenCalled();
     expect(startOAuthMock).not.toHaveBeenCalled();
   });
@@ -810,7 +810,7 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
     experimentalMock.mockResolvedValue({ enablePaperclipNotebook: true });
     listGalleryMock.mockResolvedValue({ apps: [getAppStoreDefinition("paperclip-notebook")] });
     await render();
-    expect(container.textContent).toContain("PaperMarketing Notebook");
+    expect(container.textContent).toContain("Notebook");
     expect(container.textContent).not.toContain("not available on this instance");
     expect(listGalleryMock).toHaveBeenCalledWith("company-1");
     expect([...container.querySelectorAll("button")].some(button => /Continue to|Continue to sign in|Connect/.test(button.textContent ?? ""))).toBe(true);
