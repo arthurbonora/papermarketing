@@ -14,7 +14,6 @@ import { TASK_TITLE_BUDGET_CENTS } from "./task-titles.js";
 import { CHAT_FEATURE_SUITE, CHAT_FEATURE_BUDGET_CENTS } from "./chat-feature-cases.js";
 import { codexSubscriptionAgentConfig, stageCodexSubscriptionFixture } from "./codex-subscription-fixture.js";
 import { caseReceiptTask, CASE_RECEIPT_BUDGET_CENTS, CASE_RECEIPT_RUN_TIMEOUT_MS } from "./case-receipt-cases.js";
-import { stageGrokSubscriptionFixture } from "./grok-subscription-fixture.js";
 import { pollUntil, RunnerApiHttpError, type RunnerApi } from "./api.js";
 import { assertCursorCloudQualificationBudgetOptIn, configureCursorCloudQualificationBudget, type CursorCloudQualificationBudget } from "./cursor-cloud-budget.js";
 import type {
@@ -248,7 +247,7 @@ export async function setupLiveFixtures(input: {
       for (const credentialName of execution.suite.id === "chat-features"
         ? [...new Set([execution.profile.credential, execution.environment.credential].filter((name): name is CredentialName => !!name))]
         : execution.requiredCredentials) {
-        if (["GROK_AUTH_JSON", "CODEX_AUTH_JSON"].includes(credentialName)) continue;
+        if (credentialName === "CODEX_AUTH_JSON") continue;
         const rawValue = input.credentials[credentialName];
         if (!rawValue) throw new Error(`Missing credential ${credentialName}`);
         const secret = await api.postSensitive<SecretRecord>(
@@ -270,16 +269,15 @@ export async function setupLiveFixtures(input: {
     },
   });
 
-  const grokSubscription = execution.profile.credential === "GROK_AUTH_JSON";
   const codexSubscription = execution.profile.credential === "CODEX_AUTH_JSON";
-  if (grokSubscription || codexSubscription) {
+  if (codexSubscription) {
     registry.register<() => Promise<void>>({
       id: "subscription-login",
       dependencies: ["company"],
       async setup(resolved) {
         const raw = input.credentials[execution.profile.credential];
         if (!raw) throw new Error("Missing explicit subscription login credential");
-        return (codexSubscription ? stageCodexSubscriptionFixture : stageGrokSubscriptionFixture)({
+        return stageCodexSubscriptionFixture({
           raw, companyId: value<CompanyRecord>(resolved, "company").id,
           environment: process.env,
         });
@@ -293,7 +291,7 @@ export async function setupLiveFixtures(input: {
     dependencies: [
       "company",
       "secrets",
-      ...((grokSubscription || codexSubscription) ? ["subscription-login"] : []),
+      ...((codexSubscription) ? ["subscription-login"] : []),
       ...(execution.environment.id === "daytona" ? ["sandbox-provider"] : []),
     ],
     async setup(resolved) {
@@ -383,7 +381,7 @@ export async function setupLiveFixtures(input: {
       "company",
       "secrets",
       "environment",
-      ...((grokSubscription || codexSubscription) ? ["subscription-login"] : []),
+      ...((codexSubscription) ? ["subscription-login"] : []),
       ...(managedHiring || savedCopilot || budgetedGateway ? ["ai-connection"] : []),
     ],
     async setup(resolved) {

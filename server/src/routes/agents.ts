@@ -1920,6 +1920,32 @@ export function agentRoutes(
       throw unprocessable("Select a PaperMarketing Runner provider before converting this agent.");
     }
     const next = { ...defaults, ...input.nextAdapterConfig };
+    if (!asNonEmptyString(next.model)) next.model = defaults.model;
+    return normalizeLegacyRunnerProvider(next);
+  }
+
+  function assertProviderTraceSettingTransition(
+    req: Request,
+    nextRuntimeConfig: unknown,
+    previousRuntimeConfig?: unknown,
+  ): void {
+    const previousRaw =
+      asRecord(asRecord(previousRuntimeConfig)?.debug)?.providerTrace === "raw";
+    const nextRaw =
+      asRecord(asRecord(nextRuntimeConfig)?.debug)?.providerTrace === "raw";
+    if (previousRaw !== nextRaw) assertInstanceAdmin(req);
+  }
+
+  async function assertAgentDefaultEnvironmentSelection(
+    companyId: string,
+    environmentId: string | null | undefined,
+    options?: { allowedDrivers?: string[]; allowedSandboxProviders?: string[] },
+  ) {
+    if (environmentId === undefined || environmentId === null) return;
+    const environment = await environmentsSvc.getById(environmentId);
+    if (!environment) {
+      throw unprocessable("Selected environment was not found");
+    }
     if (options?.allowedDrivers && !options.allowedDrivers.includes(environment.driver)) {
       throw unprocessable(`Environment driver "${environment.driver}" is not allowed here`);
     }

@@ -305,7 +305,7 @@ describe("runner E2E catalog", () => {
       runnerMatrix.filter(
         (entry) => entry.suite.id === "local-session-integrity",
       ),
-    ).toHaveLength(16);
+    ).toHaveLength(14);
     expect(
       runnerMatrix.filter(
         (entry) => entry.suite.id === "openrouter-model-breadth",
@@ -430,7 +430,7 @@ describe("runner E2E catalog", () => {
   });
 
   it("gives repaired LF warm prompts a distinct definition from retained results", () => {
-    for (const [id, priorHash, version] of [["rich-acp-warm-continuity", "331b88d9538a132670789fb7864df7df5f4bf294ae19b62f53d8a02f901774f0", 3], ["daytona-journal-continuity", "8713942d662d4013f59ce57ec9497d890e37c08888a8edbb4a610dd82e65bc9e", 6]] as const) {
+    for (const [id, priorHash, version] of [["daytona-journal-continuity", "8713942d662d4013f59ce57ec9497d890e37c08888a8edbb4a610dd82e65bc9e", 6]] as const) {
       const suite = runnerSuites.find(candidate => candidate.id === id)!;
       expect(suite.definitionMetadata).toMatchObject({ version, warmPromptDigest: expect.stringMatching(/^[a-f0-9]{64}$/u) });
       expect(suiteDefinitionHash(suite)).not.toBe(priorHash);
@@ -840,7 +840,7 @@ describe("runner E2E selectors", () => {
       "daytona",
     ]);
     const selected = selectRunnerExecutions(options);
-    expect(selected).toHaveLength(16);
+    expect(selected).toHaveLength(13);
     expect(
       selected.every(
         (entry) =>
@@ -859,10 +859,10 @@ describe("runner E2E selectors", () => {
     const jobs = buildMatrixJobs(
       selectRunnerExecutions(parseRunnerSelectors(["--all"])),
     );
-    expect(jobs).toHaveLength(183);
-    expect(jobs.filter((job) => job.needsDaytona)).toHaveLength(26);
-    expect(jobs.filter((job) => !job.needsDaytona)).toHaveLength(157);
-    expect(new Set(jobs.map((job) => job.executionId)).size).toBe(183);
+    expect(jobs).toHaveLength(175);
+    expect(jobs.filter((job) => job.needsDaytona)).toHaveLength(23);
+    expect(jobs.filter((job) => !job.needsDaytona)).toHaveLength(152);
+    expect(new Set(jobs.map((job) => job.executionId)).size).toBe(175);
     expect(
       jobs.find(
         (job) =>

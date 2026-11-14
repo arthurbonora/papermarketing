@@ -248,22 +248,6 @@ describeEmbeddedPostgres("hired agent provider credential inheritance", () => {
     });
   });
 
-  it("inherits a grok_local parent's XAI_API_KEY reference", async () => {
-    const companyId = await seedCompany();
-    const secret = await createCompanySecret(companyId, "xai-parent-key");
-    const parent = await seedParentAgent(companyId, "grok_local", {
-      XAI_API_KEY: secretRef(secret.id),
-    });
-
-    const res = await hire(agentActor(companyId, parent.id), companyId, {
-      name: "Grok Child",
-      role: "engineer",
-      adapterType: "grok_local",
-    });
-
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(childEnvOf(res).XAI_API_KEY).toMatchObject({ type: "secret_ref", secretId: secret.id });
-  });
 
   it("inherits a native OpenCode parent's OPENROUTER_API_KEY reference when the hire inherits the caller runtime", async () => {
     const companyId = await seedCompany();

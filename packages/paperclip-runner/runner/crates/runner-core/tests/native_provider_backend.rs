@@ -177,116 +177,6 @@ fn acpx_config(state_dir: &Path, mode: &str) -> DurableRunnerConfig {
     config
 }
 
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-fn candidate_fixture(directory: &Path) -> (DurableRunnerConfig, Value) {
-    use paperclip_runner_core::acpx_candidate_admission::AcpxCandidateAdmission;
-    let profiles: Value =
-        serde_json::from_str(include_str!("../../../../acpx-profiles.json")).unwrap();
-    let distributions: Value =
-        serde_json::from_str(include_str!("../../../../antigravity-distributions.json")).unwrap();
-    let profile = &profiles["profiles"]["antigravity"];
-    let admission = AcpxCandidateAdmission::parse_json(&json!({
-        "schema":"paperclip.acpx-candidate-admission.v1", "companyId":"company-1",
-        "agent":"antigravity", "model":"explicit-test-model", "profileDigest":profile["commandDigest"],
-        "nativeClosureDigest":format!("sha256:{}",distributions["platforms"]["darwin-arm64"]["closureSha256"].as_str().unwrap()),
-        "platform":"darwin", "architecture":"arm64", "expiresAt":SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64 + 60_000,
-        "runId":"run-1", "normalizedSessionId":"session-1"
-    }).to_string()).unwrap();
-    let mut config = acpx_config(directory, "turns-reserved-result-terminal");
-    let launch = config.acpx_launch_profile.as_mut().unwrap();
-    *launch.args.last_mut().unwrap() = admission.profile_digest.clone();
-    launch.candidate_admission = Some(admission);
-    let mut payload = prepare_payload(directory, "antigravity");
-    let provider = &mut payload["provider"];
-    for field in [
-        "agentServerPackage",
-        "agentServerVersion",
-        "agentRuntimePackage",
-        "agentRuntimeVersion",
-        "commandDigest",
-    ] {
-        provider[field] = profile[field].clone();
-    }
-    provider["sidecarArgs"] = json!(launch.args);
-    provider["providerPolicy"] = json!({"readOnly":true});
-    (config, payload)
-}
-
-#[test]
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-fn candidate_cannot_change_provider_kind_or_adopt_prior_activation() {
-    let directory = temporary_directory("candidate-provider-authority");
-    let (config, mut payload) = candidate_fixture(&directory);
-    for kind in [
-        "codex",
-        "opencode",
-        "openai_dot",
-        "grok_bot",
-        "muse",
-        "claude_managed",
-        "aws_agentcore",
-    ] {
-        let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-        let error = executor
-            .execute(&command(
-                1,
-                "run.prepare",
-                json!({"provider":{"kind":kind}}),
-            ))
-            .unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("cannot authorize another provider kind"),
-            "{kind}: {error}"
-        );
-        assert!(!directory.join("acpx-runtime").exists());
-    }
-    payload["paperclipNextAuthority"] = json!({});
-    let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    assert!(executor
-        .execute(&command(1, "run.attach", payload))
-        .unwrap_err()
-        .to_string()
-        .contains("cannot rotate a live runner authority"));
-    assert!(!directory.join("acpx-provider-state.json").exists());
-    fs::write(directory.join("codex-provider-state.json"), b"{}").unwrap();
-    let mut recovered = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    assert!(recovered
-        .poll_events()
-        .unwrap_err()
-        .to_string()
-        .contains("cannot adopt a prior durable runner activation"));
-    fs::remove_dir_all(directory).unwrap();
-}
-
-#[test]
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-fn candidate_verified_cold_session_retires_on_suspend_instead_of_warm_adoption() {
-    let directory = temporary_directory("candidate-cold-session");
-    let (config, payload) = candidate_fixture(&directory);
-    let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    executor
-        .execute(&command(1, "run.prepare", payload))
-        .unwrap();
-    let opened = executor
-        .execute(&command(2, "session.open", json!({})))
-        .unwrap();
-    assert_eq!(opened.result["status"], "started");
-    let closed = executor
-        .execute(&command(3, "runner.suspend", json!({})))
-        .unwrap();
-    assert_eq!(closed.result["status"], "closed");
-    let state: Value =
-        serde_json::from_slice(&fs::read(directory.join("acpx-provider-state.json")).unwrap())
-            .unwrap();
-    assert_eq!(state["lifecycle"], "closed");
-    executor.shutdown().unwrap();
-    let mut recovered = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    assert!(recovered.poll_events().is_err());
-    fs::remove_dir_all(directory).unwrap();
-}
-
 fn pi_acpx_config(state_dir: &Path, mode: &str) -> DurableRunnerConfig {
     let mut config = acpx_config(state_dir, mode);
     *config
@@ -1414,33 +1304,8 @@ fn acpx_control_failure_keeps_its_classification_in_the_durable_terminal() {
 fn provider_death_expires_input_and_commits_failure_without_querying_the_dead_provider() {
     let directory = temporary_directory("acpx-provider-death");
     let mode = "turns-provider-death";
-    let mut config = acpx_config(&directory, mode);
-    let mut payload = prepare_payload_with_mode(&directory, "codex", mode);
-    // Keep the death/expiry assertions on the active immutable profile. A
-    // historical digest fails admission before a provider can die.
-    let identity: Value =
-        serde_json::from_str(include_str!("../../../../acpx-profiles.json")).unwrap();
-    let digest = identity["profiles"]["copilot"]["commandDigest"]
-        .as_str()
-        .unwrap();
-    *config
-        .acpx_launch_profile
-        .as_mut()
-        .unwrap()
-        .args
-        .last_mut()
-        .unwrap() = digest.to_owned();
-    let provider = &mut payload["provider"];
-    provider["agent"] = json!("copilot");
-    provider["model"] = json!("gpt-5.6-luna");
-    provider["permissionMode"] = json!("approve-paperclip");
-    provider["agentServerPackage"] = json!("@github/copilot");
-    provider["agentServerVersion"] = json!("1.0.88");
-    provider["agentRuntimePackage"] = Value::Null;
-    provider["agentRuntimeVersion"] = Value::Null;
-    provider["providerPolicy"] = json!({"readOnly":false});
-    provider["commandDigest"] = json!(digest);
-    provider["sidecarArgs"][3] = json!(digest);
+    let config = acpx_config(&directory, mode);
+    let payload = prepare_payload_with_mode(&directory, "codex", mode);
     let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
     executor
         .execute(&command(1, "run.prepare", payload))
@@ -2888,180 +2753,19 @@ fn resumes_opencode_after_cold_state_and_artifact_restore_into_a_new_allocation(
 }
 
 #[test]
-fn rejects_pi_without_an_explicit_model_before_starting_a_sidecar() {
+fn rejects_retired_pi_before_starting_a_sidecar() {
     let directory = temporary_directory("pi-model");
-    let config = pi_acpx_config(&directory, "bootstrap");
-    let mut payload = pi_prepare_payload(&directory, "bootstrap");
-    // Distribution and policy are valid, but model selection is still required.
-    payload["provider"]["model"] = json!(" ");
-    let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    let error = executor
-        .execute(&command(1, "run.prepare", payload))
-        .unwrap_err();
-    assert!(error
-        .to_string()
-        .contains("does not match a qualified immutable profile"));
-    assert!(!directory.join("acpx-runtime").exists());
-    assert!(!directory.join("acpx-provider-state.json").exists());
-    fs::remove_dir_all(directory).unwrap();
-}
-
-#[test]
-#[cfg_attr(windows, ignore = "verified launch is not supported on Windows yet")]
-fn pi_thinking_change_cannot_attach_to_an_existing_provider_identity() {
-    let directory = temporary_directory("pi-thinking-attach");
     let config = pi_acpx_config(&directory, "bootstrap");
     let payload = pi_prepare_payload(&directory, "bootstrap");
     let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    executor
-        .execute(&command(1, "run.prepare", payload.clone()))
-        .unwrap();
-    let opened = executor
-        .execute(&command(2, "session.open", json!({})))
-        .unwrap();
-    assert_eq!(opened.result["piThinkingLevel"], json!("low"));
-    assert_eq!(
-        opened.events[0].2["providerDescriptor"]["piThinkingLevel"],
-        json!("low")
-    );
-    let state_path = directory.join("acpx-provider-state.json");
-    let prior = fs::read(&state_path).unwrap();
-    for (index, mode) in ["off", "high", "max"].into_iter().enumerate() {
-        let mut changed = payload.clone();
-        changed["provider"]["piThinkingLevel"] = json!(mode);
-        let error = executor
-            .execute(&command(3 + index as u64, "run.attach", changed))
-            .unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("requires the same settled ACPX provider profile and session"),
-            "unexpected thinking identity rejection: {error}"
-        );
-        assert_eq!(fs::read(&state_path).unwrap(), prior);
-    }
-    executor
-        .execute(&command(6, "run.attach", payload))
-        .unwrap();
-    executor.shutdown().unwrap();
-    fs::remove_dir_all(directory).unwrap();
-}
-
-#[test]
-#[cfg_attr(windows, ignore = "verified launch is not supported on Windows yet")]
-fn stops_an_idle_pi_provider_before_suspension_without_waiting_for_its_close_rpc() {
-    let directory = temporary_directory("pi-idle-suspension");
-    let mut config = pi_acpx_config(&directory, "bootstrap");
-    config
-        .acpx_launch_profile
-        .as_mut()
-        .unwrap()
-        .args
-        .extend(["--suspend-delay-ms".to_owned(), "8000".to_owned()]);
-    let mut payload = pi_prepare_payload(&directory, "bootstrap");
-    payload["provider"]["sidecarArgs"] = json!(config.acpx_launch_profile.as_ref().unwrap().args);
-    let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    executor
-        .execute(&command(1, "run.prepare", payload))
-        .unwrap();
-    executor
-        .execute(&command(2, "session.open", json!({})))
-        .unwrap();
-    let state_path = directory.join("acpx-provider-state.json");
-    let opened: Value = serde_json::from_slice(&fs::read(&state_path).unwrap()).unwrap();
-    let started = std::time::Instant::now();
-    let stopped = executor
-        .execute(&command(3, "turn.stop", json!({})))
-        .unwrap();
-    executor
-        .execute(&command(4, "runner.drain", json!({})))
-        .unwrap();
-    executor
-        .execute(&command(5, "runner.suspend", json!({})))
-        .unwrap();
-    let suspended: Value = serde_json::from_slice(&fs::read(&state_path).unwrap()).unwrap();
-    let elapsed = started.elapsed();
-    executor.shutdown().unwrap();
-    fs::remove_dir_all(directory).unwrap();
-
-    assert_eq!(stopped.result["status"], "stopped");
-    assert_eq!(stopped.result["providerExitConfirmed"], true);
-    assert!(
-        elapsed < Duration::from_secs(3),
-        "idle close took {elapsed:?}"
-    );
-    assert_eq!(suspended["lifecycle"], "suspended");
-    assert_eq!(suspended["providerExitUnconfirmed"], false);
-    assert_eq!(suspended["identity"], opened["identity"]);
-    assert_eq!(suspended["activeProviderTurnId"], Value::Null);
-}
-
-#[test]
-#[cfg_attr(windows, ignore = "verified launch is not supported on Windows yet")]
-fn idle_pi_stop_cannot_publish_a_reusable_identity_while_its_lifetime_fence_is_held() {
-    let directory = temporary_directory("pi-idle-held-lifetime");
-    // Linux can assign port 0 below the identity contract's dynamic-port range.
-    // Keep this fixture distinct from the fake sidecar's default fence ports.
-    let fence = (61_000..=u16::MAX)
-        .filter_map(|port| std::net::TcpListener::bind(("127.0.0.1", port)).ok())
-        .take(3)
-        .collect::<Vec<_>>();
-    assert_eq!(
-        fence.len(),
-        3,
-        "three valid lifetime fence ports are required"
-    );
-    let ports = fence
-        .iter()
-        .map(|listener| listener.local_addr().unwrap().port().to_string())
-        .collect::<Vec<_>>()
-        .join(",");
-    let mut config = pi_acpx_config(&directory, "bootstrap");
-    config
-        .acpx_launch_profile
-        .as_mut()
-        .unwrap()
-        .args
-        .extend(["--lifetime-fence-ports".to_owned(), ports]);
-    let mut payload = pi_prepare_payload(&directory, "bootstrap");
-    payload["provider"]["sidecarArgs"] = json!(config.acpx_launch_profile.as_ref().unwrap().args);
-    let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-    executor
-        .execute(&command(1, "run.prepare", payload))
-        .unwrap();
-    executor
-        .execute(&command(2, "session.open", json!({})))
-        .unwrap();
-    let state_path = directory.join("acpx-provider-state.json");
-    let opened: Value = serde_json::from_slice(&fs::read(&state_path).unwrap()).unwrap();
     let error = executor
-        .execute(&command(3, "turn.stop", json!({})))
+        .execute(&command(1, "run.prepare", payload))
         .unwrap_err();
     assert!(error
         .to_string()
-        .contains("original provider lifetime remains active"));
-    let stopped: Value = serde_json::from_slice(&fs::read(&state_path).unwrap()).unwrap();
-    assert_eq!(stopped["lifecycle"], "prepared");
-    assert_eq!(stopped["providerExitUnconfirmed"], true);
-    assert_eq!(stopped["identity"], opened["identity"]);
-    assert!(
-        executor
-            .execute(&command(4, "runner.suspend", json!({})))
-            .is_err(),
-        "unconfirmed lifetime cannot produce a suspension receipt"
-    );
-    let before_poll = fs::read(&state_path).unwrap();
-    assert!(
-        executor.poll_events().unwrap().is_empty(),
-        "held lifetime cannot publish a resumed provider"
-    );
-    assert_eq!(
-        fs::read(&state_path).unwrap(),
-        before_poll,
-        "polling cannot erase the unconfirmed lifetime boundary"
-    );
-    drop(fence);
-    executor.shutdown().unwrap();
+        .contains("ACPX agent is no longer supported"));
+    assert!(!directory.join("acpx-runtime").exists());
+    assert!(!directory.join("acpx-provider-state.json").exists());
     fs::remove_dir_all(directory).unwrap();
 }
 
@@ -3198,67 +2902,4 @@ fn rejected_turn_start_cannot_publish_a_checkpoint_while_its_provider_lifetime_i
     drop(fence);
     executor.shutdown().unwrap();
     fs::remove_dir_all(directory).unwrap();
-}
-
-#[test]
-#[cfg_attr(windows, ignore = "verified launch is not supported on Windows yet")]
-fn publishes_only_changed_pi_controls_before_the_new_turn() {
-    for (mode, initially_available, turn_available) in [
-        ("controls-lazy", false, true),
-        ("controls-downgrade", true, false),
-        ("controls", true, true),
-    ] {
-        let directory = temporary_directory(mode);
-        let config = pi_acpx_config(&directory, mode);
-        let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
-        executor
-            .execute(&command(
-                1,
-                "run.prepare",
-                pi_prepare_payload(&directory, mode),
-            ))
-            .unwrap();
-        let opened = executor
-            .execute(&command(2, "session.open", json!({})))
-            .unwrap();
-        assert_eq!(
-            opened.events[0].2["providerDescriptor"]["turnControls"],
-            json!({"steering":initially_available, "queuedFollowUp":initially_available})
-        );
-
-        let started = executor
-            .execute(&command(
-                3,
-                "turn.start",
-                json!({
-                    "text":"Work", "turnId":"provider-turn-controls"
-                }),
-            ))
-            .unwrap();
-        assert_eq!(started.result["providerTurnId"], "provider-turn-controls");
-        let expected_types = if initially_available != turn_available {
-            vec!["session.capabilities.updated", "turn.started"]
-        } else {
-            vec!["turn.started"]
-        };
-        assert_eq!(
-            started
-                .events
-                .iter()
-                .map(|event| event.0.as_str())
-                .collect::<Vec<_>>(),
-            expected_types
-        );
-        if initially_available != turn_available {
-            assert_eq!(
-                started.events[0].2["turnControls"],
-                json!({"steering":turn_available, "queuedFollowUp":turn_available})
-            );
-        }
-        let turn = &started.events.last().unwrap().2;
-        assert_eq!(turn["providerTurnId"], "provider-turn-controls");
-        assert_eq!(turn["turn"]["id"], "provider-turn-controls");
-        executor.shutdown().unwrap();
-        fs::remove_dir_all(directory).unwrap();
-    }
 }
