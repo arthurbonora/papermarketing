@@ -1902,10 +1902,7 @@ export function buildRunnerMatrix(
                 environment: selectedEnvironment,
                 task: suite.id === "confirmation-replies" && profile.id === "runner-codex" && environment.id === "daytona" && task.id === "task-card-accept"
                   ? { ...task, expectedRunCount: 4, automaticRetryPolicy: "single_attempt" as const }
-                  : suite.id === "extended-harnesses" && profile.qualificationCandidate === "pi" && task.id === "file-edit-validate"
-                    ? { ...task, buildPrompt: piFilePrompt }
-                    : suite.id === "extended-harnesses" && profile.qualificationCandidate === "copilot" && task.id === "file-edit-validate"
-                      ? { ...task, buildPrompt: copilotFilePrompt } : task,
+                  : task,
                 groups: [
                   ...new Set([
                     ...suite.groups,
