@@ -496,10 +496,11 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
     expect(await current(agent.id)).toMatchObject({ lifecycleState: "ready", status: "idle", lifecycleError: null });
   });
 
-  it.each(["claude_local", "gemini_local"])("keeps %s authentication warnings out of ready", async adapterType => {
+  it("keeps Claude authentication warnings out of ready", async () => {
+    const adapterType = "claude_local";
     const adapter = requireServerAdapter(adapterType);
     const probe = vi.spyOn(adapter, "testEnvironment").mockResolvedValue({ adapterType, status: "warn",
-      testedAt: new Date().toISOString(), checks: [{ code: `${adapterType.split("_")[0]}_hello_probe_auth_required`, level: "warn", message: "Login required" }] });
+      testedAt: new Date().toISOString(), checks: [{ code: "claude_hello_probe_auth_required", level: "warn", message: "Login required" }] });
     try {
       const agent = await createAgentLifecycle(db).requestHire(companyId, { name: "Login test", adapterType, runner: "legacy" });
       const work = worker(createLifecycleDriver(db, {} as never).runHost);

@@ -66,7 +66,6 @@ describe("plugin Runner setup", () => {
     } finally { probe.mockRestore(); if (root) await rm(root, { recursive: true, force: true }); }
   });
   it.each([
-    { config: { provider: "acpx", acpxAgent: "pi", model: "fixture-model", piThinkingLevel: "high" }, options: { transportOptions: { acpxAgent: "pi", piThinkingLevel: "high" } } },
     { config: { provider: "acpx", acpxAgent: "claude", model: "claude-opus-5-5", effort: "high" }, options: { transportOptions: { acpxAgent: "claude", claudeEffort: "high" } } },
     { config: { provider: "codex", model: "gpt-6.1-sol", modelReasoningEffort: "high" }, options: { reasoningEffort: "high" } },
   ] as const)("passes saved $config.provider settings to the setup transport", async ({ options, config }) => {

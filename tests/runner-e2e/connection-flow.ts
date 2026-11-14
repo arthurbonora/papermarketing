@@ -146,7 +146,7 @@ async function createConnectionThroughUi(input: ConnectionFlowInput, agentURL: s
     await page.getByRole("button", { name: `Connect ${definition.name}`, exact: true }).click();
     const next = page.getByRole("button", { name: /^(Save and continue|Continue)$/ }).last();
     if (!advanced && await next.isVisible()) await next.click();
-    if (!advanced && harness.provider !== "google") {
+    if (!advanced) {
       // The credential step loads asynchronously. Wait for its provider tile
       // before inspecting the mode switch, otherwise a still-loading page can
       // skip the API-key switch and leave the subscription form selected.

@@ -9,7 +9,7 @@ vi.mock("../services/subscription-refresh.js", () => ({ refreshSubscriptionConne
 import * as localCredentials from "../services/local-ai-credentials.js";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { localEncryptedProvider } from "../secrets/local-encrypted-provider.js";
 import { promises as fs } from "node:fs";
@@ -17,7 +17,7 @@ import { mkdtemp, realpath, rm, access, readFile, writeFile, stat } from "node:f
 import os from "node:os";
 import path from "node:path";
 import { and, eq, sql } from "drizzle-orm";
-import { createDb, type Db, companies, agents, agentTaskSessions, heartbeatRuns, companyMemberships, connectionGrants, toolApplications, connectionGrantDelegations, connectionGrantMembers, toolConnections, toolConnectionInstalls, aiConnectionDefaults, aiProviderDefaults, adapterAuthSessions, environments, plugins, issues, issueThreadInteractions, issueRecoveryActions, connectionIntentDeliveries, agentWakeupRequests, companySecrets, companySecretVersions, userSecretDefinitions, principalPermissionGrants } from "@paperclipai/db";
+import { createDb, type Db, companies, agents, heartbeatRuns, companyMemberships, connectionGrants, toolApplications, connectionGrantDelegations, connectionGrantMembers, toolConnections, toolConnectionInstalls, aiConnectionDefaults, aiProviderDefaults, adapterAuthSessions, environments, plugins, issues, issueThreadInteractions, issueRecoveryActions, connectionIntentDeliveries, agentWakeupRequests, companySecrets, companySecretVersions, userSecretDefinitions, principalPermissionGrants } from "@paperclipai/db";
 import { startEmbeddedPostgresTestDatabase } from "@paperclipai/db/test-embedded-postgres";
 import { fetchCompanyQuotaWindows } from "../services/quota-windows.js";
 import { quotaCredentialRecoveryPath, quotaCredentialRecovery, quotaCredentialHash } from "../services/quota-credential-recovery.js";
@@ -1081,47 +1081,6 @@ describe("managed AI connections", () => {
       expect(grant.credentialSecretRefs).toEqual([]);
     } finally { await Promise.all([first.cleanup(), second.cleanup()]); }
   });
-  it("never restores retained Grok transcripts into same-user runtime homes", async () => {
-    const account = await service.save(companyId, "alice", {
-      provider: "xai", method: "api_key", ownership: "personal",
-      name: "Grok history isolation", agentIds: [], allAgents: true,
-    }, "fixture-grok-key");
-    const taskKey = `grok-history-${randomUUID()}`;
-    const runInput = { ...input, taskKey, adapterType: "grok_local", responsibleUserId: "alice", config: {},
-      binding: { provider: "xai", method: "api_key", mode: "delegated", connectionId: account.connectionId, grantId: account.grantId } as const };
-    const first = await prepareManagedAiRuntime(db, runInput);
-    const scope = createHash("sha256").update(JSON.stringify([
-      companyId, agentId, taskKey, first.sessionIdentity,
-    ])).digest("hex");
-    await first.cleanup();
-    // Seed a valid archive from the earlier implementation. Runtime preparation
-    // must not decrypt it onto the host, even for its authorized agent/task.
-    const retained = await localEncryptedProvider.createVersion({ value: JSON.stringify({
-      scope, entries: [{ name: "history.json", bytes: Buffer.from("previous-task-private-transcript").toString("base64") }],
-    }) });
-    await db.insert(agentTaskSessions).values({ companyId, agentId, adapterType: "grok_local", taskKey,
-      sessionParamsJson: { sessionId: "history", paperclipGrokHistory: { scope, material: retained.material } } });
-    const resumed = await prepareManagedAiRuntime(db, runInput);
-    const peer = await prepareManagedAiRuntime(db, { ...runInput, agentId: randomUUID() });
-    try {
-      expect(resumed.home).not.toBe(first.home);
-      expect(peer.home).not.toBe(resumed.home);
-      const transcript = path.join(String(resumed.config.env.GROK_HOME), "sessions", "history.json");
-      // A separate same-UID process can bypass 0700. It must find no restored
-      // transcript because none was materialized, not because of permissions.
-      const crossAgentRead = spawnSync(process.execPath, ["-e", `
-        const fs = require("node:fs");
-        try { process.stdout.write(fs.readFileSync(process.argv[1], "utf8")); }
-        catch (error) { process.stdout.write(error.code); }
-      `, transcript], { encoding: "utf8" });
-      expect(crossAgentRead.status).toBe(0);
-      expect(crossAgentRead.stdout).toBe("ENOENT");
-      await expect(access(transcript)).rejects.toMatchObject({ code: "ENOENT" });
-    } finally { await Promise.all([resumed.cleanup(), peer.cleanup()]); }
-  });
-
-
-
   it.each([false, true])("reports the authoritative connection-manager capability for custom grants (manager: %s)", async (manager) => {
     const userId = `custom-manager-${manager}`;
     await db.insert(companyMemberships).values({ companyId, principalType: "user", principalId: userId, status: "active", membershipRole: "member" });
@@ -1956,27 +1915,6 @@ describe("managed AI connections", () => {
     await newer.cleanup();
     const stored = await service.credential(await service.select({ ...runInput, userId }));
     expect(stored).toBe(auth("newer", 12));
-  });
-  it("resolves two concurrent xAI subscription write-backs by freshness, not by order", async () => {
-    const userId = "concurrent-freshness-xai-user";
-    await db.insert(companyMemberships).values({ companyId, principalId: userId, principalType: "user", status: "active", membershipRole: "member" });
-    const identityKey = "https://auth.x.ai::33333333-3333-3333-3333-333333333333";
-    const auth = (marker: string, expiresAtMs: number) => JSON.stringify({ [identityKey]: { key: `key-${marker}`, refresh_token: `refresh-${marker}`, expires_at: new Date(expiresAtMs).toISOString() } });
-    const now = Date.now();
-    await service.save(companyId, userId, { provider: "xai", method: "subscription", ownership: "personal", name: "Grok freshness fixture", loginSessionId: "fixture", allAgents: true, agentIds: [] }, auth("start", now));
-    const runInput = { ...input, adapterType: "grok_local", responsibleUserId: userId, binding: { provider: "xai", method: "subscription", mode: "responsible_user" } as const, config: { model: "same-model" } };
-    // Two runs use the same xAI subscription grant at the same time.
-    // Neither call below throws ai_connection_busy.
-    const older = await prepareManagedAiRuntime(db, runInput);
-    const newer = await prepareManagedAiRuntime(db, runInput);
-    await writeFile(path.join(String(older.config.env.GROK_HOME), "auth.json"), auth("older", now + 60 * 60 * 1000));
-    await writeFile(path.join(String(newer.config.env.GROK_HOME), "auth.json"), auth("newer", now + 2 * 60 * 60 * 1000));
-    // The run with the older expiry writes back first. The run with the
-    // newer expiry writes back last and must win.
-    await older.cleanup();
-    await newer.cleanup();
-    const stored = await service.credential(await service.select({ ...runInput, userId }));
-    expect(stored).toBe(auth("newer", now + 2 * 60 * 60 * 1000));
   });
   it("discards a credential write-back when the grant is revoked while the run is open", async () => {
     const userId = "revoked-write-back-user";

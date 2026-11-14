@@ -773,7 +773,6 @@ describe.skipIf(!support.supported)("heartbeat runtime selection boundary", () =
     [{ provider: "opencode", model: "openai/gpt-5" }, "warm"],
     [{ provider: "acpx", acpxAgent: "claude", model: "claude-sonnet-4-6" }, "warm"],
     [{ provider: "acpx", model: "claude-sonnet-4-6" }, "warm"],
-    [{ provider: "acpx", acpxAgent: "copilot", model: "gpt-5" }, "per_turn"],
   ] as const)("agrees with the environment view's lease for %j", async (adapterConfig, mode) => {
     const { input, run, agent, issue } = await fixture();
     input.agent.adapterConfig = adapterConfig;
@@ -844,7 +843,6 @@ describe.skipIf(!support.supported)("heartbeat runtime selection boundary", () =
 
   it.each([
     { provider: "acpx", acpxAgent: "claude", model: "claude-opus-5-5", credentialProvider: "anthropic" as const, method: "subscription" as const },
-    { provider: "acpx", acpxAgent: "grok", model: "grok-4.7", credentialProvider: "xai" as const, method: "subscription" as const },
     { provider: "opencode", model: "openrouter/deepseek/deepseek-v4-flash-0731", credentialProvider: "openrouter" as const, method: "api_key" as const },
   ])("admits managed $provider/$acpxAgent on an ephemeral server without changing credential lifecycle", async profile => {
     vi.stubEnv("PAPERCLIP_EPHEMERAL_SERVER", "true");

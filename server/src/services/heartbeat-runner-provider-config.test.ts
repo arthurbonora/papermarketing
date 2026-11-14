@@ -57,11 +57,12 @@ describe("Paperclip Runner native provider configuration", () => {
     expect(resolvePaperclipRunnerNativeProviderInput({ backend: "codex_app_server",
       adapterConfig: { provider: "codex", homeMode: "preconfigured" },
     })).toMatchObject({ homeMode: "preconfigured", codexApprovalPolicy: "never" });
-    for (const config of [{ provider: "acpx", acpxAgent: "grok" }, { provider: "opencode", model: "provider/model" }]) {
-      expect(() => resolvePaperclipRunnerNativeProviderInput({ backend: "codex_app_server",
-        adapterConfig: { ...config, homeMode: "preconfigured" },
-      })).toThrow("Preconfigured home supports");
-    }
+    expect(() => resolvePaperclipRunnerNativeProviderInput({ backend: "codex_app_server",
+      adapterConfig: { provider: "opencode", model: "provider/model", homeMode: "preconfigured" },
+    })).toThrow("Preconfigured home supports");
+    expect(() => resolvePaperclipRunnerNativeProviderInput({ backend: "acpx_runtime",
+      adapterConfig: { provider: "acpx", acpxAgent: "grok", homeMode: "preconfigured" },
+    })).toThrow(expect.objectContaining({ code: "agent_harness_removed" }));
   });
 
   it("projects Codex effort only when the selected model supports it", () => {

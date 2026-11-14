@@ -81,7 +81,7 @@ describe("automatic retained workspace recovery", () => {
         createdAt: new Date(), updatedAt: new Date() }).onConflictDoNothing();
       await db.insert(companyMemberships).values({ companyId: f.companyId, principalType: "user", principalId: "local-board", membershipRole: "owner" });
       await db.update(agents).set({ defaultEnvironmentId: f.lease.environmentId,
-        adapterConfig: withWarning ? { provider: "acpx", acpxAgent: "pi", model: "openrouter/deepseek/deepseek-v4.1-flash-1017" }
+        adapterConfig: withWarning ? { provider: "cursor_cloud", model: "cursor-model", repoUrl: "https://github.com/example/workspace" }
           : { provider: "codex", model: "gpt-6.1-sol" } }).where(eq(agents.id, source.agentId));
       if (withWarning) await db.insert(companyObservability).values({ companyId: f.companyId, revision: randomUUID(), enabled: true,
         destination: { provider: "otlp", endpointBaseUrl: "https://collector.example.invalid/otel" },

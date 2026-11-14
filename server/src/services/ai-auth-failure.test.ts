@@ -13,7 +13,6 @@ describe("AI authentication failure recovery", () => {
     ["claude_local", {}, "anthropic"],
     ["paperclip_runner", { provider: "codex" }, "openai"],
     ["paperclip_runner", { provider: "acpx", acpxAgent: "claude" }, "anthropic"],
-    ["paperclip_runner", { provider: "acpx", acpxAgent: "grok" }, "xai"],
     ["opencode_local", { model: "openrouter/model" }, "openrouter"],
   ] as const)("maps %s %j to %s", (adapter, config, provider) => {
     expect(aiBindingForAuthRecovery(adapter, config)).toMatchObject({ provider, mode: "responsible_user" });
@@ -26,5 +25,6 @@ describe("AI authentication failure recovery", () => {
     expect(aiBindingForAuthRecovery("gemini_local", {})).toBeUndefined();
     expect(aiBindingForAuthRecovery("pi_local", { model: "google/fixture-model" })).toBeUndefined();
     expect(aiBindingForAuthRecovery("paperclip_runner", { provider: "acpx", acpxAgent: "antigravity" })).toBeUndefined();
+    expect(aiBindingForAuthRecovery("paperclip_runner", { provider: "acpx", acpxAgent: "grok" })).toBeUndefined();
   });
 });

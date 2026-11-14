@@ -36,7 +36,7 @@ describe("resolveLoginCommandKey", () => {
     const original = capability.getCommand;
     capability.getCommand = () => "rm -rf /";
     try {
-      expect(resolveLoginCommandKey("grok_local")).toBe("grok");
+      expect(resolveLoginCommandKey("codex_local")).toBe("codex");
     } finally {
       capability.getCommand = original;
     }

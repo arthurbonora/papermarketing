@@ -2328,7 +2328,7 @@ describe("remote provider pack manifest", () => {
     return JSON.stringify(value);
   };
 
-  it.each(["opencode", "opencode-new-durable", "opencode-new-durable-reset", "opencode-new-durable-inspect-reset", "opencode-new-durable-provider-reset", "opencode-new-durable-store-failed", "opencode-new-durable-publish-failed", "opencode-continuation", "opencode-continuation-missing", "opencode-continuation-no-receipt", "opencode-continuation-replacement", "opencode-continuation-cold", "opencode-continuation-legacy-durable", "opencode-dirty", "opencode-diagnostics", "opencode-diagnostics-stale", "cursor", "claude-x64", "claude-arm64"] as const)("uses the bundled Linux image authority for remote %s without controller overrides", async provider => {
+  it.each(["opencode", "opencode-new-durable", "opencode-new-durable-reset", "opencode-new-durable-inspect-reset", "opencode-new-durable-provider-reset", "opencode-new-durable-store-failed", "opencode-new-durable-publish-failed", "opencode-continuation", "opencode-continuation-missing", "opencode-continuation-no-receipt", "opencode-continuation-replacement", "opencode-continuation-cold", "opencode-continuation-legacy-durable", "opencode-dirty", "opencode-diagnostics", "opencode-diagnostics-stale", "claude-x64", "claude-arm64"] as const)("uses the bundled Linux image authority for remote %s without controller overrides", async provider => {
     const firstDurable = provider.startsWith("opencode-new-durable");
     // A sandbox connection drops once while the settled state is read out.
     let checkpointReadResets = provider === "opencode-new-durable-reset" ? 1 : 0;
@@ -2369,7 +2369,7 @@ describe("remote provider pack manifest", () => {
     await writeFile(state.bundledRunnerBinary, daemon);
     if (claude) state.resolveRemoteRunnerBinary.mockResolvedValue(state.bundledRunnerBinary);
     const remoteExecution = { ...execution, provider: opencode
-      ? { kind: "opencode", model: null } : { kind: "acpx", agent: claude ? "claude" : "cursor", model: null },
+      ? { kind: "opencode", model: null } : { kind: "acpx", agent: "claude", model: null },
       workspace: { ...execution.workspace, cwd: root },
       session: { ...execution.session, normalizedSessionId: `bundled-${provider}-${randomUUID()}`, driverKind: opencode ? "opencode_server" : "acpx_runtime" },
     } as unknown as NativeExecutionInputV1;
@@ -14691,16 +14691,6 @@ describe("native process ownership", () => {
       "acpx_runtime",
     ],
     [
-      "GitHub Copilot ACPX",
-      {
-        kind: "acpx",
-        agent: "copilot",
-        model: "gpt-5.6-luna",
-        permissionMode: "approve-all",
-      },
-      "acpx_runtime",
-    ],
-    [
       "Codex ACPX",
       {
         kind: "acpx",
@@ -14708,11 +14698,6 @@ describe("native process ownership", () => {
         model: "gpt-5.6-sol",
         permissionMode: "deny-all",
       },
-      "acpx_runtime",
-    ],
-    [
-      "Pi ACPX without candidate authorization",
-      { kind: "acpx", agent: "pi", model: "openrouter/deepseek/deepseek-v4-flash-0731", permissionMode: "approve-reads" },
       "acpx_runtime",
     ],
   ])(
@@ -16233,7 +16218,7 @@ describe("runnerd provider runtime wiring", () => {
     }
   });
 
-  it.each(["codex", "opencode", "claude", "pi"] as const)("adopts remote %s with no old controller launch assets", async provider => {
+  it.each(["codex", "opencode", "claude"] as const)("adopts remote %s with no old controller launch assets", async provider => {
     const base = scopedNativeExecution(`missing-launch-assets-${provider}`);
     const current = { ...base,
       provider: provider === "codex" ? base.provider : provider === "opencode"
@@ -16781,7 +16766,7 @@ describe("runnerd provider runtime wiring", () => {
     expect(task.mock.calls.some(([op]) => ["prepare", "submit", "stop"].includes(op.kind))).toBe(false);
   });
 
-  it.each(["codex", "acpx-codex", "grok"] as const)("writes managed %s events through the current warm exporter without per-turn reads", async provider => {
+  it.each(["codex", "acpx-codex"] as const)("writes managed %s events through the current warm exporter without per-turn reads", async provider => {
     const root = await realpath(await mkdtemp(join(tmpdir(), "native-managed-refresh-")));
     const previousRoot = process.env.PAPERCLIP_RUNNER_STATE_DIR;
     process.env.PAPERCLIP_RUNNER_STATE_DIR = join(root, "runner");
@@ -16791,7 +16776,7 @@ describe("runnerd provider runtime wiring", () => {
     const current = scopedNativeExecution(`managed-refresh-${provider}`);
     current.session.lifecyclePolicy = { mode: "warm", idleTimeoutMs: 60_000 };
     if (provider !== "codex") {
-      current.provider = { kind: "acpx", agent: provider === "grok" ? "grok" : "codex", model: null, permissionMode: "deny-all" } as never;
+      current.provider = { kind: "acpx", agent: "codex", model: null, permissionMode: "deny-all" } as never;
       current.session.driverKind = "acpx_runtime";
     }
     const firstStore = { read: vi.fn(async () => "first-refresh"), remove: vi.fn(async () => {}) };
@@ -16817,7 +16802,7 @@ describe("runnerd provider runtime wiring", () => {
         sourceInstanceId: "managed-runner", sourceEventId: "refresh", sourceSeq: 1, runId: current.binding.runId,
         normalizedSessionId: current.session.normalizedSessionId!, priority: 0, emittedAt: "2020-01-01T00:00:00Z",
         payload: { schema: "paperclip.auth.credentials.updated.v1", bindingId: "harness-auth", revision: 1,
-          detection: "credential_store", provider: provider === "grok" ? "grok" : "codex" },
+          detection: "credential_store", provider: "codex" },
       };
       await retainedHook(notification);
       expect(firstStore.read).toHaveBeenCalledOnce();
@@ -16832,12 +16817,12 @@ describe("runnerd provider runtime wiring", () => {
       await rm(nextHome, { recursive: true, force: true });
       await retainedHook(notification);
       expect(persist).toHaveBeenLastCalledWith(expect.anything(), current.binding.companyId, nextBinding,
-        provider === "grok" ? "grok" : "codex", nextStore.read);
+        "codex", nextStore.read);
       expect(persist.mock.calls.at(-1)![2]).toBe(nextBinding);
       await session.close({ reason: "idle retirement" });
       expect(nextStore.read).toHaveBeenCalledTimes(2);
       expect(firstStore.remove).not.toHaveBeenCalled(); expect(nextStore.remove).toHaveBeenCalledOnce();
-      expect(stores.mock.calls[0]![0].localHome).toContain(provider === "grok" ? "grok-home" : "codex-home");
+      expect(stores.mock.calls[0]![0].localHome).toContain("codex-home");
       persist.mockClear();
       await expect(retainedHook({ ...notification, payload: { provider: "unexpected" } })).rejects.toThrow("provider_mismatch");
       expect(persist).not.toHaveBeenCalled();
@@ -17358,7 +17343,7 @@ describe("runnerd provider runtime wiring", () => {
       const spans = exporter.getFinishedSpans();
       expect(spans.map(span => span.name)).toEqual(expect.arrayContaining([
         "native.controller.assigned_mcp", "native.controller.tool_authority",
-        "native.controller.wake_binding", "native.controller.companion_selection",
+        "native.controller.wake_binding",
       ]));
       for (const span of spans) {
         expect(Object.keys(span.attributes)).toEqual(["paperclip.task.run.run_id"]);
