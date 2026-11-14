@@ -124,10 +124,8 @@ export function ReviewIndex() {
       <section className="space-y-3">
         <h2 className="font-semibold">Included harnesses</h2>
         <p className="text-sm text-muted-foreground">
-          Codex, Claude Code, OpenCode, Grok Build, Pi, Gemini CLI, Kimi CLI,
-          and Hermes local. Both runner paths are represented where available.
-          Cursor is shown as unverified for custom endpoints; native Pi and
-          Copilot show their qualification boundary. Fixture model IDs are
+          Codex, Claude Code, OpenCode and Hermes local. Both runner paths are
+          represented where available. Fixture model IDs are
           examples, not a validated provider catalog.
         </p>
       </section>

@@ -2,7 +2,7 @@ const fs = require("fs");
 
 // Co-change notice: parseAuthValue below mirrors parseGrokAuthPayload and
 // hasUsableGrokAuthValue in
-// packages/adapters/grok-local/src/server/grok-home.ts. If the auth format
+// ../legacy-xai-subscription-auth.ts. If the auth format
 // changes (new shape, renamed field), update both sites together.
 
 // Matches the composite `<issuer>::<uuid>` top-level key. See grok-home.ts

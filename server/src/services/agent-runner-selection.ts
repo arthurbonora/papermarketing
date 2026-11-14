@@ -55,6 +55,7 @@ function runnerAdaptersAvailable(harness: string, driver: string, disabledTypes:
 }
 
 export function agentRunnerAvailability(harness: string, target: RunnerTarget = localAgentRunnerTarget(), disabledTypes: string[] = localDisabledTypes()): AgentRunnerAvailability {
+  if (isRemovedAgentHarness(harness)) return { supportedRunners: [], defaultRunner: "legacy" };
   if (harness === "cursor_cloud") {
     if (target.executionMode === "kubernetes") return { supportedRunners: [], defaultRunner: "legacy" };
     const controller = localAgentRunnerTarget();

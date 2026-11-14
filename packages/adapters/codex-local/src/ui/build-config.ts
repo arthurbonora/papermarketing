@@ -121,10 +121,8 @@ export function buildPaperclipRunnerConfig(v: CreateConfigValues, context?: {
     };
   }
   const selectedAcpxProfile = PAPERCLIP_RUNNER_ACPX_PROFILES.find(profile => profile.value === schemaValues.acpxAgent);
-  const selectedModel = typeof v.model === "string" && v.model ? v.model : schemaValues.model;
-  if (provider === "acpx" && selectedAcpxProfile && !selectedAcpxProfile.qualified
-    && !(candidate && candidate.model === selectedModel)) {
-    throw new Error(`${selectedAcpxProfile.label} is not enabled for production`);
+  if (provider === "acpx" && schemaValues.acpxAgent !== undefined && !selectedAcpxProfile) {
+    throw new Error("This agent harness has been removed. Select a supported harness.");
   }
   const acpxAgent = selectedAcpxProfile?.value ?? "claude";
 

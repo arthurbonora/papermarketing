@@ -66,7 +66,7 @@ it("freezes all intended requests and keeps unrun scenarios in the denominator",
   const campaign = freezeChatCampaign(root, base);
   expect(campaign.scenarios).toHaveLength(244);
   expect(campaign.areas).toBe(35);
-  expect(campaign.capabilities).toBe(191);
+  expect(campaign.capabilities).toBe(190);
   expect(campaign.scenarios.every(scenario => scenario.query && scenario.context && scenario.expected_outcome)).toBe(true);
   expect(campaignSummary(campaign)).toMatchObject({ denominator: 244, unrun: 244, finalPassed: 0, requiredPasses: 196, mergeEligible: false });
 });

@@ -180,7 +180,6 @@ export interface FailHeartbeatRunSetupInput {
 }
 
 function nonRetryablePreflightFailureCode(error: unknown): string | null {
-  if (error instanceof HttpError && error.status === 422 && parseObject(error.details).code === "agent_harness_removed") return "agent_harness_removed";
   if (error instanceof ProjectAccessDeniedError) return PROJECT_ACCESS_DENIED;
   if (error instanceof ChatControlRecoveryUnresolvedError)
     return CHAT_CONTROL_RECOVERY_UNRESOLVED_CODE;

@@ -328,8 +328,10 @@ impl AcpxProviderDescriptor {
         context: &AcpxEventProjectionContext,
     ) -> Result<(), DurableRunnerError> {
         if !matches!(self.agent.as_str(), "claude" | "codex") {
-            return Err(DurableRunnerError::invalid("ACPX agent is no longer supported")
-                .with_classification(PROVIDER_STATE_INCOMPATIBLE));
+            return Err(
+                DurableRunnerError::invalid("ACPX agent is no longer supported")
+                    .with_classification(PROVIDER_STATE_INCOMPATIBLE),
+            );
         }
         let expected = acpx_release_profile(&self.agent).ok_or_else(|| {
             DurableRunnerError::invalid("ACPX agent must name a known immutable profile")
@@ -4078,7 +4080,7 @@ mod tests {
 
     #[test]
     fn model_admission_is_independent_of_qualification_examples() {
-        for agent in ["claude", "grok", "cursor", "copilot", "codex", "pi"] {
+        for agent in ["claude", "codex"] {
             let original: AcpxProviderDescriptor =
                 serde_json::from_value(descriptor(agent)).unwrap();
             original.validate_session(&context()).unwrap();
@@ -4111,129 +4113,13 @@ mod tests {
     }
 
     #[test]
-    fn admits_candidate_descriptors_only_with_explicit_policy_and_exact_distribution() {
-        for agent in ["cursor", "copilot", "pi"] {
-            let mut value = descriptor(agent);
-            let mut missing = value.clone();
-            missing.as_object_mut().unwrap().remove("providerPolicy");
-            let missing: AcpxProviderDescriptor = serde_json::from_value(missing).unwrap();
-            assert!(missing.validate(&context()).is_err());
-            let valid: AcpxProviderDescriptor = serde_json::from_value(value.clone()).unwrap();
-            valid.validate(&context()).unwrap();
-            if matches!(agent, "cursor" | "copilot") {
-                let mut previous_v9 = value.clone();
-                previous_v9["commandDigest"] = json!(match agent {
-                    "cursor" =>
-                        "sha256:a76ad26878a3b3328154901563cbda857e53583e4e01787f35a797992ef76162",
-                    "copilot" =>
-                        "sha256:98936d763497bd6f0e5605f52831a344f456357de58c457e440e69a1a468a2f4",
-                    _ => unreachable!(),
-                });
-                let previous_v9: AcpxProviderDescriptor =
-                    serde_json::from_value(previous_v9).unwrap();
-                assert!(previous_v9.validate(&context()).is_err());
-            }
-            if agent == "cursor" {
-                let mut previous_v8 = value.clone();
-                previous_v8["commandDigest"] = json!(
-                    "sha256:b9e94cbcdce2783665612c85caf019c4defe37d3d245a694de590ebdf5b1f1a3"
-                );
-                let previous_v8: AcpxProviderDescriptor =
-                    serde_json::from_value(previous_v8).unwrap();
-                assert!(previous_v8.validate(&context()).is_err());
-            }
-            let mut previous_identity = value.clone();
-            previous_identity["commandDigest"] = json!(match agent {
-                "cursor" =>
-                    "sha256:f4c7af914738149cf868d071e53ac4917658fb055224715a2c89d3f59b335503",
-                "copilot" =>
-                    "sha256:b11721382293b39c1d6dd363eae547b5eae0ccca2cd5dcafc9127cc060ee9526",
-                "pi" => "sha256:edf058835ee84de3869c4a8e8bdb71a934ffdb9f34daa37ae6faeb92371d1cdf",
-                _ => unreachable!(),
-            });
-            let previous_identity: AcpxProviderDescriptor =
-                serde_json::from_value(previous_identity).unwrap();
-            assert!(previous_identity.validate(&context()).is_err());
-            let mut previous_contract = value.clone();
-            previous_contract["commandDigest"] = json!(match agent {
-                "cursor" =>
-                    "sha256:377dcea64a727ce799cc112458d4b40ba4bc6574cd6c6f7233b6efd5917a6c4b",
-                "copilot" =>
-                    "sha256:ece77e40876631a69a828b91813722001d71b6fc81be47ecd4b3dced84ff9473",
-                "pi" => "sha256:843d30e419914529755c9827d9151a306da1b50b643be7eab1abe797641a37ce",
-                _ => unreachable!(),
-            });
-            let previous_contract: AcpxProviderDescriptor =
-                serde_json::from_value(previous_contract).unwrap();
-            assert!(previous_contract.validate(&context()).is_err());
-            if agent == "cursor" {
-                assert_eq!(valid.public_descriptor(None)["mode"], json!("agent"));
-                let mut previous_v4 = value.clone();
-                previous_v4["commandDigest"] = json!(
-                    "sha256:b1440d559ebc4eef5c7a582f1c81fc153270cfbafa1731a8ee76d83713bdf61b"
-                );
-                let previous_v4: AcpxProviderDescriptor =
-                    serde_json::from_value(previous_v4).unwrap();
-                assert!(previous_v4.validate(&context()).is_err());
-                let mut missing = value.clone();
-                missing.as_object_mut().unwrap().remove("mode");
-                let missing: AcpxProviderDescriptor = serde_json::from_value(missing).unwrap();
-                missing.validate(&context()).unwrap();
-                let mut opaque = value.clone();
-                opaque["mode"] = json!("architect");
-                serde_json::from_value::<AcpxProviderDescriptor>(opaque)
-                    .unwrap()
-                    .validate(&context())
-                    .unwrap();
-                let mut invalid = value.clone();
-                invalid["mode"] = json!("");
-                assert!(serde_json::from_value::<AcpxProviderDescriptor>(invalid)
-                    .unwrap()
-                    .validate(&context())
-                    .is_err());
-            } else {
-                assert!(valid.public_descriptor(None).get("mode").is_none());
-                let mut wrong_agent = value.clone();
-                wrong_agent["mode"] = json!("plan");
-                let other_agent: AcpxProviderDescriptor =
-                    serde_json::from_value(wrong_agent).unwrap();
-                other_agent.validate(&context()).unwrap();
-            }
-
-            for field in ["model", "agentServerVersion", "commandDigest"] {
-                let mut wrong = value.clone();
-                wrong[field] = json!("");
-                let invalid: AcpxProviderDescriptor = serde_json::from_value(wrong).unwrap();
-                assert!(invalid.validate(&context()).is_err());
-            }
-            value["providerPolicy"] = json!({"readOnly":true, "protectedPaths":[]});
-            assert!(serde_json::from_value::<AcpxProviderDescriptor>(value).is_err());
+    fn retired_acpx_profiles_fail_before_provider_launch() {
+        for agent in ["antigravity", "copilot", "cursor", "grok", "kimi", "pi"] {
+            let provider: AcpxProviderDescriptor =
+                serde_json::from_value(descriptor(agent)).unwrap();
+            let error = provider.validate_session(&context()).unwrap_err();
+            assert_eq!(error.classification(), Some(PROVIDER_STATE_INCOMPATIBLE));
         }
-    }
-
-    #[test]
-    fn pi_profile_admits_its_release_attestation_and_rejects_the_prior_digest() {
-        let current_digest = crate::generated_acpx_profiles::acpx_release_profile("pi")
-            .unwrap()
-            .command_digest;
-        let mut value = descriptor("codex");
-        value["agent"] = json!("pi");
-        value["model"] = json!("openrouter/deepseek/deepseek-v4-flash-0731");
-        value["agentServerPackage"] = json!("pi-acp");
-        value["agentServerVersion"] = json!("0.0.33");
-        value["agentRuntimePackage"] = json!("@earendil-works/pi-coding-agent");
-        value["agentRuntimeVersion"] = json!("1.0.0");
-        value["piThinkingLevel"] = json!("low");
-        value["providerPolicy"] = json!({"readOnly": true});
-        value["commandDigest"] = json!(current_digest);
-        let current: AcpxProviderDescriptor = serde_json::from_value(value.clone()).unwrap();
-        current.validate(&context()).unwrap();
-
-        // The last source-bound Pi identity is refused.
-        value["commandDigest"] =
-            json!("sha256:faafb66c09c1efc7eb4eda6baaa5813c975e8a992f9cd333687695aa5522d7dc");
-        let rejected: AcpxProviderDescriptor = serde_json::from_value(value).unwrap();
-        assert!(rejected.validate(&context()).is_err());
     }
 
     #[test]

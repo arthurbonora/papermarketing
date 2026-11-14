@@ -4,7 +4,7 @@ import { assertAgentInteraction } from "./agent-interaction-policy.js";
 import { notifyAttentionRetentionWork } from "./retention-work-notifications.js";
 import { notifyIssueRecovery } from "./issue-recovery-notifications.js";
 import { createAgentLifecycle, requestAgentHireInTransaction, initializeImportedAgentConfigurationInTransaction, scheduleAgentLifecycle } from "./agent-lifecycle.js";
-import { agentAppearanceSchema, agentHarnessType, paperclipRunnerProfileForHarness, agentRunner, type AgentRunnerChoice } from "@paperclipai/shared";
+import { agentAppearanceSchema, agentHarnessType, isRemovedAgentHarness, paperclipRunnerProfileForHarness, agentRunner, type AgentRunnerChoice } from "@paperclipai/shared";
 import { resolveNewAgentRunnerForCompany } from "./agent-runner-selection.js";
 import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
@@ -3621,6 +3621,9 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const adapterType = typeof type === "string" ? type.trim() : "";
     if (!adapterType) {
       throw unprocessable("Adapter type is required");
+    }
+    if (isRemovedAgentHarness(adapterType)) {
+      throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
     }
     if (!findServerAdapter(adapterType)) {
       throw unprocessable(`Unknown adapter type: ${adapterType}`);

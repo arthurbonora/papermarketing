@@ -2142,7 +2142,9 @@ export function heartbeatService(
         return;
       }
       let agent = loadedAgent;
-      if (isRemovedAgentHarness(agent.adapterType, parseObject(agent.adapterConfig))) {
+      const savedProvider = parseObject(parseObject(parseObject(run.runnerProfileJson).nativeExecutionInput).provider);
+      if (isRemovedAgentHarness(agent.adapterType, parseObject(agent.adapterConfig))
+        || isRemovedAgentHarness("paperclip_runner", { provider: savedProvider.kind, acpxAgent: savedProvider.agent })) {
         throw unprocessable("This agent harness has been removed. Select a supported harness before retrying.", { code: "agent_harness_removed" });
       }
 

@@ -8,7 +8,7 @@ import {
   type ChildProcess,
   type SpawnOptionsWithoutStdio,
 } from "node:child_process";
-import { closeSync, constants, existsSync, fstatSync, openSync, readFileSync, realpathSync } from "node:fs";
+import { closeSync, constants, fstatSync, openSync, readFileSync, realpathSync } from "node:fs";
 import {
   lstat,
   open,
@@ -717,7 +717,7 @@ export async function verifyQualifiedAcpxInstallation(
       throw new Error("Qualified ACPX runtime package omitted its version");
     }
     runtimePackageJsonPath = await realpath(
-      resolvePackageJson(profile.agentRuntimePackage, serverPackageJsonPath!),
+      resolvePackageJson(profile.agentRuntimePackage, serverPackageJsonPath),
     );
     runtimePackage = await readPackageJson(
       runtimePackageJsonPath,
@@ -763,7 +763,7 @@ export async function verifyQualifiedAcpxInstallation(
         );
       }
       const dependencyPackageJsonPath = await realpath(
-        resolvePackageJson(expected.packageName, serverPackageJsonPath!),
+        resolvePackageJson(expected.packageName, serverPackageJsonPath),
       );
       const dependencyPackage = await readPackageJson(
         dependencyPackageJsonPath,

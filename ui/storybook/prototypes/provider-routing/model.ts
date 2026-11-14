@@ -3,13 +3,7 @@ export type Harness =
   | "codex"
   | "claude"
   | "opencode"
-  | "pi"
-  | "gemini"
-  | "kimi"
-  | "grok"
-  | "hermes"
-  | "cursor"
-  | "copilot";
+  | "hermes";
 export type Provider =
   | "openai"
   | "anthropic"
@@ -51,33 +45,7 @@ export const harnesses: {
     native: true,
     formats: ["responses", "messages", "chat"],
   },
-  {
-    value: "grok",
-    label: "Grok Build",
-    native: true,
-    formats: ["responses", "messages", "chat"],
-  },
-  {
-    value: "pi",
-    label: "Pi",
-    native: false,
-    formats: ["responses", "messages", "chat", "gemini"],
-  },
-  { value: "gemini", label: "Gemini CLI", native: false, formats: ["gemini"] },
-  {
-    value: "kimi",
-    label: "Kimi CLI",
-    native: false,
-    formats: ["responses", "messages", "chat", "gemini"],
-  },
   { value: "hermes", label: "Hermes local", native: false, formats: ["chat"] },
-  { value: "cursor", label: "Cursor", native: false, formats: [] },
-  {
-    value: "copilot",
-    label: "GitHub Copilot",
-    native: false,
-    formats: ["chat", "messages"],
-  },
 ];
 export const providers: {
   value: Provider;
@@ -212,10 +180,6 @@ export function compatibility(
   connection: Connection,
   harness: Harness,
 ): string | undefined {
-  if (harness === "cursor")
-    return "Custom provider configuration has not been verified for Cursor.";
-  if (harness === "copilot")
-    return "This runner profile is awaiting qualification.";
   if (
     connection.method === "Subscription" &&
     !(

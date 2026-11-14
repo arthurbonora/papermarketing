@@ -2304,6 +2304,9 @@ export function agentRoutes(
     adapterType: string | null | undefined,
     adapterConfig: Record<string, unknown>,
   ) {
+    if (adapterType && isRemovedAgentHarness(adapterType, adapterConfig)) {
+      throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+    }
     if (adapterType === "paperclip_runner") {
       await assertFreshPaperclipRunnerProvider(companyId, adapterType, adapterConfig);
       return;
@@ -5577,7 +5580,7 @@ export function agentRoutes(
       }
     }
     const nextAiBinding = aiRuntimeConnectionBindingSchema.safeParse(requestedRuntimeConfig ? requestedRuntimeConfig.aiConnection : existing.runtimeConfig.aiConnection).data;
-    if (nextAiBinding) {
+    if (nextAiBinding && (!isRemovedAgentHarness(requestedAdapterType, nextAiConfig) || requestedRuntimeConfig !== null)) {
       await assertCanConfigureAgentSetup(req, existing);
       const changed = !isDeepStrictEqual(nextAiBinding, existing.runtimeConfig.aiConnection);
       if (changed && req.actor.type === "agent") {

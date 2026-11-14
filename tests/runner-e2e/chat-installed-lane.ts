@@ -30,7 +30,7 @@ export async function runOwnedInstalledPreparation(name: string, args: string[],
 export const CHAT_INSTALL_CONFIG = "PAPERCLIP_CHAT_INSTALLED_SOURCE_CONFIG";
 export const CHAT_INSTALL_PLAN = "PAPERCLIP_CHAT_INSTALLED_PLAN";
 export const CHAT_INSTALL_RECEIPT = "PAPERCLIP_CHAT_OPERATOR_INSTALL_RECEIPT";
-export const installedChatScenarioIds = ["instance-operations.update-instance", "instance-operations.provision-runtime"] as const;
+export const installedChatScenarioIds = ["instance-operations.update-instance"] as const;
 interface PublishedPin { version: string; integrity: string }
 export interface ChatInstallConfiguration { schemaVersion: 1; disposable: true; source: PublishedPin; target?: PublishedPin; piCredentialEnv?: "OPENROUTER_API_KEY" }
 export interface PublishedArtifact { package: "paperclipai" | "@paperclipai/server"; version: string; integrity: string; archiveSha512: string; entrySha256: string }
@@ -81,7 +81,6 @@ export async function stagePublishedChatInstall(input: { execution: MatrixExecut
   const configRef = input.env[CHAT_INSTALL_CONFIG]; if (!configRef) throw new Error("Missing private installed source configuration with public npm integrity pins");
   const config = validateChatInstallConfiguration(privateJson(configRef));
   if (input.execution.task.id.endsWith("update-instance") && !config.target) throw new Error("Update requires a distinct exact published target pin");
-  if (input.execution.task.id.endsWith("provision-runtime") && !config.piCredentialEnv) throw new Error("Provision requires the declared selected OpenRouter credential name");
   const root = realpathSync(input.root), prefix = path.join(root, "published-prefix"), artifactsDir = path.join(root, "published-artifacts");
   await Promise.all([mkdir(prefix, { mode: 0o700 }), mkdir(artifactsDir, { mode: 0o700 })]);
   const env: NodeJS.ProcessEnv = { PATH: input.env.PATH, HOME: root, NPM_CONFIG_CACHE: path.join(root, ".npm"), NPM_CONFIG_USERCONFIG: "/dev/null", NPM_CONFIG_PREFIX: prefix, NO_COLOR: "1" };

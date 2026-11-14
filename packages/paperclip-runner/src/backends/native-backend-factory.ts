@@ -67,6 +67,7 @@ export function createNativeSessionBackend(
       dynamicTools: options.dynamicTools, dynamicToolHandler: options.dynamicToolHandler,
       completionFeedback: options.completionFeedback, onSpawn: options.onSpawn }));
   }
+  if (input.provider.kind === "acpx") assertAcpxProfileReleased(input.provider.agent);
   if (options.codexTransportFactory) {
     return createRunnerdNativeSessionBackend(input, {
       retainedSystemInstructions: options.retainedSystemInstructions,
@@ -99,7 +100,6 @@ export function createNativeSessionBackend(
     });
   }
   if (input.provider.kind === "acpx") {
-    assertAcpxProfileReleased(input.provider.agent);
     if (!options.acpxRuntimeDirectory?.trim()) {
       throw new Error("ACPX backend requires an instance runtime directory");
     }

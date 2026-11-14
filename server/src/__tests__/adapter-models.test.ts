@@ -177,21 +177,6 @@ describe("adapter model listing", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["gemini_local", ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash-preview"]],
-    ["grok_local", ["grok-build", "grok-4.7", "grok-4.6", "grok-4.5"]],
-    ["kimi_local", ["kimi-code/kimi-for-coding", "kimi-code/k3", "kimi-code/k3-256k"]],
-  ])("lists current %s models without a provider login", async (adapter, expectedIds) => {
-    const models = await listAdapterModels(adapter as string);
-    expect(models.map((model) => model.id)).toEqual(expect.arrayContaining(expectedIds as string[]));
-    expect(new Set(models.map((model) => model.id)).size).toBe(models.length);
-    if (adapter === "gemini_local") {
-      expect(models.some((model) => model.id.startsWith("gemini-2.0-"))).toBe(false);
-    }
-    if (adapter === "kimi_local") {
-      expect(models).toContainEqual({ id: "kimi-code/kimi-for-coding", label: "K2.8 Preview" });
-    }
-  });
 
 
   it("keeps general OpenAI API models out of the Codex catalog", async () => {

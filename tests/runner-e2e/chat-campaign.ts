@@ -24,7 +24,7 @@ const identityHash = (s: unknown): s is string => typeof s === "string" && /^[a-
 const identityRevision = (s: unknown): s is string => typeof s === "string" && /^[a-f0-9]{40}$/.test(s);
 const retainedIdentityPaths = (paths: string[]) => Array.isArray(paths) && paths.length > 0 && paths.every(p => typeof p === "string" && p.startsWith("tests/runner-e2e/results/") && !p.split("/").includes(".."));
 export function scenarioProductPolicy(id: string, baselineRevision: string) {
-  const lane: CampaignProductLane = ["instance-operations.update-instance", "instance-operations.provision-runtime"].includes(id)
+  const lane: CampaignProductLane = id === "instance-operations.update-instance"
     ? "published-global-npm" : id === "onboarding.new-instance" ? "empty-installed-boundary" : "source-build";
   return { lane, sourceBaselineRevision: baselineRevision };
 }

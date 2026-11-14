@@ -365,9 +365,6 @@ export class AcpxRuntimeHost {
     options.signal?.throwIfAborted();
     const profile = resolveQualifiedAcpxProfile(options.agent, options.model);
     assertAcpxExecutionAdmission(profile, options.candidateAdmission);
-    if (options.agent === "pi" && typeof options.providerPolicy?.readOnly !== "boolean") {
-      throw new Error("Pi admission requires an explicit task execution policy");
-    }
     const preconfigured = usesPreconfiguredHome(options.environment);
     const preparedHome = preparedHarnessHome(options.environment, options.agent);
     if (preconfigured && options.permissionMode !== "approve-all") {

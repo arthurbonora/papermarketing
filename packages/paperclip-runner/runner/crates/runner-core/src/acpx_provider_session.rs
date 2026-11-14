@@ -122,7 +122,9 @@ pub struct AcpxProviderSessionConfig {
 impl AcpxProviderSessionConfig {
     pub fn validate(&self) -> Result<(), LocalRunnerError> {
         if !matches!(self.agent.as_str(), "claude" | "codex") {
-            return Err(LocalRunnerError::invalid("ACPX agent is no longer supported"));
+            return Err(LocalRunnerError::invalid(
+                "ACPX agent is no longer supported",
+            ));
         }
         self.transport.validate()?;
         let profile = acpx_release_profile(&self.agent).ok_or_else(|| {

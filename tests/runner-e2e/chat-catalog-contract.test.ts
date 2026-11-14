@@ -27,7 +27,7 @@ describe("catalog oracle contract", () => {
   it("keeps every frozen scenario in the denominator independently of executable readiness", () => {
     expect(chatCatalogScenarios).toHaveLength(244);
     expect(new Set(chatCatalogScenarios.map(row => row.feature)).size).toBe(35);
-    expect(new Set(chatCatalogScenarios.flatMap(row => row.capabilities)).size).toBe(191);
+    expect(new Set(chatCatalogScenarios.flatMap(row => row.capabilities)).size).toBe(190);
     // agent-chat.chat-disabled retargeted to the Conference Room gate (Agent Chat is always on since #19360);
     // agents.restore-instructions retargeted to no saved history (instruction saves keep none since #14420).
     // access.manage-membership retargeted to read-and-route; activity.routine-audit builds real same-morning history.

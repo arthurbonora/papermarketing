@@ -529,14 +529,6 @@ export function agentEnvironmentTestService(db: Db, pluginWorkerManager?: Plugin
 
   async function testManagedEnvironment(adapterType: string, context: Parameters<ReturnType<typeof requireServerAdapter>["testEnvironment"]>[0], binding: AiConnectionBinding, managed: Awaited<ReturnType<typeof prepareManagedAiRuntime>>, agentId?: string) {
     const startedAt = new Date();
-    if (adapterType === "paperclip_runner" && binding.provider === "google" && context.config.provider === "acpx"
-      && context.config.acpxAgent === "antigravity" && managed.home) {
-      const selectedHome = join(managed.home, "provider");
-      if (context.managedAiCredentialHome && context.managedAiCredentialHome !== selectedHome) {
-        throw unprocessable("The Google runtime credential home does not match the selected managed account.");
-      }
-      context = { ...context, managedAiCredentialHome: selectedHome };
-    }
     const target = context.executionTarget;
     if (managed.credentialWriteback && target?.kind === "remote" && target.transport === "sandbox" && target.runnerTask && target.leaseId) {
       await registerPluginTaskCredentialHandoff(db, { companyId: context.companyId, leaseId: target.leaseId }, managed.sessionIdentity, managed.credentialWriteback);

@@ -1,5 +1,5 @@
 import type { Db } from "@paperclipai/db";
-import type { Agent, EnvironmentProbeResult } from "@paperclipai/shared";
+import { isRemovedAgentHarness, type Agent, type EnvironmentProbeResult } from "@paperclipai/shared";
 import { conflict, unprocessable } from "../errors.js";
 import { resolveAgentRunnerEnvironmentForCompany } from "./agent-runner-selection.js";
 import { probeEnvironment, readSandboxPlatformQualification } from "./environment-probe.js";
@@ -7,11 +7,14 @@ import type { PluginWorkerManager } from "./plugin-worker-manager.js";
 
 export async function qualifyAgentRunner(
   db: Db,
-  agent: Pick<Agent, "companyId" | "adapterType" | "defaultEnvironmentId">,
+  agent: Pick<Agent, "companyId" | "adapterType" | "defaultEnvironmentId"> & Partial<Pick<Agent, "adapterConfig">>,
   expectedEnvironmentId: string,
   pluginWorkerManager?: PluginWorkerManager,
 ): Promise<EnvironmentProbeResult> {
-  if (!["claude_local", "codex_local", "grok_local", "paperclip_runner"].includes(agent.adapterType)) {
+  if (isRemovedAgentHarness(agent.adapterType, agent.adapterConfig)) {
+    throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+  }
+  if (!["claude_local", "codex_local", "paperclip_runner"].includes(agent.adapterType)) {
     throw unprocessable("This agent does not support computer qualification.");
   }
   const { environment } = await resolveAgentRunnerEnvironmentForCompany(db, agent.companyId, agent.defaultEnvironmentId);

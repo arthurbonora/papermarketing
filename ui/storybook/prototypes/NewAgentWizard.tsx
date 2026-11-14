@@ -33,14 +33,13 @@ import { models as openCodeModels } from "@paperclipai/adapter-opencode-local";
 
 const modelLists = {
   claude_local: claudeModels, codex_local: codexModels, opencode_local: openCodeModels,
-  cursor_cloud: [], pi_local: [], hermes_local: [],
+  cursor_cloud: [], hermes_local: [],
 };
 
 // Review-only flow. All edits and the simulated hire live in React state;
 // importing this from Storybook never creates an agent or contacts a provider.
 export const NEW_AGENT_ADAPTERS = [
-  "claude_local", "codex_local", "cursor", "cursor_cloud", "gemini_local",
-  "grok_local", "kimi_local", "opencode_local", "pi_local", "hermes_local", "paperclip_runner",
+  "claude_local", "codex_local", "cursor_cloud", "opencode_local", "hermes_local", "paperclip_runner",
 ] as const;
 export type NewAgentAdapter = typeof NEW_AGENT_ADAPTERS[number];
 export type NewAgentScreen = "name" | "adapter" | "connect" | "runtime" | "saved";
@@ -329,7 +328,7 @@ export function NewAgentWizard({ initialScreen = "name", initialAdapter = null, 
               <TextField label="Branch" value={draft.branch} onChange={branch => setDraft({ branch })} placeholder="Repository default" />
             </div>}
             <div className="grid gap-5 sm:grid-cols-2">
-              {selected !== "cursor_cloud" && !(selected === "kimi_local" && draft.apiKey) && <div className="flex flex-col gap-2">
+              {selected !== "cursor_cloud" && <div className="flex flex-col gap-2">
                 <ModelDropdown models={models} value={draft.model} onChange={model => setDraft({ model })}
                   open={modelOpen} onOpenChange={setModelOpen} allowDefault required={false} groupByProvider={usesOpenCode}
                   creatable defaultLabel="Default" />
