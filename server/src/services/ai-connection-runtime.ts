@@ -3,7 +3,7 @@ import type { ManagedAiCredentialWritebackBinding } from "./managed-ai-credentia
 import { OPENROUTER_ATTRIBUTION_HEADERS, openRouterClaudeHeaders } from "@paperclipai/shared/openrouter-attribution";
 import { createHash } from "node:crypto";
 import { HttpError, unprocessable } from "../errors.js";
-import { mkdtemp, mkdir, writeFile, readFile, realpath, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { and, eq } from "drizzle-orm";
@@ -22,11 +22,9 @@ import { decideCodexAuthMerge, withAccountHomeSecretMutationLock } from "@paperc
 import { WORKSPACE_RESTORE_LOCK_TIMEOUT_CODE } from "@paperclipai/adapter-utils/workspace-restore-merge";
 import type { AdapterExecutionTarget } from "@paperclipai/adapter-utils/execution-target";
 import { runAdapterExecutionTargetProcess } from "@paperclipai/adapter-utils/execution-target";
-import { decideGrokAuthMerge } from "@paperclipai/adapter-grok-local/server";
-import { NativeEnvironmentProbeCleanupError, sanitizeAntigravityCredential } from "../vendor/paperclip-runner/index.js";
-import { readLocalAiCredentialFile } from "./local-ai-credential-file.js";
-import { prepareAntigravityCredentialWriteback } from "./native-runtime/antigravity-runner-credentials.js";
-import { quotaCredentialHash, quotaCredentialRecovery, RetiredCredentialRecoveryError } from "./quota-credential-recovery.js";
+import { decideGrokAuthMerge } from "./grok-auth-merge-decision.js";
+import { NativeEnvironmentProbeCleanupError } from "../vendor/paperclip-runner/index.js";
+import { RetiredCredentialRecoveryError } from "./quota-credential-recovery.js";
 import { bindRetainedAiCredentialHome, reconcileRetainedAiCleanup, retainAiCredentialCleanup } from "./retained-ai-credential-cleanup.js";
 
 export function isAiConnectionBusy(error: unknown): error is HttpError {
@@ -333,15 +331,13 @@ export async function prepareManagedAiRuntime(
       }
       throw unprocessable("The AI credential changed during preparation; retry this execution");
     })();
-    const antigravitySubscription = harness === "antigravity_runtime" && selection.attribution.method === "subscription";
-    const originalCredential = antigravitySubscription ? sanitizeAntigravityCredential(value) : value;
+    const originalCredential = value;
     home = await mkdtemp(
       path.join(
         os.tmpdir(),
         `paperclip-ai-${input.companyId}-${selection.grant.id}-`,
       ),
     );
-    if (harness === "antigravity_runtime") home = await realpath(home);
     const providerHome = path.join(home, "provider");
     await mkdir(providerHome, { mode: 0o700 });
     if (retainedCleanupScope) releaseCredentialHome = bindRetainedAiCredentialHome(providerHome, retainedCleanupScope);
@@ -355,16 +351,14 @@ export async function prepareManagedAiRuntime(
       AI_CONNECTION_CAPABILITIES[input.binding.provider].methods[
         selection.attribution.method
       ]!;
-    const authFile = antigravitySubscription
-      ? path.join(providerHome, "antigravity-acp", "acp_token.json")
-      : path.join(providerHome, "auth.json");
+    const authFile = path.join(providerHome, "auth.json");
     if (harness === "codex_local")
       await writeFile(
         path.join(providerHome, "config.toml"),
         'cli_auth_credentials_store = "file"\n',
         { mode: 0o600 },
       );
-    if (!routing && subscriptionFile && !antigravitySubscription) await writeFile(authFile, value, { mode: 0o600 });
+    if (!routing && subscriptionFile) await writeFile(authFile, value, { mode: 0o600 });
     else if (!routing && !subscriptionFile) env[capability.envKey] = value;
     if (
       !routing && input.binding.provider === "openai" && harness === "codex_local" &&
@@ -380,27 +374,6 @@ export async function prepareManagedAiRuntime(
         provider: { openrouter: { options: { apiKey: value, headers: OPENROUTER_ATTRIBUTION_HEADERS } } },
       });
       env.OPENCODE_DISABLE_PROJECT_CONFIG = "true";
-    }
-    if (!routing && input.binding.provider === "google" && harness === "gemini_local") {
-      // Gemini headless CLI requires an explicit auth choice even with an API key.
-      // Seed only the disposable connection home, never the operator's settings.
-      const geminiHome = path.join(home, ".gemini");
-      await mkdir(geminiHome, { mode: 0o700 });
-      await writeFile(path.join(geminiHome, "settings.json"), JSON.stringify({
-        selectedAuthType: "gemini-api-key",
-        security: { auth: { selectedType: "gemini-api-key" } },
-      }), { mode: 0o600 });
-    }
-    if (harness === "antigravity_runtime") {
-      // Native Antigravity reads this explicit auth selection beneath GEMINI_HOME.
-      // The selected AI connection owns this disposable home, not a browser login.
-      env.GEMINI_HOME = providerHome;
-      const antigravityHome = path.join(providerHome, "antigravity-acp");
-      await mkdir(antigravityHome, { mode: 0o700 });
-      await writeFile(path.join(antigravityHome, "settings.json"), JSON.stringify({
-        auth: { type: antigravitySubscription ? "oauth-personal" : "gemini-api-key" },
-      }), { mode: 0o600 });
-      if (antigravitySubscription) await writeFile(authFile, originalCredential, { mode: 0o600 });
     }
     const projected = routing ? managedProviderRouting(routing, harness, value, typeof input.config.model === "string" ? input.config.model : "") : undefined;
     if (projected) {
@@ -434,9 +407,7 @@ export async function prepareManagedAiRuntime(
     const identity = `${selection.grant.id}:${input.responsibleUserId ?? "shared"}:${generation}`;
     const sessionIdentity = `${selection.grant.id}:${input.responsibleUserId ?? "shared"}:${noAuth ? "no-auth" : `${credentialRef!.secretId}:${freshness!.epoch}`}`;
     let homeRemoved = false;
-    let ownsGoogleRecovery = false;
     let removalOnly = false;
-    let deferredWriteback: { cause: unknown } | undefined;
     const removeHome = async () => {
       if (home) await rm(home, { recursive: true, force: true });
       homeRemoved = true;
@@ -450,47 +421,9 @@ export async function prepareManagedAiRuntime(
           await removeHome();
           return;
         }
-        let googleRecovery: ReturnType<typeof quotaCredentialRecovery> | undefined;
-        let durableGoogleRefresh = false;
         try {
           if (subscriptionFile) {
-            const incoming = antigravitySubscription
-              ? sanitizeAntigravityCredential(await readLocalAiCredentialFile(authFile)) : undefined;
-            if (antigravitySubscription && incoming !== originalCredential) {
-              const accountEmail = selection.grant.providerTenant?.name;
-              if (!credentialRef || !freshness || !accountEmail) throw new Error("The selected Google credential recovery authority is unavailable");
-              googleRecovery = quotaCredentialRecovery(input.companyId, selection.grant.id);
-              const prior = await googleRecovery.read();
-              if (prior && prior.value !== incoming && !ownsGoogleRecovery) {
-                // A previous retired owner keeps its first recoverable refresh.
-                // Settle it before this owner can stage another generation.
-                await aiConnectionService(db).runtimeCredential(selection);
-              }
-              // Physical retirement is the caller's cleanup precondition. Save
-              // before network verification or a database write can fail; only
-              // this exact grant generation may later consume the encrypted copy.
-              await googleRecovery.write({ companyId: input.companyId, grantId: selection.grant.id,
-                connectionId: selection.connection.id, secretId: credentialRef.secretId,
-                baseHash: quotaCredentialHash(value), value: incoming!, provider: "google",
-                google: { sessionEpoch: freshness.epoch, baseVersion: freshness.version,
-                  versionSelector: credentialRef.versionSelector ?? "latest", accountEmail, verified: false } });
-              ownsGoogleRecovery = true;
-            }
-            // Verification itself can consume a rotating refresh. Until its
-            // newest result is durably journaled, the private home owns it.
-            durableGoogleRefresh = false;
-            const refreshed = antigravitySubscription
-              ? await prepareAntigravityCredentialWriteback({ originalCredential,
-                  refreshedCredential: incoming!, managedHome: providerHome,
-                  accountEmail: selection.grant.providerTenant?.name,
-                })
-              : await readFile(authFile, "utf8");
-            if (googleRecovery) {
-              const pending = await googleRecovery.read();
-              if (!pending?.google) throw new Error("The Google credential recovery journal is unavailable");
-              await googleRecovery.write({ ...pending, value: refreshed, google: { ...pending.google, verified: true } });
-              durableGoogleRefresh = true;
-            }
+            const refreshed = await readFile(authFile, "utf8");
             if (refreshed !== originalCredential) {
               // A quota exchange can hold this company lock for 60 seconds.
               // Retry its 30-second acquisition timeout without discarding the
@@ -514,15 +447,12 @@ export async function prepareManagedAiRuntime(
                   (r) => r.configPath === "ai.credential",
                 );
                 if (!ref) return;
-                if (antigravitySubscription && (!credentialRef || ref.secretId !== credentialRef.secretId
-                  || ref.versionSelector !== credentialRef.versionSelector
-                  || grant.providerTenant?.name?.toLowerCase() !== selection.grant.providerTenant?.name?.toLowerCase())) return;
                 // Lock the referenced secret row for the rest of this
                 // transaction. The grant-row lock above does not cover it,
                 // so an authorized rotation of this secret could otherwise
                 // land between the read and the write below and be
                 // overwritten by this stale write-back.
-                const [currentSecret] = await tx
+                await tx
                   .select({ id: companySecrets.id, epoch: companySecrets.aiSessionEpoch, version: companySecrets.latestVersion })
                   .from(companySecrets)
                   .where(
@@ -532,20 +462,9 @@ export async function prepareManagedAiRuntime(
                     ),
                   )
                   .for("update");
-                if (antigravitySubscription && (!freshness || !currentSecret || currentSecret.epoch !== freshness.epoch
-                  || currentSecret.version !== freshness.version)) return;
                 const current = await aiConnectionService(
                   tx as unknown as Db,
                 ).credential({ ...selection, grant });
-                if (antigravitySubscription) {
-                  // Google refresh tokens have no provider freshness counter. Only
-                  // the exact selected generation may replace itself; a reconnect,
-                  // rotation, grant remap or concurrent refresh wins over this run.
-                  if (sanitizeAntigravityCredential(current) !== originalCredential) return;
-                  await secretService(tx).rotate(ref.secretId,
-                    { value: refreshed, preserveAiSessionEpoch: true }, { userId: grant.subjectUserId });
-                  return;
-                }
                 const destination = path.join(
                   providerHome,
                   "current-auth.json",
@@ -577,27 +496,13 @@ export async function prepareManagedAiRuntime(
               }
             }
           }
-          await googleRecovery?.clear();
-          // A committed save, intentional generation discard, or encrypted
-          // recovery handoff must own the refresh before deleting its home.
           removalOnly = true;
-          await removeHome();
-        } catch (error) {
-          if (!durableGoogleRefresh && !removalOnly) throw error;
-          // Once native retirement and encrypted fsync transfer ownership, the
-          // original controller/home is unnecessary for next-use recovery.
-          if (!removalOnly) {
-            removalOnly = true;
-            deferredWriteback = { cause: error };
-          }
-          await removeHome();
-          if (deferredWriteback) throw new RetiredCredentialRecoveryError(deferredWriteback.cause);
+        } finally {
+          if (removalOnly) await removeHome();
         }
       };
-      // Journal writes and generation checks share the same reconnect fence.
       try {
-        return await (antigravitySubscription
-          ? withAccountHomeSecretMutationLock(undefined, input.companyId, cleanup) : cleanup());
+        return await cleanup();
       } catch (error) {
         if (retainedCleanupScope && !homeRemoved) retainAiCredentialCleanup({ scope: retainedCleanupScope, home: providerHome, cleanup: cleanupRuntime });
         throw error;

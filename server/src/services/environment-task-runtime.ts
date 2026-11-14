@@ -115,9 +115,9 @@ export async function executeEnvironmentTask(db: Db, workers: PluginWorkerManage
     metadata.runnerTaskDispatched === true && metadata.runnerTaskExecutionStopped !== true &&
     metadata.runnerTaskRetiring !== true && (!lease.expiresAt || lease.expiresAt.getTime() > Date.now()) &&
     (metadata.runnerTaskLifecyclePolicy as { mode?: unknown } | undefined)?.mode === "warm";
-  if ((operation.kind === "read_file" || operation.kind === "describe" || operation.kind === "prepare" || operation.kind === "submit" || (operation.kind === "connection" && !retainedConnection) || (operation.kind === "read_state" && metadata.runnerTaskExecutionStopped !== true && !retainedCheckpointRead) || operation.kind === "archive_state" || operation.kind === "check_project_auth" || operation.kind === "copilot_metadata") &&
+  if ((operation.kind === "read_file" || operation.kind === "describe" || operation.kind === "prepare" || operation.kind === "submit" || (operation.kind === "connection" && !retainedConnection) || (operation.kind === "read_state" && metadata.runnerTaskExecutionStopped !== true && !retainedCheckpointRead) || operation.kind === "archive_state" || operation.kind === "check_project_auth") &&
       (metadata.runnerTaskRetiring === true || !environment || (!activeProbe && run?.status !== "running") || lease.status !== "active" || (lease.expiresAt && lease.expiresAt.getTime() <= Date.now()))) throw new Error("Plugin-provided Runner execution lease is not active");
-  if (operation.kind === "copilot_metadata" && !activeProbe) throw new Error("Copilot metadata requires a private setup lease");
+  if (operation.kind === "copilot_metadata") throw new Error("agent_harness_removed");
   const sourceReference = metadata.runnerTaskSourceRecovery as { identity?: { runId?: unknown } } | undefined;
   const sourceAttachment = operation.kind === "prepare" && prior && sourceReference?.identity?.runId === prior.runId
     ? await assertPluginTaskSourceAttachment(db, { companyId: input.companyId, leaseId: lease.id,
@@ -255,7 +255,7 @@ export async function executeEnvironmentTask(db: Db, workers: PluginWorkerManage
     operation.launch.maxRuntimeMs = Math.min(remainingMs, ...requestedLimits);
     delete operation.launch.maxLifetimeMs;
   }
-  if (operation.kind === "submit" || operation.kind === "copilot_metadata") {
+  if (operation.kind === "submit") {
     // No ticket, headers, environment values, or launch paths belong in metadata.
     const marked = await db.update(environmentLeases).set({
       metadata: sql`(coalesce(${environmentLeases.metadata}, '{}'::jsonb) - 'runnerTaskAdmissionRejection') || ${JSON.stringify({ runnerTaskLease: true, runnerTaskDispatched: true, runnerTaskExecutionStopped: false, runnerTaskSessionRetained: false, ...(operation.kind === "submit" ? { runnerTaskIdentity: operation.runner, runnerTaskResumeFrom: operation.resumeFrom ?? null } : {}) })}::jsonb`,
@@ -405,8 +405,7 @@ export async function executeEnvironmentTask(db: Db, workers: PluginWorkerManage
       executionContextSupported: 1 as const,
       ...(executionContext ? { executionContext } : {}),
     };
-    const timeout = operation.kind === "copilot_metadata" ? Math.max(1, Math.min(40_000, Number(probe?.expiresAtMs) - Date.now()))
-      : executionContext ? Math.max(1, context!.deadlineAtMs - Date.now()) : 15_000;
+    const timeout = executionContext ? Math.max(1, context!.deadlineAtMs - Date.now()) : 15_000;
     const result = await callWorker("environmentTask", params, timeout);
     if (executionContext) context!.assertOpen();
     const parsed = parseEnvironmentTaskResult(operation, taskId, result);
@@ -465,7 +464,7 @@ export async function executeEnvironmentTask(db: Db, workers: PluginWorkerManage
         if (saved.length !== 1) throw new Error("Plugin Runner project validation lease expired");
       }
     }
-    if ((parsed.kind === "status" || parsed.kind === "copilot_metadata") && parsed.executionStopped === true) {
+    if (parsed.kind === "status" && parsed.executionStopped === true) {
       await db.update(environmentLeases).set({
         metadata: sql`coalesce(${environmentLeases.metadata}, '{}'::jsonb) || ${JSON.stringify({ runnerTaskExecutionStopped: true,
           runnerTaskSessionRetained: parsed.kind === "status" && parsed.sessionStateAvailable === true,

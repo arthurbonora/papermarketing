@@ -20,20 +20,15 @@ describe("composer run settings", () => {
     expect(composerDefaultModel({ ...agent("codex_local"), adapterConfig: { model: " private-codex " } })).toBe("private-codex");
     expect(composerDefaultModel(agent("codex_local"))).toBe("");
     expect(composerDefaultModel(agent("paperclip_runner", "codex"))).toBe("gpt-6.1-sol");
-    expect(composerDefaultModel(agent("grok_local"))).toBe("grok-build");
     expect(composerDefaultModel(undefined)).toBe("");
-  });
-  it("offers native Grok effort and keeps its default model", () => {
-    const native = { ...agent("paperclip_runner", "acpx"), adapterConfig: { provider: "acpx", acpxAgent: "grok", reasoningEffort: "high" } };
-    expect(composerDefaultModel(native)).toBe("grok-4.7");
-    expect(composerEfforts(native, "grok-4.7", ["grok-4.7"])).toEqual(["low", "medium", "high", "xhigh"]);
-    expect(readComposerRunSettings({ adapterConfig: native.adapterConfig }, native.adapterType)).toMatchObject({ effort: "high" });
   });
   it("preserves the explicit native Kimi model without inventing a default or effort control", () => {
     const native = { ...agent("paperclip_runner", "acpx"), adapterConfig: { provider: "acpx", acpxAgent: "kimi" } };
     expect(composerDefaultModel(native)).toBe("");
     const configured = { ...native, adapterConfig: { ...native.adapterConfig, model: "exact-kimi-model" } };
     expect(composerDefaultModel(configured)).toBe("exact-kimi-model");
+    expect(supportsComposerModel(configured)).toBe(false);
+    expect(supportsComposerModel(agent("cursor_cloud"))).toBe(true);
     expect(composerEfforts(configured, "exact-kimi-model", ["exact-kimi-model"])).toEqual([]);
   });
   it("shows only effort levels known for the selected harness and model", () => {
@@ -44,13 +39,6 @@ describe("composer run settings", () => {
     expect(composerEfforts(agent("opencode_local"), "openrouter/x/y", ["openrouter/x/y"])).toEqual([]);
     expect(composerEfforts(agent("claude_local"), "claude-sonnet-5", ["claude-sonnet-5"])).toEqual(["low", "medium", "high", "xhigh", "max"]);
     expect(composerEfforts(agent("claude_local"), "claude-haiku-4-5", ["claude-haiku-4-5"])).toEqual([]);
-    expect(composerEfforts(agent("grok_local"), "grok-4.7", ["grok-4.7"])).toEqual(["low", "medium", "high", "xhigh"]);
-    expect(composerEfforts(agent("grok_local"), "grok-4.7", [])).toEqual([]);
-    expect(composerEfforts(agent("grok_local"), "", ["grok-build"])).toEqual(["low", "medium", "high"]);
-    expect(composerEfforts(agent("kimi_local"), "kimi-code/k3", ["kimi-code/k3"])).toEqual([]);
-    expect(composerEfforts({ ...agent("kimi_local"), adapterConfig: { engine: "cli" } }, "kimi-code/k3", ["kimi-code/k3"])).toEqual(["low", "high", "max"]);
-    expect(composerEfforts({ ...agent("kimi_local"), adapterConfig: { engine: " CLI " } }, "", ["kimi-code/kimi-for-coding"])).toEqual(["low", "high", "max"]);
-    expect(composerEfforts(agent("kimi_local"), "kimi-code/kimi-for-coding-highspeed", ["kimi-code/kimi-for-coding-highspeed"])).toEqual([]);
     expect(composerFastAvailable(agent("codex_local"), "gpt-6-astra")).toBe(true);
     expect(composerFastAvailable(agent("codex_local"), "custom-private-model")).toBe(false);
     expect(supportsComposerModel(agent("process"))).toBe(false);

@@ -129,7 +129,7 @@ async function fill(label: string, value: string) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
-async function render(adapter = "pi_local", runnerProvider = "codex", runnerChoice: "auto" | "legacy" | "paperclip" = adapter === "paperclip_runner" ? "paperclip" : "auto") {
+async function render(adapter = "opencode_local", runnerProvider = "codex", runnerChoice: "auto" | "legacy" | "paperclip" = adapter === "paperclip_runner" ? "paperclip" : "auto") {
   // Runtime tests start after the separately tested type/profile dialog.
   // This is fixture setup, not evidence that the page creates the record.
   const existing = await api.list("company-1");
@@ -189,8 +189,7 @@ beforeEach(() => {
     "claude_local",
     "codex_local",
     "opencode_local",
-    "pi_local",
-    "paperclip_runner", "cursor_cloud", "cursor", "gemini_local", "kimi_local", "grok_local", "hermes_local", "hermes_gateway",
+    "paperclip_runner", "cursor_cloud", "hermes_local", "hermes_gateway",
   ].map((type) => ({ type, loaded: true, disabled: false }));
   api.adapterModels.mockResolvedValue([]);
   setupRecords = new Map();

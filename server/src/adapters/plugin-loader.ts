@@ -1,3 +1,4 @@
+import { isRemovedAgentHarness } from "@paperclipai/shared";
 /**
  * External adapter plugin loader.
  *
@@ -165,6 +166,10 @@ export function validateAdapterModule(mod: unknown, packageName: string): Server
     throw new Error(
       `createServerAdapter() from "${packageName}" returned an invalid module (missing "type").`,
     );
+  }
+
+  if (isRemovedAgentHarness(adapterModule.type)) {
+    throw new Error("Agent harness has been removed: " + adapterModule.type);
   }
 
   // Fail closed on a malformed login capability. The validator throws a clear

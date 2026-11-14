@@ -1,9 +1,9 @@
 import { assertProviderApiPlacementPolicy, managedCursorApiDefaultEnabled, resolveProviderApiPlacement } from "./native-runtime/provider-api-placement.js";
 import type { Db } from "@paperclipai/db";
-import { agentHarnessType, paperclipRunnerProfileForHarness, isEnvironmentDriverSupportedForAdapter, paperclipRunnerSupportsPlatform, type AgentRunnerChoice, type AgentRunnerAvailability } from "@paperclipai/shared";
+import { agentHarnessType, isRemovedAgentHarness, paperclipRunnerProfileForHarness, isEnvironmentDriverSupportedForAdapter, paperclipRunnerSupportsPlatform, type AgentRunnerChoice, type AgentRunnerAvailability } from "@paperclipai/shared";
 import { normalizeLegacyRunnerProvider, PAPERCLIP_RUNNER_DEFAULT_MODELS } from "@paperclipai/adapter-utils";
 import { resolveClaudeModel } from "@paperclipai/adapter-claude-local";
-import { DEFAULT_GROK_LOCAL_MODEL } from "@paperclipai/adapter-grok-local";
+
 import { findActiveServerAdapter, hasActiveAdapterOverride, waitForExternalAdapters } from "../adapters/registry.js";
 import { getDisabledAdapterTypes } from "./adapter-plugin-store.js";
 import { adapterSettingsService, effectiveDisabledAdapterTypes } from "./adapter-settings.js";
@@ -55,6 +55,7 @@ function runnerAdaptersAvailable(harness: string, driver: string, disabledTypes:
 }
 
 export function agentRunnerAvailability(harness: string, target: RunnerTarget = localAgentRunnerTarget(), disabledTypes: string[] = localDisabledTypes()): AgentRunnerAvailability {
+  if (isRemovedAgentHarness(harness)) return { supportedRunners: [], defaultRunner: "legacy" };
   if (harness === "cursor_cloud") {
     if (target.executionMode === "kubernetes") return { supportedRunners: [], defaultRunner: "legacy" };
     const controller = localAgentRunnerTarget();
@@ -73,7 +74,7 @@ export function agentRunnerAvailability(harness: string, target: RunnerTarget = 
   const supported = runnerAdaptersAvailable(harness, target.driver, disabledTypes)
     && (target.driver !== "sandbox" || Boolean(target.platform && target.architecture
       && (target.platform !== "linux" || (target.libc === "glibc" && target.glibcVersion))))
-    && (["claude_local", "grok_local"].includes(harness)
+    && (harness === "claude_local"
       ? !!target.platform && paperclipRunnerSupportsPlatform(harness, target.platform, target.architecture ?? "", target.libc, target.glibcVersion)
       : !target.platform || paperclipRunnerSupportsPlatform(harness, target.platform, target.architecture ?? "", target.libc, target.glibcVersion));
   const automatic = supported && !(harness === "claude_local" && target.driver === "ssh" && target.platform === "darwin");
@@ -82,45 +83,6 @@ export function agentRunnerAvailability(harness: string, target: RunnerTarget = 
 
 function incompatible(fields: string[]): never {
   throw unprocessable(`PaperMarketing Runner cannot honor these settings: ${fields.join(", ")}. Remove them before retrying.`, { code: "agent_runner_config_incompatible", fields });
-}
-
-function resolveGrokRunnerConfig(config: Record<string, unknown>): Record<string, unknown> {
-  const unsupported = ["extraArgs", "args", "permissionMode", "maxTurns"]
-    .filter(key => config[key] !== undefined && config[key] !== "" && config[key] !== 0 && !(Array.isArray(config[key]) && config[key].length === 0));
-  if (config.command && config.command !== "grok") unsupported.push("command");
-  if (config.alwaysApprove !== undefined && config.alwaysApprove !== true) unsupported.push("alwaysApprove");
-  if (config.disableWebSearch !== undefined && typeof config.disableWebSearch !== "boolean") unsupported.push("disableWebSearch");
-  if (config.model !== undefined && typeof config.model !== "string") unsupported.push("model");
-  if (unsupported.length) incompatible(unsupported);
-  const translated = { ...config };
-  const effort = config.reasoningEffort ?? config.modelReasoningEffort ?? config.effort;
-  for (const key of ["command", "extraArgs", "args", "alwaysApprove", "maxTurns", "permissionMode", "reasoningEffort", "modelReasoningEffort", "effort"]) delete translated[key];
-  return { ...translated, provider: "acpx", acpxAgent: "grok", disableWebSearch: config.disableWebSearch ?? true,
-    model: typeof config.model === "string" && config.model.trim() && config.model.trim() !== DEFAULT_GROK_LOCAL_MODEL ? config.model.trim() : "grok-4.7",
-    ...(effort === undefined || effort === "" ? {} : { reasoningEffort: effort }),
-    acpxPermissionMode: config.acpxPermissionMode ?? "approve-all", lifecycleMode: config.lifecycleMode ?? "per_turn" };
-}
-
-function resolvePiRunnerConfig(config: Record<string, unknown>): Record<string, unknown> {
-  const unsupported = ["extraArgs", "args", "modelReasoningEffort", "reasoningEffort", "effort"]
-    .filter(key => config[key] !== undefined && config[key] !== "" && !(Array.isArray(config[key]) && config[key].length === 0));
-  if (config.command && config.command !== "pi") unsupported.push("command");
-  if (config.model !== undefined && typeof config.model !== "string") unsupported.push("model");
-  if (config.stdoutLogMode !== undefined && config.stdoutLogMode !== "compact") unsupported.push("stdoutLogMode");
-  const thinking = config.piThinkingLevel ?? config.thinking;
-  if (thinking !== undefined && !["off", "low", "high", "max"].includes(String(thinking))) unsupported.push("thinking");
-  if (config.piThinkingLevel !== undefined && config.thinking !== undefined && config.piThinkingLevel !== config.thinking) unsupported.push("thinking", "piThinkingLevel");
-  if (unsupported.length) incompatible(unsupported);
-  const translated = { ...config };
-  for (const key of ["command", "extraArgs", "args", "thinking", "stdoutLogMode"]) delete translated[key];
-  return {
-    ...translated,
-    provider: "acpx", acpxAgent: "pi",
-    model: typeof config.model === "string" ? config.model.trim() : "",
-    piThinkingLevel: thinking ?? "low",
-    acpxPermissionMode: config.acpxPermissionMode ?? "approve-all",
-    lifecycleMode: config.lifecycleMode ?? "per_turn",
-  };
 }
 
 function resolveOpenCodeRunnerConfig(config: Record<string, unknown>): Record<string, unknown> {
@@ -190,10 +152,13 @@ export function resolveNewAgentRunner(input: AgentRunnerSelection): { adapterTyp
 function resolveAgentRunner(input: AgentRunnerSelection): { adapterType: string; adapterConfig: Record<string, unknown> } {
   const adapterType = input.adapterType ?? "process";
   let config = { ...input.adapterConfig };
+  if (isRemovedAgentHarness(adapterType, config)) {
+    throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+  }
   const disabledTypes = input.disabledTypes ?? localDisabledTypes();
   const harness = agentHarnessType(adapterType, config);
   const native = adapterType === "paperclip_runner";
-  if (paperclipRunnerProfileForHarness(adapterType) && disabledTypes.includes(adapterType)) throw unprocessable(`${adapterType === "grok_local" ? "Grok Build" : adapterType === "pi_local" ? "Pi" : adapterType === "opencode_local" ? "OpenCode" : adapterType === "claude_local" ? "Claude" : "Codex"} is disabled on this instance. Enable its adapter or choose another harness.`, { code: "agent_runner_unavailable" });
+  if (paperclipRunnerProfileForHarness(adapterType) && disabledTypes.includes(adapterType)) throw unprocessable(`${adapterType === "opencode_local" ? "OpenCode" : adapterType === "claude_local" ? "Claude" : "Codex"} is disabled on this instance. Enable its adapter or choose another harness.`, { code: "agent_runner_unavailable" });
   if (native && (input.runner === undefined || input.runner === "paperclip" || (harness !== "codex_local" && input.runner !== "legacy"))) return { adapterType, adapterConfig: normalizeLegacyRunnerProvider(config) };
   const availability = agentRunnerAvailability(harness, input.target, disabledTypes);
   const choice = input.runner ?? "auto";
@@ -215,27 +180,6 @@ function resolveAgentRunner(input: AgentRunnerSelection): { adapterType: string;
       if (config.cursorCloudTimeoutMs !== undefined) incompatible(["cursorCloudTimeoutMs"]);
       for (const key of ["provider", "lifecycleMode", "idleTimeoutMs"]) delete config[key];
       return { adapterType: "cursor_cloud", adapterConfig: config };
-    }
-    if (harness === "grok_local") {
-      if (!native) return { adapterType, adapterConfig: config };
-      if (config.acpxPermissionMode !== undefined && config.acpxPermissionMode !== "approve-all") incompatible(["acpxPermissionMode"]);
-      if (config.lifecycleMode !== undefined && config.lifecycleMode !== "per_turn") incompatible(["lifecycleMode"]);
-      const effort = config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort;
-      for (const key of ["provider", "acpxAgent", "acpxPermissionMode", "lifecycleMode", "idleTimeoutMs", "modelReasoningEffort", "effort"]) delete config[key];
-      return { adapterType: "grok_local", adapterConfig: { ...config, disableWebSearch: config.disableWebSearch ?? false, ...(effort === undefined ? {} : { reasoningEffort: effort }) } };
-    }
-    if (harness === "pi_local") {
-      if (!native) return { adapterType, adapterConfig: config };
-      const thinking = config.thinking ?? config.piThinkingLevel ?? "low";
-      const unsupported = [
-        ...(config.acpxPermissionMode !== undefined && config.acpxPermissionMode !== "approve-all" ? ["acpxPermissionMode"] : []),
-        ...(config.lifecycleMode !== undefined && config.lifecycleMode !== "per_turn" ? ["lifecycleMode"] : []),
-        ...(config.acpxSessionMode !== undefined ? ["acpxSessionMode"] : []),
-        ...(!["off", "minimal", "low", "medium", "high", "xhigh"].includes(String(thinking)) ? [config.thinking !== undefined ? "thinking" : "piThinkingLevel"] : []),
-      ];
-      if (unsupported.length) throw unprocessable(`Legacy Pi cannot honor these settings: ${unsupported.join(", ")}. Keep PaperMarketing Runner or explicitly choose compatible settings.`, { code: "agent_runner_config_incompatible", fields: unsupported });
-      for (const key of ["provider", "acpxAgent", "acpxPermissionMode", "acpxSessionMode", "piThinkingLevel", "lifecycleMode", "idleTimeoutMs"]) delete config[key];
-      return { adapterType: "pi_local", adapterConfig: { ...config, thinking } };
     }
     if (harness === "opencode_local") {
       if (!native) return { adapterType, adapterConfig: config };
@@ -279,26 +223,6 @@ function resolveAgentRunner(input: AgentRunnerSelection): { adapterType: string;
     config = { ...config, provider: "cursor_cloud", lifecycleMode: "per_turn" };
     if (input.setupOnly && !config.model) return { adapterType: "paperclip_runner", adapterConfig: config };
     try { resolvePaperclipRunnerNativeProviderInput({ backend: "cursor_cloud_api", adapterConfig: config }); }
-    catch (error) {
-      if (error instanceof PaperclipRunnerProviderProfileError) throw unprocessable(error.message, { code: error.code });
-      throw error;
-    }
-    return { adapterType: "paperclip_runner", adapterConfig: config };
-  }
-  if (harness === "grok_local") {
-    config = resolveGrokRunnerConfig(config);
-    try { resolvePaperclipRunnerNativeProviderInput({ backend: "acpx_runtime", adapterConfig: config }); }
-    catch (error) {
-      if (error instanceof PaperclipRunnerProviderProfileError) throw unprocessable(error.message, { code: error.code });
-      throw error;
-    }
-    return { adapterType: "paperclip_runner", adapterConfig: config };
-  }
-  if (harness === "pi_local") {
-    config = resolvePiRunnerConfig(config);
-    if (input.setupOnly && !config.model) return { adapterType: "paperclip_runner", adapterConfig: config };
-    if (typeof config.model !== "string" || !/^[^/\s]+\/\S+$/.test(config.model)) throw unprocessable("Pi requires an explicit provider/model. Select a model before testing or hiring.", { code: "agent_runner_config_incompatible", fields: ["model"] });
-    try { resolvePaperclipRunnerNativeProviderInput({ backend: "acpx_runtime", adapterConfig: config }); }
     catch (error) {
       if (error instanceof PaperclipRunnerProviderProfileError) throw unprocessable(error.message, { code: error.code });
       throw error;
@@ -447,7 +371,7 @@ export async function resolveAgentRunnerTargetForCompany(db: Db, companyId: stri
   }
   const disabledForSsh = driver === "ssh" && environment
     ? disabledTypes ?? await adapterSettingsService(db).getDisabledTypes() : [];
-  if (driver === "ssh" && environment && ["codex_local", "claude_local", "opencode_local", "pi_local", "grok_local"].some(harness => runnerAdaptersAvailable(harness, driver, disabledForSsh))) {
+  if (driver === "ssh" && environment && ["codex_local", "claude_local", "opencode_local"].some(harness => runnerAdaptersAvailable(harness, driver, disabledForSsh))) {
     const parsed = await resolveEnvironmentDriverConfigForRuntime(db, companyId, environment);
     if (parsed.driver !== "ssh") throw unprocessable("The selected SSH environment is unavailable.");
     let output: string;

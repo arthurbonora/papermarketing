@@ -30,22 +30,16 @@ import { stepMotion } from "@/components/onboarding/onboarding-motion";
 import { models as claudeModels } from "@paperclipai/adapter-claude-local";
 import { models as codexModels } from "@paperclipai/adapter-codex-local";
 import { models as openCodeModels } from "@paperclipai/adapter-opencode-local";
-import { models as cursorModels } from "@paperclipai/adapter-cursor-local";
-import { models as geminiModels } from "@paperclipai/adapter-gemini-local";
-import { models as grokModels } from "@paperclipai/adapter-grok-local";
-import { models as kimiModels } from "@paperclipai/adapter-kimi-local";
 
 const modelLists = {
   claude_local: claudeModels, codex_local: codexModels, opencode_local: openCodeModels,
-  cursor: cursorModels, gemini_local: geminiModels, grok_local: grokModels, kimi_local: kimiModels,
-  cursor_cloud: [], pi_local: [], hermes_local: [],
+  cursor_cloud: [], hermes_local: [],
 };
 
 // Review-only flow. All edits and the simulated hire live in React state;
 // importing this from Storybook never creates an agent or contacts a provider.
 export const NEW_AGENT_ADAPTERS = [
-  "claude_local", "codex_local", "cursor", "cursor_cloud", "gemini_local",
-  "grok_local", "kimi_local", "opencode_local", "pi_local", "hermes_local", "paperclip_runner",
+  "claude_local", "codex_local", "cursor_cloud", "opencode_local", "hermes_local", "paperclip_runner",
 ] as const;
 export type NewAgentAdapter = typeof NEW_AGENT_ADAPTERS[number];
 export type NewAgentScreen = "name" | "adapter" | "connect" | "runtime" | "saved";
@@ -53,10 +47,10 @@ export type NewAgentScreen = "name" | "adapter" | "connect" | "runtime" | "saved
 export type RunnerProvider = "Codex (app server)" | "OpenCode" | "Claude (ACPX)";
 
 type RuntimeDraft = {
-  model: string; effort: string; repoUrl: string; branch: string; apiKey: string; kimiModel: string;
+  model: string; effort: string; repoUrl: string; branch: string; apiKey: string;
 };
 function defaultRuntime(): RuntimeDraft {
-  return { model: "", effort: "Auto", repoUrl: "", branch: "", apiKey: "", kimiModel: "" };
+  return { model: "", effort: "Auto", repoUrl: "", branch: "", apiKey: "" };
 }
 
 function AdapterMark({ adapter }: { adapter: NewAgentAdapter }) {
@@ -334,7 +328,7 @@ export function NewAgentWizard({ initialScreen = "name", initialAdapter = null, 
               <TextField label="Branch" value={draft.branch} onChange={branch => setDraft({ branch })} placeholder="Repository default" />
             </div>}
             <div className="grid gap-5 sm:grid-cols-2">
-              {selected !== "cursor_cloud" && !(selected === "kimi_local" && draft.apiKey) && <div className="flex flex-col gap-2">
+              {selected !== "cursor_cloud" && <div className="flex flex-col gap-2">
                 <ModelDropdown models={models} value={draft.model} onChange={model => setDraft({ model })}
                   open={modelOpen} onOpenChange={setModelOpen} allowDefault required={false} groupByProvider={usesOpenCode}
                   creatable defaultLabel="Default" />
@@ -347,7 +341,6 @@ export function NewAgentWizard({ initialScreen = "name", initialAdapter = null, 
               {selected === "cursor_cloud" && <a href="https://cursor.com/dashboard/api?section=user-keys#user-api-keys" target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">get api key</a>}
               <p className="text-xs text-muted-foreground">New keys are saved as organization secrets when you finish setup.</p>
             </>}
-            {selected === "kimi_local" && draft.apiKey && <TextField label="Kimi API model name" value={draft.kimiModel} onChange={kimiModel => setDraft({ kimiModel })} placeholder="kimi-for-coding" required />}
           </Section>
           {selected !== "cursor_cloud" && <Section title="Environment">
             <SelectField label="Environment" hideLabel value={environment} onChange={value => { setEnvironments(previous => ({ ...previous, [selected]: value })); resetTest(); }} options={["Organization default", "Paperclip Sandbox", "Local machine"]} />

@@ -197,12 +197,12 @@ export function localAiLoginService(db: Db) {
   }
 
   async function start(companyId: string, userId: string, intent: AiConnectionLoginIntent, restart = false, managementContext?: ConnectionManagementContext): Promise<LocalAiLoginAttempt> {
-    if (!["openai", "xai", "anthropic", "google"].includes(intent.provider))
+    if (!["openai", "anthropic"].includes(intent.provider))
       throw unprocessable("This provider does not use a separate local login home.");
     // Expiry is owned by the durable localLoginCleanup deadline. Starting a
     // sign-in must not wait for another user's or provider's native retirement.
     await managementContext?.reauthorize();
-    const adapterType = intent.provider === "google" ? "paperclip_runner" : intent.provider === "openai" ? "codex_local" : intent.provider === "anthropic" ? "claude_local" : "grok_local";
+    const adapterType = intent.provider === "openai" ? "codex_local" : "claude_local";
     let retiredAttemptId: string | undefined;
     if (restart) {
       const [existing] = await db.select().from(adapterAuthSessions).where(and(

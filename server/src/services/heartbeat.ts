@@ -307,7 +307,7 @@ import {
   prepareManagedAiRuntime,
   assertManagedAiProjectAuth,
 } from "./ai-connection-runtime.js";
-import { aiConnectionBindingSchema, aiRuntimeConnectionBindingSchema, type AiConnectionRouterSelection } from "@paperclipai/shared";
+import { isRemovedAgentHarness, aiConnectionBindingSchema, aiRuntimeConnectionBindingSchema, type AiConnectionRouterSelection } from "@paperclipai/shared";
 import { aiConnectionRouterService, AiConnectionPoolExhausted, applyAiConnectionRouterTaskSettings } from "./ai-connection-router.js";
 import {
   getExecutionBlocker,
@@ -377,7 +377,7 @@ import {
   projects,
   projectWorkspaces,
 } from "@paperclipai/db";
-import { conflict, HttpError, notFound } from "../errors.js";
+import { conflict, HttpError, notFound, unprocessable } from "../errors.js";
 
 import { logger } from "../middleware/logger.js";
 import { publishLiveEvent } from "./live-events.js";
@@ -2142,6 +2142,11 @@ export function heartbeatService(
         return;
       }
       let agent = loadedAgent;
+      const savedProvider = parseObject(parseObject(parseObject(run.runnerProfileJson).nativeExecutionInput).provider);
+      if (isRemovedAgentHarness(agent.adapterType, parseObject(agent.adapterConfig))
+        || isRemovedAgentHarness("paperclip_runner", { provider: savedProvider.kind, acpxAgent: savedProvider.agent })) {
+        throw unprocessable("This agent harness has been removed. Select a supported harness before retrying.", { code: "agent_harness_removed" });
+      }
 
       // The claimed adapter identity is immutable recovery evidence. Do not
       // execute a newly selected adapter under a previous adapter's claim.

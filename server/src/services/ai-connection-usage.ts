@@ -5,7 +5,7 @@ import {
   type AiConnectionUsageLimit,
   type AiConnectionUsageOverage,
 } from "@paperclipai/shared";
-import { parseGrokAuthPayload } from "@paperclipai/adapter-grok-local/server";
+import { parseGrokAuthPayload } from "./legacy-xai-subscription-auth.js";
 
 type Observation = Pick<AiConnectionUsage, "source" | "planType" | "limits" | "overage">;
 type ObjectValue = Record<string, unknown>;

@@ -175,19 +175,6 @@ it("uses the server's connection-manager permission for company-wide access", as
   expect(credentialProps).toMatchObject({ allAgents: true });
 });
 
-it("offers Pi account selection before choosing its required model", async () => {
-  mocks.list.mockResolvedValue({ currentUserId: "owner", connections: [], canManageConnections: true });
-  expect(aiProviderForAdapter("pi_local")).toBe("openrouter");
-  flushSync(() => root.render(<QueryClientProvider client={client}>
-    <AiConnectionField companyId="company" agentId="agent" agentName="Pi" adapterType="pi_local" model=""
-      value={{ provider: "openrouter", method: "api_key", mode: "responsible_user" }} onChange={onChange} />
-  </QueryClientProvider>));
-  await settle();
-  expect(document.querySelector('[role="combobox"][aria-label="Connection"]')).not.toBeNull();
-  expect(container.textContent).not.toContain("does not support the current harness");
-  await click("Connect another account");
-  expect(document.body.textContent).toContain("Advanced provider setup");
-});
 
 it.each(["openai", "anthropic", "google", "openrouter"] as const)("keeps a matching saved Pi %s API-key account selectable", async provider => {
   const saved = account({ provider, method: "api_key", name: "Pi provider account", accountLabel: "avery@example.test", status: "connected" });

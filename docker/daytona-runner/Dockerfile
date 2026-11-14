@@ -9,7 +9,7 @@ WORKDIR /workspace/packages/paperclip-runner/runner
 COPY packages/paperclip-runner/runner/Cargo.toml packages/paperclip-runner/runner/Cargo.lock ./
 COPY packages/paperclip-runner/runner/crates ./crates
 COPY packages/paperclip-runner/protocol ../protocol
-COPY packages/paperclip-runner/acpx-profiles.json packages/paperclip-runner/antigravity-distributions.json ../
+COPY packages/paperclip-runner/acpx-profiles.json ../
 # Retain only the finished executable in this layer. Keeping Cargo's target and
 # download trees makes BuildKit run out of disk while exporting the final image
 # and the default-branch build cache. A separate dependency-precompile layer
@@ -44,8 +44,6 @@ COPY cli/package.json ./cli/package.json
 # is no default, so a stale fixed value can never masquerade as lockfile drift.
 ARG PAPERCLIP_RUNNER_LOCK_SHA256
 ARG PAPERCLIP_RUNNER_SOURCE_REVISION
-# Optional qualification assets; this never promotes candidate profiles.
-ARG PAPERCLIP_RUNNER_CANDIDATE_PROVIDERS=
 # pnpm 9 subtracts PNPM_WORKERS from available CPUs; it is not a worker count.
 # Subtract all available CPUs to select its minimum (one tarball worker).
 # Install and build in one layer so the disposable workspace and package store
@@ -62,7 +60,6 @@ RUN if ! printf '%s' "${PAPERCLIP_RUNNER_LOCK_SHA256}" | grep -Eqx '[0-9a-f]{64}
     && pnpm --filter @paperclipai/paperclip-runner build:typescript \
     && PAPERCLIP_RUNNER_SOURCE_REVISION="${PAPERCLIP_RUNNER_SOURCE_REVISION}" \
       node packages/paperclip-runner/scripts/build-provider-pack.mjs /provider-pack \
-        "--candidate-providers=${PAPERCLIP_RUNNER_CANDIDATE_PROVIDERS}" \
     && chmod -R a+rX /provider-pack \
     && du -sk /workspace /provider-pack \
     && rm -rf /workspace /root/.local/share/pnpm/store
@@ -79,12 +76,7 @@ ENV PATH=${PAPERCLIP_RUNNER_PROVIDER_PACK_ROOT}/node_modules/.bin:/usr/local/sha
 
 # Share the pack's latest stable Codex, Claude and OpenCode with every adapter.
 # Never add a second CLI version to work around a runner compatibility pin.
-RUN npm uninstall -g @anthropic-ai/claude-code @openai/codex opencode-ai \
-    && npm install -g \
-      @xai-official/grok@1.0.70 \
-      @google/gemini-cli@0.65.0 \
-      @moonshot-ai/kimi-code@2.3.3 \
-    && npm cache clean --force
+RUN npm uninstall -g @anthropic-ai/claude-code @openai/codex opencode-ai
 
 # Hermes requires Python >=3.11,<3.14; the image's default Python is newer.
 # Use the distro interpreter in a dedicated environment without changing PATH
@@ -93,21 +85,6 @@ RUN npm uninstall -g @anthropic-ai/claude-code @openai/codex opencode-ai \
 RUN /usr/bin/python3 -m venv /opt/hermes \
     && /opt/hermes/bin/pip install --no-cache-dir hermes-agent==0.19.0 \
     && ln -sf /opt/hermes/bin/hermes /usr/local/bin/hermes
-
-ARG CURSOR_VERSION=2026.10.22-27dcf5f
-ARG CURSOR_SHA256_AMD64=85296944e4600a83c4b764f578d1502bf9c416db200d33a593e8f3ecabfdc294
-RUN set -eu; \
-    arch="$(dpkg --print-architecture)"; \
-    [ "$arch" = "amd64" ] || { echo "FATAL: cursor pin only covers amd64, not $arch" >&2; exit 1; }; \
-    dir="/opt/cursor/versions/${CURSOR_VERSION}"; mkdir -p "$dir"; \
-    curl -fsSL "https://downloads.cursor.com/lab/${CURSOR_VERSION}/linux/x64/agent-cli-package.tar.gz" -o /tmp/cursor.tgz; \
-    printf '%s  /tmp/cursor.tgz\n' "${CURSOR_SHA256_AMD64}" > /tmp/cursor.sha256; \
-    sha256sum -c /tmp/cursor.sha256; \
-    tar --strip-components=1 -xzf /tmp/cursor.tgz -C "$dir"; \
-    rm -f /tmp/cursor.tgz /tmp/cursor.sha256; \
-    ln -sf "$dir/cursor-agent" /usr/local/bin/cursor-agent; \
-    ln -sf /usr/local/bin/cursor-agent /usr/local/bin/agent; \
-    chmod -R a+rX /opt/cursor
 
 ARG GH_VERSION=2.103.3
 ARG GH_SHA256_AMD64=4c806978ffce1cec70853302a56d70ac6da4f19bae7adca4e1a8ab00633dd91d
@@ -120,10 +97,6 @@ RUN set -eu; \
     tar -xzf /tmp/gh.tgz -C /tmp; \
     install "/tmp/gh_${GH_VERSION}_linux_amd64/bin/gh" /usr/local/bin/gh; \
     rm -rf /tmp/gh.tgz /tmp/gh.sha256 "/tmp/gh_${GH_VERSION}_linux_amd64"
-
-COPY packages/paperclip-runner/scripts/provision-grok.mjs /tmp/grok-provision/scripts/provision-grok.mjs
-COPY packages/paperclip-runner/src/providers/grok/platforms.json /tmp/grok-provision/src/providers/grok/platforms.json
-RUN node /tmp/grok-provision/scripts/provision-grok.mjs /opt/paperclip/providers/grok/1.0.13/grok && rm -rf /tmp/grok-provision
 
 # Keep revision-dependent metadata below the stable agent CLI installation
 # layers. A source-only image miss can then reuse those expensive layers from
@@ -149,7 +122,7 @@ RUN set -eu; \
     printf '%s\n' 'export PATH=/opt/paperclip-runner/provider-pack/node_modules/.bin:$PATH' \
       > /etc/profile.d/01-paperclip-runner-provider-pack.sh; \
     chmod 0644 /etc/profile.d/01-paperclip-runner-provider-pack.sh; \
-    for command_name in acpx claude-agent-acp codex-acp claude codex grok gemini kimi opencode cursor-agent agent hermes gh paperclip-runnerd; do \
+    for command_name in acpx claude-agent-acp codex-acp claude codex opencode hermes gh paperclip-runnerd; do \
       command -v "$command_name" >/dev/null || { echo "FATAL: $command_name not on PATH after build" >&2; exit 1; }; \
     done; \
     metadata="$(paperclip-runnerd --build-metadata)"; \

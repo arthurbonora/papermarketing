@@ -81,7 +81,8 @@ export function parseAcpxCandidateStartupAdmission(
 
 /** This exception is deliberately absent from direct driver/config admission. */
 export function assertAcpxExecutionAdmission(profile: QualifiedAcpxProfile, candidate?: AcpxCandidateStartupAdmission): void {
-  if (candidate === undefined) return assertAcpxProfileReleased(profile.agent);
+  assertAcpxProfileReleased(profile.agent);
+  if (candidate === undefined) return;
   parseAcpxCandidateStartupAdmission(candidate, { agent: profile.agent, model: profile.qualificationModel });
   if (candidate.platform !== process.platform || candidate.architecture !== process.arch) return invalid();
   if (profile.commandDigest !== candidate.profileDigest) return invalid();

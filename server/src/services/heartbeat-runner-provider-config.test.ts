@@ -63,59 +63,6 @@ describe("Paperclip Runner native provider configuration", () => {
       })).toThrow("Preconfigured home supports");
     }
   });
-  it.each([undefined, "0.156.0", "0.159.0"])(
-    "keeps the exact Copilot model independent of Codex CLI version %s",
-    (codexCliVersion) => {
-      const adapterConfig = {
-        provider: "acpx", acpxAgent: "copilot", model: "gpt-5.6-luna",
-        acpxPermissionMode: "approve-paperclip",
-      };
-      expect(resolvePaperclipRunnerNativeProviderInput({
-        backend: "acpx_runtime", adapterConfig, codexCliVersion,
-      })).toEqual({
-        provider: "acpx", acpxAgent: "copilot", model: "gpt-5.6-luna",
-        acpxPermissionMode: "approve-paperclip",
-      });
-      expect(adapterConfig.model).toBe("gpt-5.6-luna");
-    },
-  );
-
-  it.each([undefined, "approve-all", "approve-paperclip", "approve-reads", "deny-all"])(
-    "passes Grok's full-auto default or explicit %s policy to the native runner",
-    (acpxPermissionMode) => {
-      expect(resolvePaperclipRunnerNativeProviderInput({
-        backend: "acpx_runtime",
-        adapterConfig: { provider: "acpx", acpxAgent: "grok", acpxPermissionMode },
-      })).toEqual({
-        provider: "acpx",
-        acpxAgent: "grok",
-        model: "grok-4.7",
-        acpxPermissionMode: acpxPermissionMode ?? "approve-all",
-      });
-    },
-  );
-
-  it("qualifies native Codex only in never-ask mode", () => {
-    expect(
-      resolvePaperclipRunnerNativeProviderInput({
-        backend: "codex_app_server",
-        adapterConfig: { provider: "codex", model: "gpt-5.6-sol" },
-      }),
-    ).toEqual({
-      provider: "codex",
-      model: "gpt-5.6-sol",
-      codexApprovalPolicy: "never",
-    });
-    expect(() =>
-      resolvePaperclipRunnerNativeProviderInput({
-        backend: "codex_app_server",
-        adapterConfig: {
-          provider: "codex",
-          codexPermissionMode: "on-request",
-        },
-      }),
-    ).toThrow("codexPermissionMode set to never");
-  });
 
   it("projects Codex effort only when the selected model supports it", () => {
     expect(resolvePaperclipRunnerNativeProviderInput({
@@ -153,20 +100,7 @@ describe("Paperclip Runner native provider configuration", () => {
     expect(() => resolvePaperclipRunnerNativeProviderInput({ backend: "acpx_runtime", adapterConfig: { ...base, networkScope: "unrestricted" } })).toThrow("networkScope");
   });
 
-  it("projects Grok task model and effort while retaining the search policy and account", () => {
-    const base = { provider: "acpx", acpxAgent: "grok", model: "grok-4.7", reasoningEffort: "high", disableWebSearch: true, aiConnection: "saved" };
-    const projected = projectPaperclipRunnerTaskConfig("acpx_runtime", base, { model: "grok-next", effort: "medium", provider: "codex", disableWebSearch: false, aiConnection: "other" });
-    expect(projected).toEqual({ ...base, model: "grok-next", reasoningEffort: "medium" });
-    expect(resolvePaperclipRunnerNativeProviderInput({ backend: "acpx_runtime", adapterConfig: projected }))
-      .toMatchObject({ acpxAgent: "grok", model: "grok-next", grokEffort: "medium", grokDisableWebSearch: true });
-  });
 
-  it("resolves the Grok task default marker before native model admission", () => {
-    const base = { provider: "acpx", acpxAgent: "grok", model: "grok-4.7", reasoningEffort: "high", disableWebSearch: true };
-    const config = projectPaperclipRunnerTaskConfig("acpx_runtime", base, { model: "grok-build", reasoningEffort: "high" });
-    expect(resolvePaperclipRunnerNativeProviderInput({ backend: "acpx_runtime", adapterConfig: config }))
-      .toMatchObject({ model: "grok-4.7", grokEffort: "high", grokDisableWebSearch: true });
-  });
 
   it("uses an OpenCode task model without changing the Runner provider", () => {
     const projected = projectPaperclipRunnerTaskConfig(
@@ -533,12 +467,4 @@ describe("Paperclip Runner native provider configuration", () => {
     ).toThrow("provider changed after this run selected its native backend");
   });
 
-  it("preserves a caller-selected Pi model in the native descriptor", () => {
-    expect(
-      resolvePaperclipRunnerNativeProviderInput({
-        backend: "acpx_runtime",
-        adapterConfig: { provider: "acpx", acpxAgent: "pi", model: "pi-model" },
-      }),
-    ).toMatchObject({ provider: "acpx", acpxAgent: "pi", model: "pi-model" });
-  });
 });

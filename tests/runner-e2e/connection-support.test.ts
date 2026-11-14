@@ -129,10 +129,9 @@ describe("live connection coverage", () => {
     expect(connectionScopeGaps.find(h => h.adapter === "hermes_gateway")?.status).toBe("excluded");
   });
   it("includes both UI entry points and actual runner variants without invented auth capabilities", () => {
-    expect(cells.length).toBe(116);
+    expect(cells.length).toBe(96);
     expect(new Set(cells.map(e => connectionCell(e).entry))).toEqual(new Set(["agent", "apps"]));
-    expect(cells.filter(e => connectionCell(e).harness.id === "grok").every(e => ["subscription", "api-key"].includes(connectionCell(e).mode))).toBe(true);
-    expect(supportsConnection(connectionHarnesses.find(h => h.id === "gemini")!, "subscription")).toBe(false);
+    expect(cells.some(e => ["grok", "gemini"].includes(connectionCell(e).harness.id))).toBe(false);
   });
   it("never runs on --all or advertises a preinstalled subscription token as a credential", () => {
     expect(selectRunnerExecutions(parseRunnerSelectors(["--all"])).some(e => e.suite.id === "provider-connections")).toBe(false);

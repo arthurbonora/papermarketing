@@ -873,39 +873,6 @@ it("projects a warm Copilot grant onto the remote runner filesystem", () => {
   expect(runnerdRecoveryInternals.projectCopilotRunGrant(grant)).toEqual(grant);
 });
 
-it("reopens Copilot with the current registered files after collecting the previous run copy", async () => {
-  const root = await mkdtemp(join(tmpdir(), "copilot-current-attachment-"));
-  const previousRoot = join(root, "previous-agent");
-  const currentRoot = join(root, "current-agent");
-  try {
-    await mkdir(previousRoot);
-    await mkdir(currentRoot);
-    await writeFile(join(currentRoot, "AGENTS.md"), "Current instructions.\n");
-    const previousContext = assignedRuntimeContext("/skills", "/bundle");
-    previousContext.instructions.workingCopy = { kind: "agent_files", rootPath: previousRoot, entryPath: "AGENTS.md" };
-    const currentContext = structuredClone(previousContext);
-    currentContext.instructions.workingCopy!.rootPath = currentRoot;
-    const seed = {
-      provider: { kind: "acpx", agent: "copilot", runId: "prior-run", normalizedSessionId: "same-session",
-        instructions: "Previous instructions.", runtimeContext: previousContext, commandDigest: "unchanged", model: "selected-model" },
-    };
-    await rm(previousRoot, { recursive: true });
-    const attached = runnerdRecoveryInternals.rotatedRunAttachPayload(
-      { runAttachTemplate: seed },
-      { runnerInstanceId: "runner", environmentLeaseId: "lease", runId: "current-run", normalizedSessionId: "same-session", turnId: "turn", itemId: "item" },
-      null, undefined,
-      currentContext, { text: "Current instructions.", context: currentContext },
-    );
-    const provider = attached.provider as typeof seed.provider;
-    const files = bindAcpxAgentFiles(provider.runtimeContext, []);
-    expect(files?.root).toBe(await realpath(currentRoot));
-    files?.assertHeld();
-    expect(provider).toMatchObject({ instructions: "Current instructions.", commandDigest: "unchanged", model: "selected-model", normalizedSessionId: "same-session" });
-    expect(seed.provider.runtimeContext).toEqual(previousContext);
-    expect(seed.provider.instructions).toBe("Previous instructions.");
-  } finally { await rm(root, { recursive: true, force: true }); }
-});
-
 it("refreshes Cloud instructions on cold rotation without replacing the pinned launch profile", () => {
   const identity = { runnerInstanceId: "runner", environmentLeaseId: "lease", runId: "next-run", normalizedSessionId: "session", turnId: "turn", itemId: "item" };
   const provider = { kind: "cursor_cloud", provider: "cursor_cloud", instructions: "Prior instructions.", command: "/pinned/node", args: ["/pinned/proxy.cjs"], model: "pinned-model", conversationMode: "task" };
@@ -3261,21 +3228,6 @@ it.each(["opencode", "acpx"] as const)(
   },
 );
 
-it("admits Pi runnerd transport without candidate opt-in and keeps pending Copilot gated", async () => {
-  const root = await mkdtemp(join(tmpdir(), "paperclip-pi-production-admission-"));
-  const { transport } = createCapabilityRunnerdCodexTransport({ provider: "acpx", acpxAgent: "pi", piThinkingLevel: "low", stateDirectory: root });
-  try {
-    await expect(transport.request("collaborationMode/list", {})).resolves.toMatchObject({ data: [{ mode: "plan" }] });
-    for (const acpxAgent of ["copilot"] as const) {
-      expect(() => createCapabilityRunnerdCodexTransport({ provider: "acpx", acpxAgent, stateDirectory: root }))
-        .toThrow("explicit evaluation opt-in");
-    }
-  } finally {
-    await transport.close();
-    await rm(root, { recursive: true, force: true });
-  }
-});
-
 it("allows trusted package-manager runtime roots without exposing HOME paths", () => {
   expect(
     trustedRuntimeReadOnlyRoots({
@@ -4242,29 +4194,6 @@ it("recovers provider readiness from an already-committed journal without replay
       },
     ]),
   ).toEqual(persistedReady);
-});
-
-it("keeps the Copilot authentication launch requirements free of Codex search policy", async () => {
-  const root = await mkdtemp(join(tmpdir(), "runnerd-copilot-probe-policy-"));
-  let captured: RunnerProviderLaunchRequirements | undefined;
-  const launch = vi.fn(() => { throw new Error("provider process must not start"); });
-  try {
-    await expect(probeNativeRunnerEnvironment({ runtimeDirectory: root, provider: "acpx", model: "gpt-5.6-luna",
-      environment: {}, timeoutMs: 1_000,
-      transportOptions: { acpxAgent: "copilot", acpxCandidateProfile: "copilot", disableCodexWebSearch: true,
-        runnerArtifact: { version: "offline-fixture", digest: `sha256:${"a".repeat(64)}` },
-        runnerProcessLauncher: launch,
-        controlPlaneRegistration: async () => { throw new Error("registration must not start"); },
-        prepareLaunch: async requirements => {
-          captured = requirements;
-          throw new Error("offline-stop-at-Copilot-preparation");
-        },
-      },
-    })).rejects.toThrow("offline-stop-at-Copilot-preparation");
-    expect(captured).toBeDefined();
-    expect(captured?.settings).not.toHaveProperty("disableCodexWebSearch");
-    expect(launch).not.toHaveBeenCalled();
-  } finally { await rm(root, { recursive: true, force: true }); }
 });
 
 it.each(["stuck", "late-release", "late-release-error", "stuck-release", "cooperative-release", "launch-failure", "launch-failure-sandbox", "launch-failure-unsandboxed"] as const)(
@@ -6628,10 +6557,6 @@ it.each([
 ] as const)("rejects invalid provider mode transport options before allocating resources: %j", options => {
   expect(() => createCapabilityRunnerdCodexTransport(options as unknown as Parameters<typeof createCapabilityRunnerdCodexTransport>[0]))
     .toThrow(/acpxMode|Provider mode/);
-});
-
-it.each([undefined, "medium", "minimal", "xhigh", null])("rejects non-exact Pi transport thinking level %s before spawn", piThinkingLevel => {
-  expect(() => createCapabilityRunnerdCodexTransport({ provider: "acpx", acpxAgent: "pi", piThinkingLevel: piThinkingLevel as never })).toThrow(/thinking/);
 });
 
 it("rejects Pi thinking settings on a different transport provider", () => {

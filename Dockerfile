@@ -32,15 +32,10 @@ COPY packages/teams-catalog/package.json packages/teams-catalog/
 COPY packages/adapters/claude-local/package.json packages/adapters/claude-local/
 COPY packages/adapters/codex-local/package.json packages/adapters/codex-local/
 COPY packages/adapters/cursor-cloud/package.json packages/adapters/cursor-cloud/
-COPY packages/adapters/cursor-local/package.json packages/adapters/cursor-local/
-COPY packages/adapters/gemini-local/package.json packages/adapters/gemini-local/
-COPY packages/adapters/grok-local/package.json packages/adapters/grok-local/
-COPY packages/adapters/kimi-local/package.json packages/adapters/kimi-local/
 COPY packages/adapters/hermes/package.json packages/adapters/hermes/
 COPY packages/adapters/hermes-gateway/package.json packages/adapters/hermes-gateway/
 COPY packages/adapters/openclaw-gateway/package.json packages/adapters/openclaw-gateway/
 COPY packages/adapters/opencode-local/package.json packages/adapters/opencode-local/
-COPY packages/adapters/pi-local/package.json packages/adapters/pi-local/
 COPY packages/plugins/sdk/package.json packages/plugins/sdk/
 COPY --parents packages/plugins/sandbox-providers/./*/package.json packages/plugins/sandbox-providers/
 COPY packages/plugins/paperclip-plugin-fake-sandbox/package.json packages/plugins/paperclip-plugin-fake-sandbox/
@@ -48,10 +43,6 @@ COPY packages/plugins/plugin-llm-wiki/package.json packages/plugins/plugin-llm-w
 COPY packages/plugins/plugin-workspace-diff/package.json packages/plugins/plugin-workspace-diff/
 COPY patches/ patches/
 COPY scripts/link-plugin-dev-sdk.mjs scripts/
-COPY packages/paperclip-runner/scripts/install-copilot-assets.mjs packages/paperclip-runner/scripts/materialize-copilot-binary.mjs packages/paperclip-runner/scripts/copilot-inner-distribution.mjs packages/paperclip-runner/scripts/
-COPY packages/paperclip-runner/src/drivers/acpx/copilot-installation.ts packages/paperclip-runner/src/drivers/acpx/
-COPY server/scripts/install-copilot-assets.mjs server/scripts/
-COPY server/src/services/copilot-connection-probe.ts server/src/services/
 
 # CI owns repository lock updates. Resolve manifest changes in the image's
 # private build tree, then install from that exact generated lock.
@@ -159,8 +150,6 @@ RUN rm -rf packages/paperclip-runner/runner/target
 # Remote OpenCode and ACPX runs require a controller-owned provider pack to
 # verify the sandbox installation or stage matching assets. Ship it in the
 # standard image so downstream Cloud compositions inherit the same artifacts.
-# Grok's native executable stays an external sandbox prerequisite; this pack
-# contains only its launcher.
 FROM build AS runner-provider-pack
 # Unstamped local builds remain usable, but cannot qualify a remote pack.
 # Never invent a source revision to make an unqualified pack look verified.
@@ -183,10 +172,10 @@ ARG CLI_TOOLS_CACHE_EPOCH=""
 WORKDIR /app
 # Tool and OS layer BEFORE the app copy: it references nothing from /app, and
 # the app copy changes on every commit — ordered the other way around, this
-# (the single most expensive layer: four CLI toolchains + apt, per arch) can
+# (the single most expensive layer: three CLI toolchains + apt, per arch) can
 # never hit the layer cache and rebuilds on every build.
 RUN echo "cli-tools-epoch: ${CLI_TOOLS_CACHE_EPOCH}" \
-  && npm install --global --omit=dev @anthropic-ai/claude-code@latest @openai/codex@latest opencode-ai @google/gemini-cli@latest @moonshot-ai/kimi-code@latest \
+  && npm install --global --omit=dev @anthropic-ai/claude-code@latest @openai/codex@latest opencode-ai \
   && apt-get update \
   && apt-get install -y --no-install-recommends openssh-client jq \
   && rm -rf /var/lib/apt/lists/* \

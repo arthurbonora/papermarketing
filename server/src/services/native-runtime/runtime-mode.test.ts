@@ -57,16 +57,6 @@ describe("resolveNativeRuntimeMode", () => {
     })).toMatchObject({ kind: "native", profile: { backend: "codex_app_server" } });
   });
 
-  it("admits saved-token Copilot with the generic Runner rollout disabled", () => {
-    expect(resolveNativeRuntimeMode({ ...eligible, enabled: false,
-      adapterConfig: { provider: "acpx", acpxAgent: "copilot", model: "gpt-5.6-luna" },
-    })).toMatchObject({ kind: "native", profile: { backend: "acpx_runtime" } });
-    for (const acpxAgent of ["grok", "cursor", "codex"]) {
-      expect(() => resolveNativeRuntimeMode({ ...eligible, enabled: false,
-        adapterConfig: { provider: "acpx", acpxAgent, model: "gpt-5.6-luna" },
-      })).toThrow(expect.objectContaining({ code: "paperclip_runner_rollout_disabled" }));
-    }
-  });
 
   it.each([
     [false, false],
@@ -113,11 +103,6 @@ describe("resolveNativeRuntimeMode", () => {
     }));
   });
 
-  it("admits Pi without the generic rollout flag", () => {
-    expect(resolveNativeRuntimeMode({ ...eligible, enabled: false,
-      adapterConfig: { provider: "acpx", acpxAgent: "pi", model: "openrouter/anthropic/claude-sonnet-4.6", piThinkingLevel: "max" },
-    })).toMatchObject({ kind: "native", profile: { backend: "acpx_runtime" } });
-  });
 
   it("rejects unknown Paperclip Runner providers", () => {
     expect(() => resolveNativeRuntimeMode({

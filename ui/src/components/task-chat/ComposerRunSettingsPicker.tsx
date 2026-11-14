@@ -4,7 +4,6 @@ import { ArrowLeft, Check, ChevronDown, Plus, RotateCcw, Search, X, Zap } from "
 import { aiRuntimeConnectionBindingSchema, agentHarnessType, type Agent, type IssueAssigneeAdapterOverrides } from "@paperclipai/shared";
 import { agentsApi, type AdapterModel } from "@/api/agents";
 import { queryKeys } from "@/lib/queryKeys";
-import { ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS, nativeTaskModelCatalogOptions } from "@/lib/native-model-catalog";
 import { cn } from "@/lib/utils";
 import { useMobileEntityPickerViewportStyle } from "@/hooks/useMobileEntityPickerViewportStyle";
 import { getLastComposerEffort, rememberComposerEffort } from "@/lib/recent-composer-effort";
@@ -117,23 +116,16 @@ export function ComposerRunSettingsPicker({
   }, [isMuseRunner, settings, onSettingsChange]);
   const binding = aiRuntimeConnectionBindingSchema.safeParse(agent?.runtimeConfig?.aiConnection).data;
   const poolId = binding?.mode === "router" ? binding.connectionId : undefined;
-  const nativeCatalog = nativeTaskModelCatalogOptions(agent);
   const acpxAgent = agent?.adapterType === "paperclip_runner" && provider === "acpx" && typeof agent.adapterConfig.acpxAgent === "string" ? agent.adapterConfig.acpxAgent : undefined;
-  const nativeCatalogScope = JSON.stringify(nativeCatalog ?? null);
-  const requestNativeModels = Boolean(nativeCatalog && open && view !== "agents" && !modelOptionsOverride);
-  const { data: fetchedModels = [], isPending: modelsPending, refetch: refreshModels } = useQuery({
+  const { data: fetchedModels = [], isPending: modelsPending } = useQuery({
     queryKey: agent && modelSupported
-      ? [...queryKeys.agents.adapterModels(companyId, agent.adapterType, agent.defaultEnvironmentId ?? null, provider), poolId ?? null, nativeCatalog ?? null, acpxAgent ?? null]
+      ? [...queryKeys.agents.adapterModels(companyId, agent.adapterType, agent.defaultEnvironmentId ?? null, provider), poolId ?? null, acpxAgent ?? null]
       : ["agents", "composer-models", "none"],
     queryFn: () => agentsApi.adapterModels(companyId, agent!.adapterType, {
-      environmentId: agent!.defaultEnvironmentId ?? null, provider, poolId, acpxAgent, ...nativeCatalog,
+      environmentId: agent!.defaultEnvironmentId ?? null, provider, poolId, acpxAgent,
     }),
-    ...(nativeCatalog ? ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS : {}),
-    enabled: Boolean(agent && modelSupported && !modelOptionsOverride && (!nativeCatalog || requestNativeModels)),
+    enabled: Boolean(agent && modelSupported && !modelOptionsOverride),
   });
-  useEffect(() => {
-    if (requestNativeModels) void refreshModels();
-  }, [requestNativeModels, nativeCatalogScope, companyId, agent?.defaultEnvironmentId, refreshModels]);
   // The server resolves instance-declared models first and otherwise returns the
   // adapter's curated catalog. Do not replace a declared Codex list locally.
   const models: readonly (AdapterModel & { detail?: string })[] = modelOptionsOverride

@@ -1,5 +1,3 @@
-import { isLegacyWorkspaceMigration } from "./legacy-workspace-migration.js";
-import { isRollingWebDeployment } from "./controller-rolling-deployment.js";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { chmod, lstat, mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
@@ -9,9 +7,10 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { runnerMatrix } from "./catalog.js";
 import { assertInstalledCliSelection, installedCliKeys, probeInstalledCodexStartup, verifyInstalledCli } from "./installed-cli.js";
 import { buildPaperclipServerEnvironment, buildRunnerE2EProcessEnvironment } from "./harness-env.js";
-const cells = runnerMatrix.filter(e => !isRollingWebDeployment(e) && !isLegacyWorkspaceMigration(e) && e.profile.id === "runner-acpx-pi"
-  // The explicit reliability facade cell is not an installed-CLI Pi qualification case.
-  && e.task.explicitGroup === undefined);
+const cells = runnerMatrix.filter(cell => [
+  "first-task.runner-codex.local.task-card-accept",
+  "everyday-workflows.runner-codex.daytona.recover-controller",
+].includes(cell.id));
 const roots: string[] = [];
 // pnpm's source test wrapper sets NODE_PATH; the disposable public-install fixture must start closed.
 beforeEach(() => { vi.stubEnv("NODE_PATH", undefined); vi.stubEnv("NODE_OPTIONS", undefined); });
@@ -30,10 +29,6 @@ async function fixture() {
   const env = { PAPERCLIP_RUNNER_E2E_INSTALLED_CLI: join(cli, "dist/index.js"), PAPERCLIP_RUNNER_E2E_INSTALLED_CLI_SHA256: hash("// installed public CLI"), PAPERCLIP_RUNNER_E2E_INSTALLED_SERVER_ROOT: server, PAPERCLIP_RUNNER_E2E_INSTALLED_SERVER_SHA256: hash("// installed public server") };
   return { root, cli, server, env };
 }
-it("admits all26 current Pi cases through pinned installed public CLI/server with no overrides", async () => {
-  const { env, server } = await fixture(); expect(cells).toHaveLength(26);
-  for (const cell of cells) expect(await verifyInstalledCli(env, [cell])).toMatchObject({ serverRoot: server, defaultRuntimeResolution: true, qualificationOverride: false });
-});
 it("admits existing Codex onboarding, useful-file revision and restart journeys without broadening other cells", async () => {
   const { env, server } = await fixture();
   for (const id of ["first-task.runner-codex.local.task-card-accept", "everyday-workflows.runner-codex.local.build-revise", "agent-chat.runner-codex.local.continuity-restart", "everyday-workflows.runner-codex.daytona.recover-controller", "daytona-restart-continuity.runner-codex.daytona.recover-controller"]) {
@@ -45,39 +40,19 @@ it("admits existing Codex onboarding, useful-file revision and restart journeys 
   for (const id of ["first-task.legacy-codex.local.task-card-accept", "first-task.runner-codex.local.interview-first-response", "everyday-workflows.runner-codex.daytona.build-revise"]) {
     const cell = runnerMatrix.find(e => e.id === id)!;
     expect(cell).toBeDefined();
-    expect(() => assertInstalledCliSelection(env, [cell])).toThrow("explicit supported Pi, Codex, or Copilot");
-  }
-});
-it("admits only the 20 agreed Copilot cells through normal installed resolution with no qualification override", async () => {
-  const { env, server } = await fixture();
-  const selected = runnerMatrix.filter(e => !isRollingWebDeployment(e) && !isLegacyWorkspaceMigration(e) && e.profile.id === "runner-acpx-copilot");
-  expect(selected).toHaveLength(20);
-  expect(selected.filter(e => e.environment.id === "local")).toHaveLength(10);
-  expect(selected.filter(e => e.environment.id === "daytona")).toHaveLength(10);
-  for (const cell of selected) {
-    expect(await verifyInstalledCli(env, [cell])).toMatchObject({ serverRoot: server, defaultRuntimeResolution: true, qualificationOverride: false });
-    const child = buildRunnerE2EProcessEnvironment(env, [cell]);
-    expect(child.PAPERCLIP_RUNNER_ACPX_QUALIFICATION).toBeUndefined();
-    for (const key of ["PAPERCLIP_RUNNER_BINARY", "PAPERCLIP_RUNNER_REMOTE_BINARY_PATH", "PAPERCLIP_RUNNER_ACPX_QUALIFICATION", "NODE_PATH"]) {
-      expect(() => assertInstalledCliSelection({ ...env, [key]: "foreign" }, [cell])).toThrow("forbids");
-    }
-    expect(() => assertInstalledCliSelection(env, [{ ...cell, id: `${cell.id}-unreviewed` }])).toThrow("explicit supported");
+    expect(() => assertInstalledCliSelection(env, [cell])).toThrow("explicit supported Codex or chat");
   }
 });
 it("qualified providers drop ambient admission without granting custom model overrides", () => {
   for (const cell of cells) expect(buildRunnerE2EProcessEnvironment({ PAPERCLIP_RUNNER_ACPX_QUALIFICATION: "ambient" }, [cell]).PAPERCLIP_RUNNER_ACPX_QUALIFICATION).toBeUndefined();
-  for (const agent of ["copilot"]) {
-    const cell = runnerMatrix.find(e => e.profile.qualificationCandidate === agent)!;
-    expect(buildRunnerE2EProcessEnvironment({ PAPERCLIP_RUNNER_ACPX_QUALIFICATION: "ambient" }, [cell]).PAPERCLIP_RUNNER_ACPX_QUALIFICATION).toBeUndefined();
-  }
   const changed = { ...cells[0]!, profile: { ...cells[0]!.profile, model: "custom/explicit-model" } };
   expect(buildRunnerE2EProcessEnvironment({}, [changed]).PAPERCLIP_RUNNER_ACPX_QUALIFICATION).toBeUndefined();
 });
 it("rejects partial authority, unsupported cells and every runtime/path override", async () => {
   const { env } = await fixture();
   for (const key of installedCliKeys) { const changed = { ...env, [key]: undefined }; await expect(verifyInstalledCli(changed, [cells[0]!])).rejects.toThrow("complete pins"); }
-  expect(() => assertInstalledCliSelection(env, [])).toThrow("explicit supported Pi");
-  expect(() => assertInstalledCliSelection(env, [runnerMatrix.find(e => e.profile.qualificationCandidate === "cursor")!])).toThrow("explicit supported Pi");
+  expect(() => assertInstalledCliSelection(env, [])).toThrow("explicit supported Codex");
+  expect(() => assertInstalledCliSelection(env, [runnerMatrix.find(e => e.profile.id === "legacy-codex")!])).toThrow("explicit supported Codex");
   for (const key of ["PAPERCLIP_RUNNER_BINARY", "PAPERCLIP_RUNNER_REMOTE_BINARY_PATH", "PAPERCLIP_RUNNER_REMOTE_PROVIDER_PACK_PATH", "PAPERCLIP_RUNNER_ACPX_QUALIFICATION", "PAPERCLIP_ACPX_BUILTIN_ROOT", "PAPERCLIP_ACPX_PROVIDER_PACKAGE_ROOT", "PAPERCLIP_ACPX_PROVIDER_PACKAGE_MANIFEST", "NODE_OPTIONS", "NODE_PATH"]) await expect(verifyInstalledCli({ ...env, [key]: "foreign" }, [cells[0]!])).rejects.toThrow("forbids");
 });
 it("rejects stale bytes and another server root instead of falling back to source", async () => {
@@ -118,10 +93,10 @@ it("uses the direct public Playwright JS bin without bin-shim Node injection", a
   for (const key of ["NODE_PATH","NODE_OPTIONS"]) expect(()=>assertInstalledCliSelection({...f.env,[key]:""},[cells[0]!])).toThrow("ambient Node injection");
 });
 
-it("startup-only accepts only explicit uncredentialed local hello and zero retries", async () => {
+it("startup-only accepts only explicit uncredentialed local task and zero retries", async () => {
   const { assertInstalledStartupOnly } = await import("./installed-cli.js");
   const { parseRunnerSelectors } = await import("./selectors.js");
-  const f=await fixture(); const cell=cells.find(e=>e.id==="extended-harnesses.runner-acpx-pi.local.hello-complete")!;
+  const f=await fixture(); const cell=cells.find(e=>e.id==="first-task.runner-codex.local.task-card-accept")!;
   const options=parseRunnerSelectors(["--installed-startup-only","--id",cell.id,"--max-automatic-retries","0"]);
   expect(options.installedStartupOnly).toBe(true);expect(()=>assertInstalledStartupOnly(f.env,[cell],options)).not.toThrow();
   for(const delta of [{maxAutomaticRetries:1},{maxParallel:2},{ui:true},{debug:true},{headed:true},{list:true},{matrixJson:true},{ids:[]}])expect(()=>assertInstalledStartupOnly(f.env,[cell],{...options,...delta})).toThrow("startup-only");

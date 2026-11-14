@@ -11,12 +11,12 @@ import {
   QUALIFIED_ACPX_VERSION,
   QUALIFIED_ACPX_PROFILES,
   resolveQualifiedAcpxProfile,
+  isSupportedAcpxAgent,
   type QualifiedAcpxAgent,
 } from "./qualified-profiles.js";
 
 import { ACPX_CAPABILITY_PROFILES } from "./capability-profiles.js";
 
-const ACPX_AGENTS = ["claude", "codex", "grok", "pi", "cursor", "copilot", "kimi", "antigravity"] as const;
 const ACPX_PERMISSION_MODES = [
   "approve-all",
   "approve-paperclip",
@@ -111,12 +111,15 @@ export function validateAcpxDriverConfig(
   }
 
   const agent = text(config.agent);
-  if (!isAcpxAgent(agent)) {
+  if (!Object.hasOwn(QUALIFIED_ACPX_PROFILES, agent)) {
     return invalid(
       "agent",
       "invalid_agent",
-      "ACPX agent must be claude, codex, grok, cursor, copilot, kimi, pi, or antigravity.",
+      "ACPX agent must be claude or codex.",
     );
+  }
+  if (!isSupportedAcpxAgent(agent)) {
+    return invalid("agent", "agent_harness_removed", `ACPX agent ${agent} is no longer supported.`);
   }
   if (ACPX_CAPABILITY_PROFILES[agent].qualification !== "qualified") {
     return invalid("agent", "qualification_pending", `${ACPX_CAPABILITY_PROFILES[agent].displayName} requires native Runner acceptance before use.`);
@@ -158,10 +161,6 @@ function invalid(
   message: string,
 ): HarnessDriverConfigValidation {
   return { ok: false, config: null, issues: [{ path, code, message }] };
-}
-
-function isAcpxAgent(value: string): value is QualifiedAcpxAgent {
-  return (ACPX_AGENTS as readonly string[]).includes(value);
 }
 
 function isPermissionMode(value: string): value is NativeAcpxPermissionMode {

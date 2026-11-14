@@ -44,6 +44,7 @@ import {
   duplicateAgentName,
   type DuplicateInstructionsBundle,
 } from "../lib/duplicate-agent-payload";
+import { isRemovedAgentHarness } from "@paperclipai/shared";
 import type {
   Agent,
   AgentInstructionsBundle,
@@ -361,8 +362,9 @@ export function AgentActionButtons({
 
   const isPendingApproval = agent.status === "pending_approval";
   const disabled = actionsDisabled || agentAction.isPending;
-  const assignAndRunDisabled = disabled || isPendingApproval || workActionsDisabled || agent.status === "terminated";
-  const pauseResumeDisabled = disabled || isPendingApproval || (isPaused && workActionsDisabled)
+  const removedHarness = isRemovedAgentHarness(agent.adapterType, agent.adapterConfig);
+  const assignAndRunDisabled = removedHarness || disabled || isPendingApproval || workActionsDisabled || agent.status === "terminated";
+  const pauseResumeDisabled = disabled || isPendingApproval || (isPaused && (workActionsDisabled || removedHarness))
     || Boolean(agent.lifecycleState && ["pausing", "terminating", "cleaning_up", "terminated", "rejected"].includes(agent.lifecycleState));
   const clearErrorDisabled = disabled;
   const runtimeConfig = agent.runtimeConfig as Record<string, unknown> | null;
@@ -486,7 +488,7 @@ export function AgentActionButtons({
                 {label}
               </button>
             ))}
-            <button type="button" className={item} disabled={duplicateAgent.isPending} onClick={handleDuplicateAgent}>
+            <button type="button" className={item} disabled={duplicateAgent.isPending || removedHarness} onClick={handleDuplicateAgent}>
               {duplicateAgent.isPending ? <Loader2 className={cn(icon, "animate-spin")} /> : <Copy className={icon} />}
               Duplicate agent
             </button>
@@ -637,7 +639,7 @@ export function AgentActionButtons({
         <PopoverContent className="w-44 p-1" align="end">
           <button
             className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
-            disabled={duplicateAgent.isPending}
+            disabled={duplicateAgent.isPending || removedHarness}
             onClick={handleDuplicateAgent}
           >
             {duplicateAgent.isPending ? (

@@ -7,7 +7,7 @@ export async function validateAiApiKey(
   key: string,
   request: typeof fetch = fetch,
 ) {
-  if (provider === "github") throw unprocessable("Copilot requires verification in the selected execution environment.", { code: "copilot_environment_required" });
+  if (provider === "github") throw unprocessable("This agent harness has been removed.", { code: "agent_harness_removed" });
   const endpoints = {
     anthropic: "https://api.anthropic.com/v1/models?limit=1",
     openai: "https://api.openai.com/v1/models",

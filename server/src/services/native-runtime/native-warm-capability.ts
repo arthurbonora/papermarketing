@@ -18,19 +18,14 @@ export function resolveWarmProviderSelection(adapterConfig: unknown, companyId?:
 
 /** Providers with a session-owned home and the current instruction-grant handoff. */
 export function supportsNativeWarmFiles(profile: WarmProviderSelection): boolean {
-  return profile.backend === "codex_app_server" ||
-    (profile.backend === "acpx_runtime" && profile.acpxAgent === "copilot");
+  return profile.backend === "codex_app_server";
 }
 
-/** Copilot carries a token in its fenced session environment, not a temporary auth file.
- * Credential generation changes still retire the exact warm owner before attachment. */
 export function supportsManagedNativeWarmSession(
   profile: WarmProviderSelection,
-  attribution: { provider: string; method: string } | undefined,
+  _attribution: { provider: string; method: string } | undefined,
 ): boolean {
-  return profile.backend === "codex_app_server" ||
-    (profile.backend === "acpx_runtime" && profile.acpxAgent === "copilot" &&
-      attribution?.provider === "github" && attribution.method === "api_key");
+  return profile.backend === "codex_app_server";
 }
 
 /**

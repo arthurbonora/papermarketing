@@ -80,8 +80,6 @@ const mockRemoteAgentProfileService = vi.hoisted(() => ({
 }));
 
 const mockLogActivity = vi.hoisted(() => vi.fn());
-const mockAntigravityModels = vi.hoisted(() => vi.fn());
-vi.mock("../services/antigravity-connection-models.js", () => ({ antigravityConnectionModels: mockAntigravityModels }));
 
 vi.mock("../services/index.js", () => ({
   agentService: () => mockAgentService,
@@ -117,7 +115,6 @@ vi.mock("../services/remote-agent-profiles.js", () => ({
 }));
 
 function registerModuleMocks() {
-  vi.doMock("../services/antigravity-connection-models.js", () => ({ antigravityConnectionModels: mockAntigravityModels }));
   vi.doMock("../services/index.js", () => ({
     agentService: () => mockAgentService,
     agentInstructionsService: () => mockAgentInstructionsService,
@@ -417,22 +414,13 @@ describe("agent routes adapter validation", () => {
     await unregisterTestAdapter(missingAdapterType);
   });
 
-  it("omits the default marker from the native Grok catalog while retaining Legacy defaults", async () => {
-    const adapters = await import("../adapters/index.js");
-    const models = [{ id: "grok-build", label: "Default" }, { id: "grok-4.7", label: "Grok 4.7" }];
-    const list = vi.spyOn(adapters, "listAdapterModels").mockResolvedValue(models);
-    const refresh = vi.spyOn(adapters, "refreshAdapterModels").mockResolvedValue(models);
-    try {
-      const app = await createApp();
-      for (const suffix of ["", "&refresh=true"]) {
-        const native = await requestApp(app, baseUrl => request(baseUrl).get(`/api/companies/company-1/adapters/paperclip_runner/models?provider=acpx&acpxAgent=grok${suffix}`));
-        expect(native.status).toBe(200);
-        expect(native.body).toEqual([models[1]]);
-        const legacy = await requestApp(app, baseUrl => request(baseUrl).get(`/api/companies/company-1/adapters/grok_local/models?refresh=${Boolean(suffix)}`));
-        expect(legacy.status).toBe(200);
-        expect(legacy.body).toEqual(models);
-      }
-    } finally { list.mockRestore(); refresh.mockRestore(); }
+  it("rejects both legacy and native Grok Build model discovery", async () => {
+    const app = await createApp();
+    for (const path of ["/grok_local/models", "/paperclip_runner/models?provider=acpx&acpxAgent=grok"]) {
+      const response = await requestApp(app, baseUrl => request(baseUrl).get(`/api/companies/company-1/adapters${path}`));
+      expect(response.status).toBe(422);
+      expect(response.body.code).toBe("agent_harness_removed");
+    }
   });
 
   it("selects and refreshes the runner provider catalog independently", async () => {
@@ -441,7 +429,7 @@ describe("agent routes adapter validation", () => {
     const refresh = vi.spyOn(adapters, "refreshAdapterModels").mockImplementation(async (type) => [{ id: `${type}-fresh`, label: type }]);
     try {
       const app = await createApp();
-      for (const [provider, adapter] of [["acpx", "claude_local"], ["acpx&acpxAgent=grok", "grok_local"], ["codex", "codex_local"], ["opencode", "opencode_local"]]) {
+      for (const [provider, adapter] of [["acpx", "claude_local"], ["acpx&acpxAgent=codex", "codex_local"], ["codex", "codex_local"], ["opencode", "opencode_local"]]) {
         const res = await requestApp(app, (baseUrl) => request(baseUrl).get(`/api/companies/company-1/adapters/paperclip_runner/models?provider=${provider}`));
         expect(res.status).toBe(200);
         expect(res.body).toEqual([{ id: adapter, label: adapter }]);
@@ -454,37 +442,7 @@ describe("agent routes adapter validation", () => {
     } finally { list.mockRestore(); refresh.mockRestore(); }
   });
 
-  it("loads setup-only Antigravity account metadata without consulting another harness", async () => {
-    const adapters = await import("../adapters/index.js");
-    const list = vi.spyOn(adapters, "listAdapterModels");
-    const refresh = vi.spyOn(adapters, "refreshAdapterModels");
-    const catalog = [{ id: "caller-exact-google-model", label: "Google account model" }];
-    mockAntigravityModels.mockResolvedValue(catalog);
-    try {
-      const app = await createApp();
-      for (const suffix of ["", "&refresh=true"]) {
-        const response = await requestApp(app, base => request(base).get(`/api/companies/company-1/adapters/paperclip_runner/models?provider=acpx&acpxAgent=antigravity${suffix}`));
-        expect(response.status, JSON.stringify(response.body)).toBe(200);
-        expect(response.body).toEqual(catalog);
-        expect(mockAntigravityModels).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({
-          companyId: "company-1", binding: { provider: "google", method: "subscription", mode: "responsible_user" },
-        }));
-      }
-      expect(list).not.toHaveBeenCalled();
-      expect(refresh).not.toHaveBeenCalled();
-    } finally { list.mockRestore(); refresh.mockRestore(); }
-  });
-
-  it("refuses another provider binding before Antigravity model discovery", async () => {
-    const app = await createApp();
-    const binding = encodeURIComponent(JSON.stringify({ provider: "openai", method: "subscription", mode: "responsible_user" }));
-    const response = await requestApp(app, base => request(base).get(`/api/companies/company-1/adapters/paperclip_runner/models?provider=acpx&acpxAgent=antigravity&aiConnection=${binding}`));
-    expect(response.status).toBe(422);
-    expect(response.body.error).toContain("Google runtime connection");
-    expect(mockAntigravityModels).not.toHaveBeenCalled();
-  });
-
-  it.each(["create", "hire", "edit"])("refuses pending Antigravity %s before persistence", async action => {
+  it.each(["create", "hire", "edit"])("refuses removed Antigravity %s before persistence", async action => {
     mockInstanceSettingsService.getExperimental.mockResolvedValue({ enableNativeRunner: true });
     const app = await createApp();
     const adapterConfig = { provider: "acpx", acpxAgent: "antigravity", model: "exact-antigravity-model" };
@@ -492,38 +450,12 @@ describe("agent routes adapter validation", () => {
       ? await requestApp(app, base => request(base).patch("/api/agents/11111111-1111-4111-8111-111111111111").send({ adapterType: "paperclip_runner", adapterConfig }))
       : await requestApp(app, base => request(base).post(`/api/companies/company-1/${action === "hire" ? "agent-hires" : "agents"}`).send({ name: "Antigravity", adapterType: "paperclip_runner", adapterConfig }));
     expect(response.status, JSON.stringify(response.body)).toBe(422);
-    expect(response.body.details).toMatchObject({ code: "paperclip_runner_acpx_agent_unavailable" });
+    expect(response.body.details).toMatchObject({ code: "agent_harness_removed" });
     expect(mockAgentService.create).not.toHaveBeenCalled();
     expect(mockAgentService.update).not.toHaveBeenCalled();
     expect(mockApprovalService.create).not.toHaveBeenCalled();
   });
 
-  it.runIf(process.platform === "darwin" && process.arch === "arm64")("saves only the exact company-authorized Antigravity candidate without persisting operator authority", async () => {
-    const [{ QUALIFIED_ACPX_PROFILES }, distributionJson] = await Promise.all([
-      import("../vendor/paperclip-runner/index.js"),
-      readFile(new URL("../../../packages/paperclip-runner/antigravity-distributions.json", import.meta.url), "utf8"),
-    ]);
-    const distributions = JSON.parse(distributionJson);
-    const adapterConfig = { provider: "acpx", acpxAgent: "antigravity", model: "exact-antigravity-model" };
-    const admission = { schema: "paperclip.acpx-candidate-admission.v1", companyId: "company-1", agent: "antigravity",
-      model: adapterConfig.model, profileDigest: QUALIFIED_ACPX_PROFILES.antigravity.commandDigest,
-      nativeClosureDigest: `sha256:${distributions.platforms["darwin-arm64"].closureSha256}`,
-      platform: "darwin", architecture: "arm64", expiresAt: Date.now() + 60_000 };
-    vi.stubEnv("PAPERCLIP_ACPX_CANDIDATE_ADMISSION", JSON.stringify(admission));
-    const app = await createApp();
-    const created = await requestApp(app, base => request(base).post("/api/companies/company-1/agents").send({ name: "Antigravity candidate", adapterType: "paperclip_runner", adapterConfig }));
-    expect(created.status, JSON.stringify(created.body)).toBe(201);
-    expect(mockAgentService.create).toHaveBeenCalledWith("company-1", expect.objectContaining({ adapterConfig: expect.objectContaining(adapterConfig) }), expect.any(Object));
-    expect(JSON.stringify(mockAgentService.create.mock.calls)).not.toContain("paperclip.acpx-candidate-admission");
-    expect(QUALIFIED_ACPX_PROFILES.antigravity.qualificationStatus).toBe("pending");
-    mockAgentService.create.mockClear();
-    for (const changed of [{ ...admission, companyId: "another-company" }, { ...admission, model: "another-model" }]) {
-      vi.stubEnv("PAPERCLIP_ACPX_CANDIDATE_ADMISSION", JSON.stringify(changed));
-      const denied = await requestApp(app, base => request(base).post("/api/companies/company-1/agents").send({ name: "Antigravity candidate", adapterType: "paperclip_runner", adapterConfig }));
-      expect(denied.status, JSON.stringify(denied.body)).toBe(422);
-    }
-    expect(mockAgentService.create).not.toHaveBeenCalled();
-  });
 
   it("creates agents for dynamically registered external adapter types", async () => {
     const { registerServerAdapter } = await import("../adapters/index.js");
@@ -879,7 +811,7 @@ describe("agent routes adapter validation", () => {
     expect(mockAgentService.create).not.toHaveBeenCalled();
   });
 
-  it("rechecks selection policy when a saved native adapter switches to an experimentally gated harness", async () => {
+  it("rejects switching a saved native adapter to a removed harness", async () => {
     mockAgentService.getById.mockResolvedValue({ ...(await mockAgentService.getById()), adapterType: "paperclip_runner", adapterConfig: { provider: "codex" } });
     mockInstanceSettingsService.getExperimental.mockResolvedValue({ enableNativeRunner: false });
     const probe = vi.fn();
@@ -891,7 +823,7 @@ describe("agent routes adapter validation", () => {
         .post("/api/companies/company-1/adapters/paperclip_runner/test-environment")
         .send({ agentId: "11111111-1111-4111-8111-111111111111", adapterConfig: { provider: "acpx", acpxAgent: "cursor" } }));
       expect(res.status, JSON.stringify(res.body)).toBe(422);
-      expect(res.body.details).toMatchObject({ code: "paperclip_runner_rollout_disabled" });
+      expect(res.body.details).toMatchObject({ code: "agent_harness_removed" });
       expect(probe).not.toHaveBeenCalled();
       expect(mockSecretService.normalizeAdapterConfigForPersistence).not.toHaveBeenCalled();
     } finally { await unregisterTestAdapter("paperclip_runner"); }
@@ -1000,113 +932,18 @@ describe("agent routes adapter validation", () => {
     expect(mockAgentService.update).not.toHaveBeenCalled();
   });
 
-  it.each(["auto", "legacy"] as const)("creates Pi through the public route with %s selection and the experimental flag off", async runner => {
-    const selection = await import("../services/agent-runner-selection.js");
-    vi.spyOn(selection, "resolveNewAgentRunnerForCompany").mockImplementation(async (_db, _companyId, input) =>
-      selection.resolveNewAgentRunner({ ...input, target: { driver: "local", platform: "darwin", architecture: "arm64" } }));
-    const app = await createApp();
-    const model = "openrouter/anthropic/claude-sonnet-4.6";
-    const response = await requestApp(app, baseUrl => request(baseUrl).post("/api/companies/company-1/agents").send({ name: "Pi", adapterType: "pi_local", runner, adapterConfig: { model } }));
-    expect(response.status, JSON.stringify(response.body)).toBe(201);
-    expect(mockAgentService.create.mock.calls.at(-1)?.[1]).toMatchObject({ adapterType: runner === "legacy" ? "pi_local" : "paperclip_runner", adapterConfig: runner === "legacy" ? { model } : { provider: "acpx", acpxAgent: "pi", model, piThinkingLevel: "low", acpxPermissionMode: "approve-all" } });
-  });
 
-  it("allows model-free Pi only as an inactive setup draft", async () => {
-    const selection = await import("../services/agent-runner-selection.js");
-    vi.spyOn(selection, "resolveNewAgentRunnerForCompany").mockImplementation(async (_db, _companyId, input) =>
-      selection.resolveNewAgentRunner({ ...input, target: { driver: "local", platform: "darwin", architecture: "arm64" } }));
-    const originalCreate = mockAgentService.create.getMockImplementation()!;
-    mockAgentService.create.mockImplementation(async (...args) => ({ ...await originalCreate(...args), lifecycleHolds: ["setup"] }));
-    const app = await createApp();
-    const input = { name: "Pi draft", adapterType: "pi_local", adapterConfig: {} };
-    const draft = await requestApp(app, baseUrl => request(baseUrl).post("/api/companies/company-1/agents")
-      .send({ ...input, setupId: "00000000-0000-4000-8000-000000000092" }));
-    expect(draft.status, JSON.stringify(draft.body)).toBe(201);
-    expect(mockAgentService.create.mock.calls.at(-1)?.[1]).toMatchObject({ adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "pi", model: "" } });
-    expect(mockAgentService.create.mock.calls.at(-1)?.[2]).toMatchObject({ setupOnly: true, runnerResolved: true });
-    mockAgentService.create.mockClear();
-    const active = await requestApp(app, baseUrl => request(baseUrl).post("/api/companies/company-1/agents")
-      .send({ ...input, setupOnly: true }));
-    expect(active.status).toBe(422);
-    expect(mockAgentService.create).not.toHaveBeenCalled();
-  });
 
-  it("keeps Pi model selection empty when a provisional setup record changes harness", async () => {
-    const selection = await import("../services/agent-runner-selection.js");
-    vi.spyOn(selection, "resolveNewAgentRunnerForCompany").mockImplementation(async (_db, _companyId, input) =>
-      selection.resolveNewAgentRunner({ ...input, target: { driver: "local", platform: "darwin", architecture: "arm64" } }));
-    mockAgentService.getById.mockResolvedValue({ ...(await mockAgentService.getById()), adapterType: "process", adapterConfig: {}, status: "paused", lifecycleState: "paused", pauseReason: "setup", lifecycleHolds: ["setup"] });
-    const app = await createApp();
-    const response = await requestApp(app, baseUrl => request(baseUrl).patch("/api/agents/11111111-1111-4111-8111-111111111111")
-      .send({ adapterType: "pi_local", runner: "auto", adapterConfig: {} }));
-    expect(response.status, JSON.stringify(response.body)).toBe(200);
-    expect(mockAgentService.update.mock.calls.at(-1)?.[1]).toMatchObject({ adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "pi", model: "" } });
-  });
 
-  it("keeps Kimi draft models unset through the public create route", async () => {
-    mockInstanceSettingsService.getExperimental.mockResolvedValue({ enableNativeRunner: true });
-    const originalCreate = mockAgentService.create.getMockImplementation()!;
-    mockAgentService.create.mockImplementation(async (...args) => ({ ...await originalCreate(...args), lifecycleHolds: ["setup"] }));
-    const app = await createApp();
-    const input = { name: "Kimi draft", adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "kimi" } };
-    const draft = await requestApp(app, base => request(base).post("/api/companies/company-1/agents")
-      .send({ ...input, setupId: "00000000-0000-4000-8000-000000000092" }));
-    expect(draft.status, JSON.stringify(draft.body)).toBe(201);
-    const saved = mockAgentService.create.mock.calls.at(-1)?.[1];
-    expect(saved).toMatchObject(input);
-    expect(saved.adapterConfig.model).toBeUndefined();
-    expect(mockAgentService.create.mock.calls.at(-1)?.[2]).toMatchObject({ setupOnly: true, runnerResolved: true });
-    mockAgentService.create.mockClear();
-    const active = await requestApp(app, base => request(base).post("/api/companies/company-1/agents").send(input));
-    expect(active.status).toBe(422);
-    expect(mockAgentService.create).not.toHaveBeenCalled();
-  });
 
-  it.each([
-    ["process", undefined, ""],
-    ["kimi_local", "kimi-for-coding", "kimi-for-coding"],
-    ["pi_local", "openrouter/anthropic/claude-sonnet-4.6", ""],
-  ] as const)("preserves Kimi model selection only from the same harness: %s", async (previousAdapterType, previousModel, expectedModel) => {
-    mockInstanceSettingsService.getExperimental.mockResolvedValue({ enableNativeRunner: true });
-    mockAgentService.getById.mockResolvedValue({ ...(await mockAgentService.getById()), adapterType: previousAdapterType,
-      adapterConfig: previousModel === undefined ? {} : { model: previousModel },
-      status: "paused", lifecycleState: "paused", pauseReason: "setup", lifecycleHolds: ["setup"] });
-    const app = await createApp();
-    const response = await requestApp(app, base => request(base).patch("/api/agents/11111111-1111-4111-8111-111111111111")
-      .send({ adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "kimi" } }));
-    expect(response.status, JSON.stringify(response.body)).toBe(200);
-    expect(mockAgentService.update.mock.calls.at(-1)?.[1]).toMatchObject({ adapterType: "paperclip_runner",
-      adapterConfig: { provider: "acpx", acpxAgent: "kimi", model: expectedModel } });
-  });
 
-  it("persists an explicit Kimi model through the public create route", async () => {
-    mockInstanceSettingsService.getExperimental.mockResolvedValue({ enableNativeRunner: true });
-    const app = await createApp();
-    const input = { name: "Kimi", adapterType: "paperclip_runner",
-      adapterConfig: { provider: "acpx", acpxAgent: "kimi", model: "kimi-for-coding" } };
-    const response = await requestApp(app, base => request(base).post("/api/companies/company-1/agents").send(input));
-    expect(response.status, JSON.stringify(response.body)).toBe(201);
-    expect(mockAgentService.create.mock.calls.at(-1)?.[1]).toMatchObject(input);
-  });
 
-  it.each([{ thinking: "high", status: 200 }, { thinking: "medium", status: 422 }, { command: "custom-pi", status: 422 }])("validates saved Pi settings during direct adapter conversion: %j", async ({ status, ...settings }) => {
-    const selection = await import("../services/agent-runner-selection.js");
-    vi.spyOn(selection, "resolveNewAgentRunnerForCompany").mockImplementation(async (_db, _companyId, input) =>
-      selection.resolveNewAgentRunner({ ...input, target: { driver: "local", platform: "darwin", architecture: "arm64" } }));
-    mockAgentService.getById.mockResolvedValue({ ...(await mockAgentService.getById()), adapterType: "pi_local", adapterConfig: { model: "openrouter/anthropic/claude-sonnet-4.5", ...settings } });
-    const app = await createApp();
-    const response = await requestApp(app, baseUrl => request(baseUrl).patch("/api/agents/11111111-1111-4111-8111-111111111111")
-      .send({ adapterType: "paperclip_runner", adapterConfig: {} }));
-    expect(response.status, JSON.stringify(response.body)).toBe(status);
-    if (status === 200) expect(mockAgentService.update.mock.calls.at(-1)?.[1]).toMatchObject({ adapterType: "paperclip_runner", adapterConfig: { acpxAgent: "pi", model: "openrouter/anthropic/claude-sonnet-4.5", piThinkingLevel: "high" } });
-    else expect(mockAgentService.update).not.toHaveBeenCalled();
-  });
 
-  it("keeps other native provider selection behind its existing flag", async () => {
+  it("rejects installing the removed native Cursor CLI profile", async () => {
     const app = await createApp();
     const response = await requestApp(app, baseUrl => request(baseUrl).post("/api/companies/company-1/agents").send({ name: "Native Cursor", adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "cursor", model: "provider-model" } }));
     expect(response.status).toBe(422);
-    expect(response.body.details).toMatchObject({ code: "paperclip_runner_rollout_disabled" });
+    expect(response.body.details).toMatchObject({ code: "agent_harness_removed" });
   });
 
   it("allows a new paperclip_runner selection while the rollout flag is on", async () => {
@@ -1289,26 +1126,13 @@ describe("agent routes adapter validation", () => {
     expect(mockAgentService.update).not.toHaveBeenCalled();
   });
 
-  it("translates compatible settings during a direct Grok conversion", async () => {
-    const existing = await mockAgentService.getById();
-    mockAgentService.getById.mockResolvedValue({ ...existing, adapterType: "grok_local",
-      adapterConfig: { model: "grok-4.7", reasoningEffort: "high", command: "grok", disableWebSearch: true } });
-    const app = await createApp();
-    const res = await requestApp(app, baseUrl => request(baseUrl).patch(`/api/agents/${existing.id}`)
-      .send({ adapterType: "paperclip_runner" }));
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    const saved = mockAgentService.update.mock.calls.at(-1)?.[1];
-    expect(saved).toMatchObject({ adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "grok", model: "grok-4.7", reasoningEffort: "high", disableWebSearch: true } });
-    expect(saved.adapterConfig).not.toHaveProperty("command");
-  });
-
-  it.each([undefined, "acpx"])("preserves an explicitly selected ACPX agent when converting Grok (provider: %s)", async provider => {
+  it("moves an existing Grok Build record to an explicitly selected Claude runtime", async () => {
     const existing = await mockAgentService.getById();
     mockAgentService.getById.mockResolvedValue({ ...existing, adapterType: "grok_local", adapterConfig: { model: "grok-4.7" } });
     const app = await createApp();
     const res = await requestApp(app, baseUrl => request(baseUrl).patch(`/api/agents/${existing.id}`)
       .send({ adapterType: "paperclip_runner", replaceAdapterConfig: true,
-        adapterConfig: { ...(provider ? { provider } : {}), acpxAgent: "claude", model: "claude-opus-5-5" } }));
+        adapterConfig: { provider: "acpx", acpxAgent: "claude", model: "claude-opus-5-5" } }));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(mockAgentService.update.mock.calls.at(-1)?.[1]).toMatchObject({
       adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "claude", model: "claude-opus-5-5" },

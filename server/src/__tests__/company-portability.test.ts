@@ -6189,7 +6189,7 @@ describe("company portability", () => {
     expect(agentSvc.create).not.toHaveBeenCalled();
     instanceSettingsSvc.getExperimental.mockResolvedValue({ enableNativeRunner: false, enableOpenAiDot: true });
     await expect(portability.importBundle({ ...input, adapterOverrides: { claudecoder: { adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "copilot", model: "gpt-5.4" } } } }, "user-1"))
-      .rejects.toMatchObject({ status: 422, details: { code: "paperclip_runner_rollout_disabled" } });
+      .rejects.toMatchObject({ status: 422, details: { code: "agent_harness_removed" } });
     expect(agentSvc.create).not.toHaveBeenCalled();
     await portability.importBundle(input, "user-1");
     expect(agentSvc.create).toHaveBeenCalledWith("company-1", expect.objectContaining({ adapterType: "paperclip_runner", adapterConfig: expect.objectContaining({ provider: "openai_dot", allowUnmeteredProvider: true }) }), { createdByUserId: "user-1" });
@@ -6199,7 +6199,7 @@ describe("company portability", () => {
     expect(() => resolvePaperclipRunnerProviderProfile(createdConfig)).toThrow(expect.objectContaining({ code: "paperclip_runner_dot_config_invalid" }));
   });
 
-  it("imports qualified Grok without the experimental flag and preserves its model and effort", async () => {
+  it("rejects a retired native Grok Build import before creating an agent", async () => {
     const portability = companyPortabilityService({} as any);
     const exported = await portability.exportBundle("company-1", { include: { company: false, agents: true, projects: false, issues: false } });
     agentSvc.list.mockResolvedValue([]);
@@ -6207,17 +6207,14 @@ describe("company portability", () => {
     instanceSettingsSvc.getExperimental.mockResolvedValue({ enableNativeRunner: false });
     const adapterConfig = { provider: "acpx", acpxAgent: "grok", model: "grok-4.7", reasoningEffort: "high" };
 
-    await portability.importBundle({
+    await expect(portability.importBundle({
       source: { type: "inline", rootPath: exported.rootPath, files: exported.files },
       include: { company: false, agents: true, projects: false, issues: false },
       target: { mode: "existing_company", companyId: "company-1" },
       agents: "all", collisionStrategy: "rename",
       adapterOverrides: { claudecoder: { adapterType: "paperclip_runner", adapterConfig } },
-    }, "user-1");
-
-    expect(agentSvc.create).toHaveBeenCalledWith("company-1", expect.objectContaining({
-      adapterType: "paperclip_runner", adapterConfig: expect.objectContaining(adapterConfig),
-    }), { createdByUserId: "user-1" });
+    }, "user-1")).rejects.toMatchObject({ status: 422, details: { code: "agent_harness_removed" } });
+    expect(agentSvc.create).not.toHaveBeenCalled();
   });
 
   it("accepts native OpenCode imports without the experimental flag", async () => {

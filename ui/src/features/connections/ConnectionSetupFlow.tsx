@@ -2559,7 +2559,7 @@ function StandardConnectionSetupFlow({
               zapierSource
                 ? { name: "Zapier", logoUrl: zapierEntry?.branding.logoUrl ?? null, darkLogoUrl: zapierEntry?.branding.darkLogoUrl ?? null }
                 : entry && step !== "gallery"
-                  ? { name: aiMethod?.provider === "github" ? "GitHub Copilot" : entry.name, logoUrl: entry.branding.logoUrl, darkLogoUrl: entry.branding.darkLogoUrl ?? null }
+                  ? { name: entry.name, logoUrl: entry.branding.logoUrl, darkLogoUrl: entry.branding.darkLogoUrl ?? null }
                 : undefined
             }
             unverifiedHost={!entry && !zapierSource && step !== "gallery" ? endpointHost(linkUrl) : null}

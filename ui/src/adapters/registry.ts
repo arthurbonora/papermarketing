@@ -1,16 +1,12 @@
+import { isRemovedAgentHarness } from "@paperclipai/shared";
 import type { UIAdapterModule } from "./types";
 import { claudeLocalUIAdapter } from "./claude-local";
 import { codexLocalUIAdapter } from "./codex-local";
 import { paperclipRunnerUIAdapter } from "./paperclip-runner";
 import { cursorCloudUIAdapter } from "./cursor-cloud";
-import { cursorLocalUIAdapter } from "./cursor";
-import { geminiLocalUIAdapter } from "./gemini-local";
-import { grokLocalUIAdapter } from "./grok-local";
-import { kimiLocalUIAdapter } from "./kimi-local";
 import { hermesGatewayUIAdapter } from "./hermes-gateway";
 import { hermesLocalUIAdapter } from "./hermes-local";
 import { openCodeLocalUIAdapter } from "./opencode-local";
-import { piLocalUIAdapter } from "./pi-local";
 import { openClawGatewayUIAdapter } from "./openclaw-gateway";
 import { processUIAdapter } from "./process";
 import { httpUIAdapter } from "./http";
@@ -58,14 +54,9 @@ function registerBuiltInUIAdapters() {
     codexLocalUIAdapter,
     paperclipRunnerUIAdapter,
     cursorCloudUIAdapter,
-    geminiLocalUIAdapter,
-    grokLocalUIAdapter,
-    kimiLocalUIAdapter,
     hermesGatewayUIAdapter,
     hermesLocalUIAdapter,
     openCodeLocalUIAdapter,
-    piLocalUIAdapter,
-    cursorLocalUIAdapter,
     openClawGatewayUIAdapter,
     processUIAdapter,
     httpUIAdapter,
@@ -103,6 +94,7 @@ export function findUIAdapter(type: string): UIAdapterModule | null {
 registerBuiltInUIAdapters();
 
 export function getUIAdapter(type: string): UIAdapterModule {
+  if (isRemovedAgentHarness(type)) return processUIAdapter;
   const builtIn = adaptersByType.get(type);
 
   if (!builtIn) {
@@ -226,6 +218,7 @@ export function syncExternalAdapters(
   // ── Non-builtin externals ───────────────────────────────────────────────
 
   for (const { type, label } of serverAdapters) {
+    if (isRemovedAgentHarness(type)) continue;
     if (builtinTypes.has(type)) continue; // handled above
 
     const existing = adaptersByType.get(type);

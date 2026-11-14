@@ -1,8 +1,6 @@
 export * from "./configured-environment.js";
 export * from "./catalog/index.js";
 export { taskDocumentKeySchema } from "./protocol-actions/task-document-key-schema.js";
-export { CURSOR_DISTRIBUTION_PINS } from "./drivers/acpx/generated-profiles.js";
-export { KIMI_DISTRIBUTION_CLOSURE_SHA256 } from "./drivers/acpx/kimi-closure-pins.js";
 export * from "./contracts/control-plane-port.js";
 export * from "./contracts/completion-result.js";
 export * from "./contracts/codex.js";
@@ -77,8 +75,6 @@ export * from "./drivers/opencode/opencode-server-driver.js";
 export * from "./drivers/opencode/mcp-bridge.js";
 export * from "./drivers/acpx/qualified-profiles.js";
 export { parseAcpxCandidateAdmission, type AcpxCandidateAdmission } from "./drivers/acpx/candidate-admission.js";
-export { startAntigravityBrowserLogin, verifyAntigravityCredential, sanitizeAntigravityCredential } from "./drivers/acpx/antigravity-auth.js";
-export { AntigravityModelDiscoveryCleanupError, discoverAntigravityModels, type AntigravityModelCatalog } from "./drivers/acpx/antigravity-models.js";
 export { acpxRuntimeSessionDirectoryName, resolveAcpxRuntimeRoot } from "./drivers/acpx/recovery-identity.js";
 export {
   probeQualifiedAcpxEnvironment,
@@ -123,8 +119,7 @@ export * from "./semantic-tools/index.js";
 export * as acceptedCapabilitySemanticTools from "./semantic-tools/index.js";
 export * from "./compatibility.js";
 
-export { probeAcpxClaudeInstallation, probeAcpxGrokInstallation } from "./drivers/acpx/installation-integrity.js";
-export { probeAcpxPiInstallation, probeAcpxKimiInstallation } from "./drivers/acpx/profile-installation.js";
+export { probeAcpxClaudeInstallation } from "./drivers/acpx/installation-integrity.js";
 export { BUNDLED_REMOTE_RUNNER_IDENTITY_MISMATCH, PROVIDER_PACK_COMPATIBILITY, bundledRemoteProviderPackManifestPath, bundledRemoteRunnerBinary, bundledRemoteRunnerRelease } from "./live/bundled-remote-provider-pack.js";
 
 export { RunnerdMuseDriver, describeRunnerdMuseDriver, type RunnerdMuseDriverOptions } from "./drivers/muse/runnerd-muse-driver.js";

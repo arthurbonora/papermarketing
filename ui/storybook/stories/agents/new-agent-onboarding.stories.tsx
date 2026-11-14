@@ -41,14 +41,9 @@ export const CloudAdapters: Story = { args: { initialScreen: "adapter", initialN
 export const RunnerDisabled: Story = { args: { initialScreen: "adapter", initialName: "Darnold", nativeRunnerEnabled: false } };
 export const AdapterSelected: Story = { name: "03 · Adapter selected", args: { initialScreen: "adapter", initialName: "Darnold", initialAdapter: "opencode_local" } };
 export const OpenCodeConfiguration: Story = { name: "04 · OpenCode configuration", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "opencode_local" } };
-export const PiConfiguration: Story = { name: "05 · Pi configuration", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "pi_local" } };
 export const ClaudeConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "claude_local" } };
 export const CodexConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "codex_local" } };
-export const CursorConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "cursor" } };
 export const CursorCloudConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "cursor_cloud" } };
-export const GeminiConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "gemini_local" } };
-export const GrokBuildConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "grok_local" } };
-export const KimiConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "kimi_local" } };
 export const HermesConfiguration: Story = { args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "hermes_local" } };
 export const Confirmation: Story = { name: "06 · Confirmation", args: { initialScreen: "saved", initialName: "Darnold", initialAdapter: "opencode_local" } };
 export const NewAgentEntryPoint: Story = { name: "New agent entry point", args: { initialOpen: false } };
@@ -70,8 +65,8 @@ export const CodexRunnerSubscription: Story = { name: "Connect · Native Codex r
 export const ConnectYourAgent: Story = { name: "Connect · Choose subscription or API key", args: { initialScreen: "connect", initialName: "Darnold", initialAdapter: "claude_local" } };
 export const CodexConfirmation: Story = { name: "Confirmation · Native Codex runner", args: { initialScreen: "saved", initialName: "Darnold", initialAdapter: "paperclip_runner", initialRunnerProvider: "Codex (app server)" } };
 
-export const RuntimeTestSucceeded: Story = { name: "Test · Succeeded", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "pi_local", initialTestState: "pass" } };
-export const RuntimeTestFailed: Story = { name: "Test · Failed", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "pi_local", initialTestState: "fail", testOutcome: "fail" } };
+export const RuntimeTestSucceeded: Story = { name: "Test · Succeeded", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "opencode_local", initialTestState: "pass" } };
+export const RuntimeTestFailed: Story = { name: "Test · Failed", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "opencode_local", initialTestState: "fail", testOutcome: "fail" } };
 export const RuntimeTestRunning: Story = { name: "Test · Running", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "codex_local", initialTestState: "running", testDelayMs: 10000 } };
 export const RuntimeTestRetry: Story = { name: "Test · Retry after failure", args: { initialScreen: "runtime", initialName: "Darnold", initialAdapter: "claude_local", initialTestState: "fail", testOutcome: "pass" } };
 

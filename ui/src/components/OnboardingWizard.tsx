@@ -117,9 +117,6 @@ import {
 } from "../lib/onboarding-launch";
 import { buildNewAgentRuntimeConfig } from "../lib/new-agent-runtime-config";
 import { DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX } from "@paperclipai/adapter-codex-local";
-import { DEFAULT_CURSOR_LOCAL_MODEL } from "@paperclipai/adapter-cursor-local";
-import { DEFAULT_GEMINI_LOCAL_MODEL } from "@paperclipai/adapter-gemini-local";
-import { DEFAULT_KIMI_LOCAL_MODEL } from "@paperclipai/adapter-kimi-local";
 import { DEFAULT_OPENCODE_LOCAL_MODEL, isValidOpenCodeModelId } from "@paperclipai/adapter-opencode-local";
 import {
   canGoBackFromOnboardingStep,
@@ -162,7 +159,6 @@ type AdapterType = string;
 const ONBOARDING_ADAPTER_TYPES = new Set(["claude_local", "codex_local"]);
 
 function restoreOnboardingAdapterType(savedAdapterType: unknown, provider?: unknown, savedCopilot?: unknown): AdapterType {
-  if (savedAdapterType === "paperclip_runner" && provider === "pi") return "pi_local";
   if (savedAdapterType === "paperclip_runner" && provider === "opencode") return "opencode_local";
   if (savedAdapterType === "paperclip_runner" && savedCopilot !== true && (provider === undefined || provider === "codex")) return "codex_local";
   return typeof savedAdapterType === "string" && savedAdapterType !== "paperclip_runner"
@@ -1012,7 +1008,7 @@ function OnboardingWizardInner({
   // silently falls back to legacy on Windows, keeping the same onboarding UI.
   // When Windows native execution is qualified, enable it in
   // paperclipRunnerSupportsPlatform so Windows onboarding defaults to native too.
-  const needsRunnerDiscovery = ["codex_local", "claude_local", "opencode_local", "pi_local"].includes(adapterType) && runner === "auto";
+  const needsRunnerDiscovery = ["codex_local", "claude_local", "opencode_local"].includes(adapterType) && runner === "auto";
   const resolvedRunner = runner === "auto"
     ? runnerDiscovery.data?.find(item => item.type === adapterType)?.defaultRunner
     : runner;
@@ -1213,11 +1209,7 @@ function OnboardingWizardInner({
     isLocalAdapterCaps ||
     adapterType === "claude_local" ||
     adapterType === "codex_local" ||
-    adapterType === "gemini_local" ||
-    adapterType === "kimi_local" ||
-    adapterType === "opencode_local" ||
-    adapterType === "pi_local" ||
-    adapterType === "cursor";
+    adapterType === "opencode_local";
   // Build adapter grids dynamically from the UI registry + display metadata.
   // External/plugin adapters automatically appear with generic defaults, and
   // server-disabled types are filtered out.
@@ -1696,24 +1688,12 @@ function OnboardingWizardInner({
       setModel(DEFAULT_OPENCODE_LOCAL_MODEL);
       return;
     }
-    if (next === "gemini_local") {
-      setModel(DEFAULT_GEMINI_LOCAL_MODEL);
-      return;
-    }
-    if (next === "cursor") {
-      setModel(DEFAULT_CURSOR_LOCAL_MODEL);
-      return;
-    }
     setModel("");
   }, [adapterRegistryLoaded, recommendedAdapters, moreAdapters, adapterType]);
 
   const COMMAND_PLACEHOLDERS: Record<string, string> = {
     claude_local: "claude",
     codex_local: "codex",
-    gemini_local: "gemini",
-    kimi_local: "kimi",
-    pi_local: "pi",
-    cursor: "agent",
     opencode_local: "opencode",
   };
   const effectiveAdapterCommand =
@@ -2079,18 +2059,9 @@ function OnboardingWizardInner({
       ...defaultCreateValues,
       adapterType,
       runner,
-      ...(adapterType === "pi_local" ? { adapterSchemaValues: savedConfig } : {}),
       resolvedRunner: setupRunner ?? resolvedRunner,
       model:
-        adapterType === "gemini_local"
-          ? model || DEFAULT_GEMINI_LOCAL_MODEL
-          : adapterType === "kimi_local"
-            ? model || DEFAULT_KIMI_LOCAL_MODEL
-          : adapterType === "cursor"
-            ? model || DEFAULT_CURSOR_LOCAL_MODEL
-            : adapterType === "opencode_local"
-              ? model || DEFAULT_OPENCODE_LOCAL_MODEL
-              : model,
+        adapterType === "opencode_local" ? model || DEFAULT_OPENCODE_LOCAL_MODEL : model,
       command,
       args,
       url,
@@ -2319,7 +2290,7 @@ function OnboardingWizardInner({
           {
             adapterConfig: testedConfig,
             ...(savedAgent?.companyId === createdCompanyId ? { agentId: savedAgent.id } : {}),
-            ...(["codex_local", "claude_local", "opencode_local", "pi_local"].includes(adapterType) && testRunner !== "auto" ? { runner: testRunner } : {}),
+            ...(["codex_local", "claude_local", "opencode_local"].includes(adapterType) && testRunner !== "auto" ? { runner: testRunner } : {}),
             ...(managedBindingForStep() ? { aiConnection: managedBindingForStep() } : {}),
             environmentId,
           },
@@ -2565,7 +2536,7 @@ function OnboardingWizardInner({
         await agentsApi.update(createdAgentId, {
           adapterType,
           adapterConfig: hireAdapterConfig,
-          ...(["codex_local", "claude_local", "opencode_local", "pi_local"].includes(adapterType) && (runner !== "auto" || existingRunner) ? { runner: existingRunner ?? runner } : {}),
+          ...(["codex_local", "claude_local", "opencode_local"].includes(adapterType) && (runner !== "auto" || existingRunner) ? { runner: existingRunner ?? runner } : {}),
           runtimeConfig: buildSetupRuntimeConfig(true, existingAgent),
         }, createdCompanyId);
         if (!isCurrent()) return;
@@ -2617,7 +2588,7 @@ function OnboardingWizardInner({
         ...(restoredSetup?.companyId === createdCompanyId ? { reportsTo: restoredSetup.reportsTo } : {}),
         adapterType,
         adapterConfig: hireAdapterConfig,
-        ...(["codex_local", "claude_local", "opencode_local", "pi_local"].includes(adapterType) && runner !== "auto" ? { runner } : {}),
+        ...(["codex_local", "claude_local", "opencode_local"].includes(adapterType) && runner !== "auto" ? { runner } : {}),
         ...(shouldApplyStoredClaudeLogin ? { applyStoredClaudeLogin: true } : {}),
         // The server owns what the first agent is told now: this marker seeds
         // the chief-of-staff persona over the agent's entry instruction file.
@@ -3440,17 +3411,11 @@ function OnboardingWizardInner({
                         <div className="rounded-md border border-border/70 bg-muted/20 px-2.5 py-2 text-(length:--text-micro) space-y-1.5">
                           <p className="font-medium">Manual debug</p>
                           <p className="text-muted-foreground font-mono break-all">
-                            {adapterType === "cursor"
-                              ? `${effectiveAdapterCommand} -p --mode ask --output-format json \"Respond with hello.\"`
-                              : adapterType === "codex_local"
+                            {adapterType === "codex_local"
                               ? `${effectiveAdapterCommand} exec --json -`
-                              : adapterType === "gemini_local"
-                                ? `${effectiveAdapterCommand} --output-format json "Respond with hello."`
-                              : adapterType === "kimi_local"
-                                ? `${effectiveAdapterCommand} -p "Respond with hello." --output-format stream-json`
                               : adapterType === "opencode_local"
                                 ? `${effectiveAdapterCommand} run --format json "Respond with hello."`
-                              : `${effectiveAdapterCommand} --print - --output-format stream-json --verbose`}
+                                : `${effectiveAdapterCommand} --print - --output-format stream-json --verbose`}
                           </p>
                           <p className="text-muted-foreground">
                             Prompt:{" "}
@@ -3460,32 +3425,10 @@ function OnboardingWizardInner({
                             <p className="text-muted-foreground">
                               If authentication fails, connect your subscription in the browser above or use an API key.
                             </p>
-                          ) : adapterType === "cursor" ||
-                          adapterType === "gemini_local" ||
-                          adapterType === "kimi_local" ||
-                          adapterType === "opencode_local" ? (
+                          ) : adapterType === "opencode_local" ? (
                             <p className="text-muted-foreground">
-                              If auth fails, set{" "}
-                              <span className="font-mono">
-                                {adapterType === "cursor"
-                                  ? "CURSOR_API_KEY"
-                                  : adapterType === "gemini_local"
-                                    ? "GEMINI_API_KEY"
-                                    : adapterType === "kimi_local"
-                                      ? "KIMI_MODEL_NAME + KIMI_MODEL_API_KEY"
-                                    : "OPENAI_API_KEY"}
-                              </span>{" "}
-                              in env or run{" "}
-                              <span className="font-mono">
-                                {adapterType === "cursor"
-                                  ? "agent login"
-                                  : adapterType === "gemini_local"
-                                      ? "gemini auth"
-                                      : adapterType === "kimi_local"
-                                        ? "kimi login"
-                                      : "opencode auth login"}
-                              </span>
-                              .
+                              If auth fails, set <span className="font-mono">OPENAI_API_KEY</span> in env or run{" "}
+                              <span className="font-mono">opencode auth login</span>.
                             </p>
                           ) : (
                             <p className="text-muted-foreground">If login is required, connect the provider above and retry.</p>

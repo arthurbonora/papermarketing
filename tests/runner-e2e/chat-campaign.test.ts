@@ -2,9 +2,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { appendCampaignCleanupResolution, campaignCleanupResolved, campaignRevalidationIdentity, campaignSummary, completeCampaignAttempt, freezeChatCampaign, reserveCampaignAttempt, validateFrozenCampaign, type CampaignAttempt, campaignProductIdentityEligible, type CampaignPublishedIdentity, campaignAttemptProcessed } from "./chat-campaign.js";
-const root = new URL("../../", import.meta.url).pathname;
+const root = fileURLToPath(new URL("../../", import.meta.url));
 const base = "8373d7867963674ff960d2345d0d28086f799bc7";
 it("resolves only complete hash-bound later resource absence without rewriting the original failure", () => {
   const directory = mkdtempSync(path.join(tmpdir(), "chat-cleanup-resolution-"));

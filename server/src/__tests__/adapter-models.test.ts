@@ -2,12 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { models as claudeFallbackModels } from "@paperclipai/adapter-claude-local";
 import { resetClaudeModelsCacheForTests } from "@paperclipai/adapter-claude-local/server";
 import { models as codexFallbackModels } from "@paperclipai/adapter-codex-local";
-import { models as cursorFallbackModels } from "@paperclipai/adapter-cursor-local";
 import { models as opencodeFallbackModels } from "@paperclipai/adapter-opencode-local";
 import { resetOpenCodeModelsCacheForTests } from "@paperclipai/adapter-opencode-local/server";
 import { listAdapterModels, listServerAdapters, refreshAdapterModels, registerServerAdapter, unregisterServerAdapter } from "../adapters/index.js";
 import { resetCodexModelsCacheForTests } from "../adapters/codex-models.js";
-import { resetCursorModelsCacheForTests, setCursorModelsRunnerForTests } from "../adapters/cursor-models.js";
 
 vi.mock("acpx/runtime", () => ({
   createAcpRuntime: vi.fn(),
@@ -26,8 +24,6 @@ describe("adapter model listing", () => {
     delete process.env.PAPERCLIP_OPENCODE_COMMAND;
     resetClaudeModelsCacheForTests();
     resetCodexModelsCacheForTests();
-    resetCursorModelsCacheForTests();
-    setCursorModelsRunnerForTests(null);
     resetOpenCodeModelsCacheForTests();
     vi.restoreAllMocks();
   });
@@ -181,30 +177,7 @@ describe("adapter model listing", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["gemini_local", ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash-preview"]],
-    ["grok_local", ["grok-build", "grok-4.7", "grok-4.6", "grok-4.5"]],
-    ["kimi_local", ["kimi-code/kimi-for-coding", "kimi-code/k3", "kimi-code/k3-256k"]],
-  ])("lists current %s models without a provider login", async (adapter, expectedIds) => {
-    const models = await listAdapterModels(adapter as string);
-    expect(models.map((model) => model.id)).toEqual(expect.arrayContaining(expectedIds as string[]));
-    expect(new Set(models.map((model) => model.id)).size).toBe(models.length);
-    if (adapter === "gemini_local") {
-      expect(models.some((model) => model.id.startsWith("gemini-2.0-"))).toBe(false);
-    }
-    if (adapter === "kimi_local") {
-      expect(models).toContainEqual({ id: "kimi-code/kimi-for-coding", label: "K2.8 Preview" });
-    }
-  });
 
-  it("includes current Cursor fallbacks when runtime discovery is unavailable", async () => {
-    setCursorModelsRunnerForTests(() => ({ status: 1, stdout: "", stderr: "", hasError: true }));
-    const models = await listAdapterModels("cursor");
-    expect(models.map((model) => model.id)).toEqual(expect.arrayContaining([
-      "composer-2.5", "claude-opus-5-5", "claude-fable-5-1", "claude-sonnet-5",
-      "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "grok-4.7", "gemini-3.8-flash", "muse-spark-1.3",
-    ]));
-  });
 
   it("keeps general OpenAI API models out of the Codex catalog", async () => {
     process.env.OPENAI_API_KEY = "sk-test";
@@ -278,17 +251,6 @@ describe("adapter model listing", () => {
   });
 
 
-  it("returns cursor fallback models when CLI discovery is unavailable", async () => {
-    setCursorModelsRunnerForTests(() => ({
-      status: null,
-      stdout: "",
-      stderr: "",
-      hasError: true,
-    }));
-
-    const models = await listAdapterModels("cursor");
-    expect(models).toEqual(cursorFallbackModels);
-  });
 
   it("returns current provider-qualified OpenCode models when discovery is unavailable", async () => {
     process.env.PAPERCLIP_OPENCODE_COMMAND = "__paperclip_missing_opencode_command__";
@@ -299,24 +261,6 @@ describe("adapter model listing", () => {
     expect(models.map((model) => model.id)).toEqual(expect.arrayContaining(["openai/gpt-6-astra", "openai/gpt-6.1-sol", "openai/gpt-6-sol", "openai/gpt-6-luna", "openai/gpt-5.6-sol", "openai/gpt-5.6-terra", "openai/gpt-5.6-luna", "anthropic/claude-opus-5-5", "anthropic/claude-opus-5", "anthropic/claude-fable-5-1", "anthropic/claude-sonnet-5-5", "anthropic/claude-sonnet-5", "google/gemini-3.8-flash", "xai/grok-4.7"]));
   });
 
-  it("loads cursor models dynamically and caches them", async () => {
-    const runner = vi.fn(() => ({
-      status: 0,
-      stdout: "Available models: auto, composer-1.5, gpt-5.3-codex-high, sonnet-4.6",
-      stderr: "",
-      hasError: false,
-    }));
-    setCursorModelsRunnerForTests(runner);
-
-    const first = await listAdapterModels("cursor");
-    const second = await listAdapterModels("cursor");
-
-    expect(runner).toHaveBeenCalledTimes(1);
-    expect(first).toEqual(second);
-    expect(first.some((model) => model.id === "auto")).toBe(true);
-    expect(first.some((model) => model.id === "gpt-5.3-codex-high")).toBe(true);
-    expect(first.some((model) => model.id === "composer-1")).toBe(true);
-  });
 
   describe("PAPERCLIP_ADAPTER_MODELS declared models", () => {
     afterEach(() => {

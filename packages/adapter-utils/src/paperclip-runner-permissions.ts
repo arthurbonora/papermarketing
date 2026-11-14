@@ -166,21 +166,6 @@ export function resolvePaperclipRunnerPermissionMode(
     : capability.defaultMode;
 }
 
-/** Native session behavior is independent of tool permission policy. */
-export function resolvePaperclipRunnerCursorMode(
-  provider: unknown,
-  agent: unknown,
-  value: unknown,
-): "agent" | "plan" | "ask" | undefined {
-  if (provider !== "acpx" || agent !== "cursor") {
-    if (value !== undefined) throw new Error("acpxSessionMode is supported only for Cursor");
-    return undefined;
-  }
-  if (value === undefined) return "agent";
-  if (value === "agent" || value === "plan" || value === "ask") return value;
-  throw new Error("Cursor session mode must be agent, plan, or ask");
-}
-
 export function resolvePaperclipRunnerModel(
   provider: keyof typeof PAPERCLIP_RUNNER_DEFAULT_MODELS,
   value: unknown,
@@ -219,7 +204,7 @@ export function paperclipRunnerTransitionConfig(
     return { provider: "cursor_cloud", model: typeof previousModel === "string" ? previousModel.trim() : "", lifecycleMode: "per_turn" };
   }
   const previousProvider =
-    (["claude_local", "pi_local", "grok_local"].includes(previousAdapterType))
+    previousAdapterType === "claude_local"
       ? "acpx"
       : previousAdapterType === "opencode_local"
         ? "opencode"
@@ -232,15 +217,11 @@ export function paperclipRunnerTransitionConfig(
       : previousProvider;
   const converted: Record<string, unknown> = {
     provider,
-    model: provider === "acpx" && previousAdapterType === "grok_local"
-      ? typeof previousModel === "string" && previousModel.trim() && previousModel.trim() !== "grok-build" ? previousModel.trim() : "grok-4.7"
-      : provider === "acpx" && previousAdapterType === "pi_local"
-      ? typeof previousModel === "string" ? previousModel.trim() : ""
-      : resolvePaperclipRunnerModel(
+    model: resolvePaperclipRunnerModel(
       provider,
       provider === previousProvider ? previousModel : undefined,
     ),
-    ...(provider === "acpx" ? { acpxAgent: previousAdapterType === "grok_local" ? "grok" : previousAdapterType === "pi_local" ? "pi" : "claude" } : {}),
+    ...(provider === "acpx" ? { acpxAgent: "claude" } : {}),
     [PAPERCLIP_RUNNER_PERMISSION_CAPABILITIES[provider].configKey]:
       PAPERCLIP_RUNNER_PERMISSION_CAPABILITIES[provider].defaultMode,
   };
@@ -262,23 +243,5 @@ export function normalizeLegacyRunnerProvider(
 
 /** Qualification is a release property, never an operator-configurable bypass. */
 export const PAPERCLIP_RUNNER_ACPX_PROFILES = Object.freeze([
-  { value: "grok", label: "Grok Build", qualified: true, credentialEnvironment: ["XAI_API_KEY"] },
   { value: "claude", label: "Claude", qualified: true, credentialEnvironment: ["ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"] },
-  { value: "cursor", label: "Cursor", qualified: true, credentialEnvironment: ["CURSOR_API_KEY", "CURSOR_AUTH_TOKEN"] },
-  { value: "copilot", label: "GitHub Copilot", qualified: true, credentialEnvironment: ["COPILOT_GITHUB_TOKEN"] },
-  { value: "pi", label: "Pi", qualified: true, credentialEnvironment: ["OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"] },
-  { value: "kimi", label: "Kimi Code", qualified: true, credentialEnvironment: ["KIMI_API_KEY"] },
-  { value: "antigravity", label: "Google Antigravity", qualified: false, credentialEnvironment: ["GEMINI_API_KEY"] },
 ] as const);
-
-/** Exact Pi native thinking levels; aliases that silently clamp are not configuration. */
-export type PaperclipRunnerPiThinkingLevel = "off" | "low" | "high" | "max";
-export function resolvePaperclipRunnerPiThinkingLevel(provider: unknown, agent: unknown, value: unknown): PaperclipRunnerPiThinkingLevel | undefined {
-  if (provider !== "acpx" || agent !== "pi") {
-    if (value !== undefined) throw new Error("piThinkingLevel is supported only for Pi");
-    return undefined;
-  }
-  if (value === undefined) return "low";
-  if (value === "off" || value === "low" || value === "high" || value === "max") return value;
-  throw new Error("Pi thinking level must be off, low, high, or max");
-}

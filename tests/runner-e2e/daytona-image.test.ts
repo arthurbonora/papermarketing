@@ -30,7 +30,6 @@ describe("runner E2E Daytona image contract", () => {
     "src/drivers/acpx/pi-closure-pins.ts",
     "src/drivers/acpx/pi-node-pins.ts",
     "src/drivers/acpx/kimi-closure-pins.ts",
-    "src/providers/grok/launcher.cjs",
   ].map(input => `packages/paperclip-runner/${input}`);
 
   it("retains the ACPX release attestation inputs in the Docker context", async () => {
@@ -68,58 +67,9 @@ describe("runner E2E Daytona image contract", () => {
     }
   });
 
-  it("binds each Antigravity input consumed by the merged provider entrypoint builder", async () => {
-    const required = [
-      "packages/paperclip-runner/antigravity-distributions.json",
-      "packages/paperclip-runner/scripts/provision-antigravity.mjs",
-      "packages/paperclip-runner/scripts/antigravity-provisioner-layout.mjs",
-      "packages/paperclip-runner/scripts/materialize-antigravity-distribution.mjs",
-      "packages/paperclip-runner/scripts/patch-antigravity-runtime.mjs",
-      "packages/paperclip-runner/scripts/patch-antigravity-runtime.admission.py",
-    ];
-    const root = await mkdtemp(path.join(tmpdir(), "paperclip-daytona-builder-inputs-"));
-    const options = {
-      repositoryRoot: root,
-      inputPaths: DAYTONA_IMAGE_INPUT_PATHS.filter(input => required.includes(input)),
-      baseImages: [`example.test/base:1@sha256:${"a".repeat(64)}`],
-      frontendDigest: `sha256:${"c".repeat(64)}`,
-    } as const;
-    try {
-      for (const input of required) {
-        expect(DAYTONA_IMAGE_INPUT_PATHS).toContain(input);
-        await mkdir(path.dirname(path.join(root, input)), { recursive: true });
-        await writeFile(path.join(root, input), await readFile(path.join(repositoryRoot, input)));
-      }
-      const baseline = await computeDaytonaImageContentId(options);
-      for (const input of required) {
-        const original = await readFile(path.join(root, input));
-        await writeFile(path.join(root, input), Buffer.concat([original, Buffer.from("\nchanged-build-input\n")]));
-        expect(await computeDaytonaImageContentId(options)).not.toBe(baseline);
-        await rm(path.join(root, input));
-        await expect(computeDaytonaImageContentId(options)).rejects.toThrow();
-        await writeFile(path.join(root, input), original);
-        expect(await computeDaytonaImageContentId(options)).toBe(baseline);
-      }
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  it("keeps the qualified native Grok binary separate from the legacy command", async () => {
-    const [dockerfile, packBuilder, runnerPackage] = await Promise.all([
-      readFile(path.join(repositoryRoot, "docker/daytona-runner/Dockerfile"), "utf8"),
-      readFile(path.join(repositoryRoot, "packages/paperclip-runner/scripts/build-provider-pack.mjs"), "utf8"),
-      readFile(path.join(repositoryRoot, "packages/paperclip-runner/package.json"), "utf8"),
-    ]);
-    expect(dockerfile).toMatch(/@xai-official\/grok@\d+\.\d+\.\d+/);
-    expect(dockerfile).not.toMatch(/for cli in[^;]*\bgrok\b/);
-    expect(packBuilder).not.toMatch(/writePortable\w+Shim\("grok"/);
-    expect(JSON.parse(runnerPackage).dependencies).not.toHaveProperty("@paperclipai/grok-acp");
-    expect(packBuilder).toContain('path: "dist/providers/grok/launcher.cjs"');
-    expect(dockerfile).toContain("scripts/provision-grok.mjs");
-    expect(dockerfile).toContain("/opt/paperclip/providers/grok/1.0.13/grok");
-    expect(DAYTONA_IMAGE_INPUT_PATHS).toContain("packages/paperclip-runner/scripts/provision-grok.mjs");
-    expect(DAYTONA_IMAGE_INPUT_PATHS).not.toContain("packages/grok-acp/package.json");
+  it("excludes removed harness binaries from the image", async () => {
+    const dockerfile = await readFile(path.join(repositoryRoot, "docker/daytona-runner/Dockerfile"), "utf8");
+    expect(dockerfile).not.toMatch(/provision-grok|@xai-official\/grok|@google\/gemini-cli|@moonshot-ai\/kimi-code|cursor-agent/);
   });
 
   it("requires every build, including documented local recipes, to pass the lockfile digest", async () => {
@@ -139,7 +89,7 @@ describe("runner E2E Daytona image contract", () => {
       /^grep -Eqx '\[0-9a-f\]\{64\}';\s+then\s+echo 'PAPERCLIP_RUNNER_LOCK_SHA256 build arg must be the SHA-256 of pnpm-lock\.yaml[^']*' >&2;\s+exit 1;\s+fi/,
     );
     for (const readme of [e2eReadme, imageReadme]) {
-      const recipes = [...readme.matchAll(/```(?:bash|sh)\n([\s\S]*?)```/g)]
+      const recipes = [...readme.matchAll(/```(?:bash|sh)\r?\n([\s\S]*?)```/g)]
         .map(match => match[1]!)
         .filter(block => block.includes("--file docker/daytona-runner/Dockerfile"));
       expect(recipes.length).toBeGreaterThan(0);
@@ -172,7 +122,7 @@ describe("runner E2E Daytona image contract", () => {
       ),
     ]);
     const normalizedDockerfile = dockerfile.replace(/\\\r?\n\s*/g, " ");
-    const daytonaImageJob = workflow.match(/^  daytona_image:\n[\s\S]*?(?=^  \w+:)/m)?.[0];
+    const daytonaImageJob = workflow.match(/^  daytona_image:\r?\n[\s\S]*?(?=^  \w+:)/m)?.[0];
     expect(daytonaImageJob).toBeDefined();
     expect(dockerfile).toContain("--bin paperclip-runnerd");
     expect(dockerfile).toContain("build-provider-pack.mjs /provider-pack");
@@ -327,7 +277,7 @@ describe("runner E2E Daytona image contract", () => {
     const providerRevisionArg = dockerfile.indexOf(
       "ARG PAPERCLIP_RUNNER_SOURCE_REVISION",
     );
-    const cliInstall = dockerfile.indexOf("npm install -g");
+    const cliInstall = dockerfile.indexOf("pip install --no-cache-dir hermes-agent");
     const finalMetadataArgs = dockerfile.lastIndexOf(
       "ARG PAPERCLIP_RUNNER_CONTENT_ID",
     );
@@ -350,24 +300,10 @@ describe("runner E2E Daytona image contract", () => {
       "patches",
       "packages/paperclip-eval-kernel/src",
       "packages/paperclip-runner/package.json",
-      "packages/paperclip-runner/scripts/candidate-provider-pack.mjs",
-      "packages/paperclip-runner/scripts/build-copilot-distribution.mjs",
-      "packages/paperclip-runner/scripts/copilot-inner-distribution.mjs",
       "packages/paperclip-runner/scripts/acpx-release-attestations.mjs",
       "packages/paperclip-runner/scripts/generate-acpx-profiles.mjs",
-      "packages/paperclip-runner/scripts/materialize-copilot-binary.mjs",
-      "packages/paperclip-runner/scripts/install-copilot-assets.mjs",
-      "packages/paperclip-runner/scripts/materialize-cursor-distribution.mjs",
-      "packages/paperclip-runner/scripts/cursor-runtime-patch.mjs",
       "packages/paperclip-runner/cursor-distributions.json",
       "packages/paperclip-runner/runner/crates",
-      "packages/paperclip-runner/scripts/materialize-pi-distribution.mjs",
-      "packages/paperclip-runner/scripts/pi-distribution",
-      "packages/paperclip-runner/scripts/materialize-kimi-distribution.mjs",
-      "packages/paperclip-runner/scripts/patch-kimi-runtime.mjs",
-      "packages/paperclip-runner/scripts/kimi-instructions-runtime.mjs",
-      "packages/paperclip-runner/scripts/provision-kimi.mjs",
-      "packages/paperclip-runner/scripts/kimi-distribution",
       "packages/paperclip-runner/src",
     ]) {
       expect(DAYTONA_IMAGE_INPUT_PATHS).toContain(requiredPath);
@@ -509,14 +445,8 @@ describe("runner E2E Daytona image contract", () => {
   });
 
   it.each([
-    "packages/paperclip-runner/scripts/cursor-runtime-patch.mjs",
     "packages/paperclip-runner/scripts/provider-pack-executable-shims.mjs",
-    "packages/paperclip-runner/scripts/materialize-kimi-distribution.mjs",
-    "packages/paperclip-runner/scripts/patch-kimi-runtime.mjs",
-    "packages/paperclip-runner/scripts/kimi-instructions-runtime.mjs",
-    "packages/paperclip-runner/scripts/provision-kimi.mjs",
-    "packages/paperclip-runner/scripts/kimi-distribution/package.json",
-    "packages/paperclip-runner/scripts/kimi-distribution/package-lock.json",
+    "packages/paperclip-runner/scripts/build-provider-pack.mjs",
   ])("invalidates the image when %s changes", async (patchPath) => {
     const root = await mkdtemp(path.join(tmpdir(), "paperclip-provider-image-id-"));
     expect(DAYTONA_IMAGE_INPUT_PATHS.some(inputPath => patchPath === inputPath || patchPath.startsWith(`${inputPath}/`))).toBe(true);

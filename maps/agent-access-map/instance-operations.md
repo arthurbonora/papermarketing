@@ -244,25 +244,14 @@ Capability ID: `instance-operations/runtime-setup`.
 
 Review: `baseline`.
 
-API: `not-applicable` — these commands provision an operator-owned published package and local filesystem cache. They have no company-domain REST equivalent and deliberately bypass instance config, environment, and credential initialization.
+API: `not-applicable`. The removed runtime setup command has no application endpoint.
 
-Agent access: `operator-only` — explicit host/package provisioning through the runtime CLI, with the installed release’s verified assets. A company agent grant does not authorize another host’s installation or private operator cache.
+Agent access: `operator-only`. Existing agent records can be read and their harness can be changed by an authorized operator.
 
-Policy: Host setup verifies public pinned assets without model calls and requires the published server package layout/identity. Import requires a trusted manifest digest, exact installed source/profile identity, Linux x64 companion inventory/pack/ELF integrity, and a private operator-owned cache. Import performs no downloads or executable probes. A Pi companion does not enable remote Cursor or qualify credentials.
+Policy: Existing agent records remain company scoped. Reconfiguration requires access to the agent.
 
-Evidence: `source-only` — reviewed at `9ef434fe79c57d976b8b03b14c5242db270b8320`. [Runtime CLI](../../cli/src/commands/runtime.ts), [instance-config bypass](../../cli/src/index.ts), [Pi provisioning](../../packages/paperclip-runner/scripts/provision-pi.mjs), [Cursor provisioning](../../packages/paperclip-runner/scripts/provision-cursor.mjs), and [companion importer](../../server/src/services/native-runtime/remote-pi-companion.ts).
+Evidence: `source-only`. [Configuration guards](../../server/src/services/agent-runner-selection.ts).
 
-Verification: `not-run` — Inspect setup identity/path and repeat reuse on an owned disposable published installation. Verify a matching trusted companion import and reject altered/cross-release/linked inventory while preserving unrelated files. Check no instance credentials are loaded and no model is called. Qualify actual adapter/account task execution separately.
+Verification: `not-run`. Check that selecting a removed harness returns the permanent removal error and that reading the old record still works.
 
-Gaps: Source-checkout setup, different platforms, remote Cursor, provider execution, and published-package acceptance remain separate scopes. Local fixture materialization does not establish remote model readiness.
-
-Antigravity addition (2026-10-28): `paperclipai runtime setup antigravity` stages
-the verified official and patched two-executable closures on macOS ARM64. The
-operator-only authority above is unchanged. The native profile remains pending
-at API, driver, sidecar and Rust admission; a company grant cannot enable it.
-Google AI API-key binding is distinct from Workspace OAuth. Evidence remains
-`source-only` for agent access: [setup](../../cli/src/commands/runtime.ts),
-[provisioner](../../packages/paperclip-runner/scripts/provision-antigravity.mjs),
-and [gate regressions](../../packages/paperclip-runner/src/drivers/acpx/antigravity-models.test.ts).
-Credential-free public-layout provisioning and controlled native tests do not
-qualify a company agent task or authenticated connection/revocation.
+Gaps: Runtime setup for retired harnesses is unavailable.

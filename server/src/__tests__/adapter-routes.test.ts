@@ -23,7 +23,6 @@ const mockPluginLoader = vi.hoisted(() => ({
   getOrExtractUiParserSource: vi.fn(),
   reloadExternalAdapter: vi.fn(),
 }));
-const mockCandidateAdmission = vi.hoisted(() => vi.fn());
 
 const overridingConfigSchemaAdapter: ServerAdapterModule = {
   type: "claude_local",
@@ -55,10 +54,6 @@ let adapterRoutes: typeof import("../routes/adapters.js").adapterRoutes;
 let errorHandler: typeof import("../middleware/index.js").errorHandler;
 
 function registerModuleMocks() {
-  vi.doMock("../services/native-runtime/acpx-qualification.js", async () => ({
-    ...await vi.importActual("../services/native-runtime/acpx-qualification.js"),
-    resolveAntigravityCandidateAdmission: mockCandidateAdmission,
-  }));
   vi.doMock("node:child_process", async () => vi.importActual("node:child_process"));
   vi.doMock("../adapters/plugin-loader.js", () => mockPluginLoader);
   vi.doMock("../services/adapter-plugin-store.js", () => mockAdapterPluginStore);
@@ -153,55 +148,8 @@ describe("adapter routes", () => {
       expect(typeof adapter.capabilities.supportsAcp).toBe("boolean");
     }
   });
-  it("projects only the enabled company-local candidate and exact model", async () => {
-    mockCandidateAdmission.mockImplementation(({ companyId }) => companyId === "company-1"
-      ? { agent: "antigravity", model: "exact-google-model", profileDigest: "private-profile", nativeClosureDigest: "private-closure" } : undefined);
-    const local = createApp({}, { resolveRunnerTarget: async () => ({ driver: "local" }) });
-    const scoped = await request(local).get("/api/adapters?companyId=company-1");
-    expect(scoped.status).toBe(200);
-    expect(scoped.body.find((adapter: any) => adapter.type === "paperclip_runner").candidateHarnesses)
-      .toEqual([{ agent: "antigravity", model: "exact-google-model" }]);
-    expect(JSON.stringify(scoped.body)).not.toContain("private-profile");
-    expect(JSON.stringify(scoped.body)).not.toContain("private-closure");
-    for (const query of ["", "?companyId=other-company"]) {
-      const response = await request(local).get(`/api/adapters${query}`);
-      expect(response.status).toBe(200);
-      expect(response.body.every((adapter: any) => adapter.candidateHarnesses === undefined)).toBe(true);
-    }
-    const remote = await request(createApp({}, { resolveRunnerTarget: async () => ({ driver: "ssh" }) }))
-      .get("/api/adapters?companyId=company-1&environmentId=remote");
-    expect(remote.body.every((adapter: any) => adapter.candidateHarnesses === undefined)).toBe(true);
-    mockAdapterPluginStore.getDisabledAdapterTypes.mockReturnValue(["paperclip_runner"]);
-    const disabled = await request(local).get("/api/adapters?companyId=company-1");
-    expect(disabled.body.find((adapter: any) => adapter.type === "paperclip_runner").candidateHarnesses).toBeUndefined();
-  });
 
-  it("keeps ordinary adapter discovery available after candidate startup authority expires", async () => {
-    mockCandidateAdmission.mockImplementation(() => { throw new Error("ACPX candidate startup authorization expired"); });
-    const app = createApp({}, { resolveRunnerTarget: async () => ({ driver: "local" }) });
-    const response = await request(app).get("/api/adapters?companyId=company-1");
-    expect(response.status).toBe(200);
-    expect(response.body.some((adapter: any) => adapter.type === "claude_local")).toBe(true);
-    expect(response.body.every((adapter: any) => adapter.candidateHarnesses === undefined)).toBe(true);
-  });
 
-  it("warns once without startup payloads for malformed candidate authority, while expiry stays quiet", async () => {
-    const { logger } = await import("../middleware/logger.js");
-    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-    const app = createApp({}, { resolveRunnerTarget: async () => ({ driver: "local" }) });
-    try {
-      mockCandidateAdmission.mockImplementation(() => { throw new Error("ACPX candidate startup authorization expired"); });
-      expect((await request(app).get("/api/adapters?companyId=company-1")).status).toBe(200);
-      expect(warn).not.toHaveBeenCalled();
-      mockCandidateAdmission.mockImplementation(() => { throw new Error("Invalid Antigravity candidate admission"); });
-      for (let index = 0; index < 2; index++) {
-        const response = await request(app).get("/api/adapters?companyId=company-1");
-        expect(response.status).toBe(200);
-        expect(response.body.every((adapter: any) => adapter.candidateHarnesses === undefined)).toBe(true);
-      }
-      expect(warn).toHaveBeenCalledExactlyOnceWith({ code: "ANTIGRAVITY_CANDIDATE_ADMISSION_INVALID" }, "Invalid Google Antigravity preview authorization");
-    } finally { warn.mockRestore(); }
-  });
 
   it("keeps the shared runner implementation available for Codex without the experimental flag", async () => {
     const disabledResponse = await request(createApp()).get("/api/adapters");
@@ -338,58 +286,11 @@ describe("adapter routes", () => {
       supportsAcp: false,
     });
 
-    // cursor adapter should require materialized runtime skills
-    const cursorAdapter = res.body.find((a: any) => a.type === "cursor");
-    expect(cursorAdapter).toBeDefined();
-    expect(cursorAdapter.capabilities.requiresMaterializedRuntimeSkills).toBe(true);
-    expect(cursorAdapter.capabilities.supportsInstructionsBundle).toBe(true);
-    expect(cursorAdapter.capabilities.supportsAcp).toBe(false);
-
-    const geminiAdapter = res.body.find((a: any) => a.type === "gemini_local");
-    expect(geminiAdapter).toBeDefined();
-    expect(geminiAdapter.capabilities).toMatchObject({
-      supportsInstructionsBundle: true,
-      supportsSkills: true,
-      supportsLocalAgentJwt: true,
-      requiresMaterializedRuntimeSkills: true,
-      supportsAcp: true,
-    });
-    expect(geminiAdapter.acp).toMatchObject({
-      agentId: "gemini",
-      skillsMode: "ephemeral",
-      prerequisites: {
-        nodeRange: ">=24.11.0",
-        packages: ["@google/gemini-cli"],
-      },
-    });
-
-    const grokAdapter = res.body.find((a: any) => a.type === "grok_local");
-    expect(grokAdapter).toBeDefined();
-    expect(grokAdapter.capabilities).toMatchObject({
-      supportsInstructionsBundle: true,
-      supportsSkills: true,
-      supportsLocalAgentJwt: true,
-      requiresMaterializedRuntimeSkills: true,
-      supportsAcp: false,
-    });
-
-    const kimiAdapter = res.body.find((a: any) => a.type === "kimi_local");
-    expect(kimiAdapter).toBeDefined();
-    expect(kimiAdapter.capabilities).toMatchObject({
-      supportsInstructionsBundle: true,
-      supportsSkills: true,
-      supportsLocalAgentJwt: true,
-      requiresMaterializedRuntimeSkills: true,
-      supportsAcp: true,
-    });
-    expect(kimiAdapter.acp).toMatchObject({
-      agentId: "kimi",
-      skillsMode: "ephemeral",
-      prerequisites: {
-        nodeRange: ">=20.0.0",
-        packages: ["@moonshot-ai/kimi-code"],
-      },
-    });
+    const types = res.body.map((adapter: { type: string }) => adapter.type);
+    expect(types).toContain("cursor_cloud");
+    for (const type of ["cursor", "gemini_local", "grok_local", "kimi_local", "pi_local"]) {
+      expect(types).not.toContain(type);
+    }
 
     const hermesLocal = res.body.find((a: any) => a.type === "hermes_local");
     expect(hermesLocal).toBeDefined();
@@ -513,12 +414,7 @@ describe("adapter routes", () => {
       default: "claude",
       meta: { visibleWhen: { key: "provider", value: "acpx" } },
       options: [
-        { value: "grok", label: "Grok Build" },
         { value: "claude", label: "Claude" },
-        { value: "cursor", label: "Cursor" },
-        { value: "copilot", label: "GitHub Copilot" },
-        { value: "pi", label: "Pi" },
-        { value: "kimi", label: "Kimi Code" },
       ],
     });
     expect(JSON.stringify(res.body)).not.toContain("Codex via ACPX");
@@ -587,34 +483,6 @@ describe("adapter routes", () => {
     );
   });
 
-  it("serves the built-in gemini_local ACP engine config schema", async () => {
-    const app = createApp();
-
-    const res = await request(app).get("/api/adapters/gemini_local/config-schema");
-
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.fields).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          key: "engine",
-          default: "auto",
-          options: expect.arrayContaining([
-            expect.objectContaining({ value: "auto" }),
-            expect.objectContaining({ value: "cli" }),
-            expect.objectContaining({ value: "acp" }),
-          ]),
-        }),
-        expect.objectContaining({
-          key: "agentCommand",
-          meta: { visibleWhen: { key: "engine", values: ["acp"] } },
-        }),
-        expect.objectContaining({
-          key: "warmHandleIdleMs",
-          default: 0,
-        }),
-      ]),
-    );
-  });
 
   it("serves built-in Hermes config schemas", async () => {
     const app = createApp();

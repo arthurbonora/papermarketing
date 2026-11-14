@@ -17,6 +17,7 @@ assert.equal(manifest.acpxVersion, pkg.dependencies.acpx);
 const check = process.argv.includes("--check");
 const writes = new Map();
 for (const agent of Object.keys(manifest.profiles)) {
+  if (agent !== "claude" && agent !== "codex") continue; // Historical wire identities are frozen.
   const attestation = await acpxReleaseAttestation(agent, fileURLToPath(root));
   if (!attestation) continue;
   // A release declaration may carry its own copy of the digest; keep it in step.
@@ -121,7 +122,7 @@ for (const [path, content] of [
 ]) {
   const url = new URL(path, root);
   if (check) {
-    assert.equal(await readFile(url, "utf8"), content, `Stale ACPX profiles: ${fileURLToPath(url)}; run generate:acpx-profiles`);
+    assert.equal((await readFile(url, "utf8")).replace(/\r\n/g, "\n"), content, `Stale ACPX profiles: ${fileURLToPath(url)}; run generate:acpx-profiles`);
   } else await writeFile(url, content);
 }
 console.log("TypeScript/Rust ACPX profiles match the release manifest.");

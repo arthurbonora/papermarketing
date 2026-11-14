@@ -36,7 +36,7 @@ describe("adapter display registry", () => {
     expect(getAdapterLabel("codex_local")).toBe("Codex");
     expect(getAdapterLabel("claude_local")).toBe("Claude Code");
     expect(getAdapterLabel("acpx_local")).toBe("ACPX (retired)");
-    expect(getAdapterLabel("cursor")).toBe("Cursor");
+    expect(getAdapterLabel("cursor")).toBe("Cursor CLI");
     expect(getAdapterLabel("gemini_local")).toBe("Gemini CLI");
     expect(getAdapterLabel("grok_local")).toBe("Grok Build");
     expect(getAdapterLabel("kimi_local")).toBe("Kimi Code");
@@ -50,7 +50,7 @@ describe("adapter display registry", () => {
       codex_local: "Codex",
       claude_local: "Claude Code",
       acpx_local: "ACPX (retired)",
-      cursor: "Cursor",
+      cursor: "Cursor CLI",
       gemini_local: "Gemini CLI",
       grok_local: "Grok Build",
       kimi_local: "Kimi Code",
