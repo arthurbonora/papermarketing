@@ -775,13 +775,13 @@ describe("New agent setup", () => {
       id: "saved-agent",
       companyId: "company-1",
       name: "Atlas",
-      adapterType: "pi_local",
+      adapterType: "opencode_local",
       adapterConfig: { model: "openrouter/anthropic/claude-sonnet-4.6" },
       status: "idle",
     });
     state.params = new URLSearchParams({
       name: "Atlas",
-      adapterType: "pi_local",
+      adapterType: "opencode_local",
       createdAgentId: "saved-agent",
     });
     await renderCurrentParams();
@@ -796,11 +796,11 @@ describe("New agent setup", () => {
   });
   it.each(["preparing", "verifying"] as const)("waits for actual %s completion and hands the current agent to the task composer", async phase => {
     const id = "00000000-0000-4000-8000-000000000094";
-    const draft = { id, companyId: "company-1", name: "Atlas", role: "general", adapterType: "pi_local",
+    const draft = { id, companyId: "company-1", name: "Atlas", role: "general", adapterType: "opencode_local",
       adapterConfig: { model: "openrouter/anthropic/claude-sonnet-4.6" }, runtimeConfig: {},
       lifecycleState: "paused", lifecycleVersion: 1, pauseReason: "setup" as string | null, status: "paused" };
     let serverAgent = draft;
-    state.params = new URLSearchParams({ name: "Atlas", adapterType: "pi_local", setupAgentId: id });
+    state.params = new URLSearchParams({ name: "Atlas", adapterType: "opencode_local", setupAgentId: id });
     api.get.mockImplementation(async () => serverAgent);
     // Keep the roster stale to reproduce the composer warning after activation.
     api.list.mockResolvedValue([draft]);
@@ -828,9 +828,9 @@ describe("New agent setup", () => {
   });
   it.each(["manual", "import"])("keeps a genuinely %s-paused agent unavailable for first-task assignment", async pauseReason => {
     const id = "00000000-0000-4000-8000-000000000095";
-    api.get.mockResolvedValue({ id, companyId: "company-1", name: "Atlas", adapterType: "pi_local", adapterConfig: {}, runtimeConfig: {},
+    api.get.mockResolvedValue({ id, companyId: "company-1", name: "Atlas", adapterType: "opencode_local", adapterConfig: {}, runtimeConfig: {},
       lifecycleState: "paused", lifecycleVersion: 3, pauseReason, status: "paused" });
-    state.params = new URLSearchParams({ name: "Atlas", adapterType: "pi_local", createdAgentId: id });
+    state.params = new URLSearchParams({ name: "Atlas", adapterType: "opencode_local", createdAgentId: id });
     await renderCurrentParams();
     expect(container.textContent).toContain("Your agent is paused");
     expect(container.textContent).not.toContain("Your agent is ready");
@@ -1122,8 +1122,8 @@ describe("New agent setup", () => {
   });
   it("does not rotate a working provider credential when a new key fails its test", async () => {
     secrets.listMyUserSecrets.mockResolvedValue([{ definition: { id: "existing-definition", key: "OPENROUTER_API_KEY" }, secret: { id: "working-secret" } }]);
-    await render();
-    await fill("Model", "openrouter/anthropic/claude-sonnet-4.6");
+    await render("hermes_local");
+    await fill("Model", "anthropic/claude-sonnet-4.6");
     await fill("OPENROUTER_API_KEY", "invalid-replacement");
     api.testEnvironment.mockResolvedValueOnce({ ...pass, status: "fail" });
     await click("Run test");
@@ -1134,16 +1134,16 @@ describe("New agent setup", () => {
     expect(api.hire).not.toHaveBeenCalled();
   });
   it("does not store a key when leaving after a successful test", async () => {
-    await render();
-    await fill("Model", "openrouter/anthropic/claude-sonnet-4.6");
+    await render("hermes_local");
+    await fill("Model", "anthropic/claude-sonnet-4.6");
     await fill("OPENROUTER_API_KEY", "abandoned-key");
     await click("Run test");
     await act(async () => root.render(null));
     expect(secrets.createUserSecretDefinition).not.toHaveBeenCalled();
   });
   it("removes the staged credential when saving setup fails", async () => {
-    await render();
-    await fill("Model", "openrouter/anthropic/claude-sonnet-4.6");
+    await render("hermes_local");
+    await fill("Model", "anthropic/claude-sonnet-4.6");
     await fill("OPENROUTER_API_KEY", "new-key");
     api.update.mockRejectedValueOnce(new ApiError("Creation rejected", 422, null));
     await click("Finish setup");
@@ -1151,8 +1151,8 @@ describe("New agent setup", () => {
     expect(container.textContent).toContain("Creation rejected");
   });
   it("preserves the creation error when credential cleanup also fails", async () => {
-    await render();
-    await fill("Model", "openrouter/anthropic/claude-sonnet-4.6");
+    await render("hermes_local");
+    await fill("Model", "anthropic/claude-sonnet-4.6");
     await fill("OPENROUTER_API_KEY", "new-key");
     api.update.mockRejectedValueOnce(new ApiError("Agent quota exceeded", 422, null));
     secrets.remove.mockRejectedValueOnce(new Error("Cleanup unavailable"));
@@ -1161,8 +1161,8 @@ describe("New agent setup", () => {
     expect(container.textContent).toContain("Could not remove an unused setup credential");
   });
   it("retains the credential on the setup record when the hire response is lost", async () => {
-    await render();
-    await fill("Model", "openrouter/anthropic/claude-sonnet-4.6");
+    await render("hermes_local");
+    await fill("Model", "anthropic/claude-sonnet-4.6");
     await fill("OPENROUTER_API_KEY", "new-key");
     api.hire.mockRejectedValueOnce(new Error("Response lost"));
     await click("Finish setup");
