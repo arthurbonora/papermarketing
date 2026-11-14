@@ -9,7 +9,7 @@ WORKDIR /workspace/packages/paperclip-runner/runner
 COPY packages/paperclip-runner/runner/Cargo.toml packages/paperclip-runner/runner/Cargo.lock ./
 COPY packages/paperclip-runner/runner/crates ./crates
 COPY packages/paperclip-runner/protocol ../protocol
-COPY packages/paperclip-runner/acpx-profiles.json ../
+COPY packages/paperclip-runner/acpx-profiles.json packages/paperclip-runner/antigravity-distributions.json ../
 # Retain only the finished executable in this layer. Keeping Cargo's target and
 # download trees makes BuildKit run out of disk while exporting the final image
 # and the default-branch build cache. A separate dependency-precompile layer

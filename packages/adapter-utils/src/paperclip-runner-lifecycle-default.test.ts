@@ -12,10 +12,8 @@ describe("native runner lifecycle default on configuration writes", () => {
     }
   });
 
-  it("keeps an explicit per_turn for other native providers", () => {
-    for (const config of [{ provider: "acpx", acpxAgent: "grok" }, { provider: "acpx", acpxAgent: "pi" }, { provider: "cursor_cloud" }]) {
-      expect(normalize(config)).toMatchObject({ lifecycleMode: "per_turn" });
-    }
+  it("keeps an explicit per_turn for Cursor Cloud", () => {
+    expect(normalize({ provider: "cursor_cloud" })).toMatchObject({ lifecycleMode: "per_turn" });
   });
 
   it("preserves an explicit choice", () => {
@@ -28,7 +26,6 @@ describe("native runner lifecycle default on configuration writes", () => {
     expect(paperclipRunnerTransitionConfig("codex_local", "gpt-5")).not.toHaveProperty("lifecycleMode");
     expect(paperclipRunnerTransitionConfig("opencode_local", "openrouter/m")).not.toHaveProperty("lifecycleMode");
     expect(paperclipRunnerTransitionConfig("claude_local", undefined)).not.toHaveProperty("lifecycleMode");
-    expect(paperclipRunnerTransitionConfig("grok_local", undefined)).toMatchObject({ lifecycleMode: "per_turn" });
     expect(paperclipRunnerTransitionConfig("cursor_cloud", "m")).toMatchObject({ lifecycleMode: "per_turn" });
   });
 });

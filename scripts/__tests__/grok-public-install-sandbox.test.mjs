@@ -215,8 +215,6 @@ test('only an offline runtime probe can execute its verified scratch snapshot', 
   assert.deepEqual(values(args, '--security-opt'), ['no-new-privileges']);
   assert.throws(() => grokConsumerDockerArgs({ ...paths, command, download: true, temporaryExecutable: true }), /offline/);
   assert.throws(() => grokConsumerDockerArgs({ ...paths, command, temporaryExecutable: 'true' }), /offline/);
-  const source = readFileSync(new URL('../verify-grok-npm-install.mjs', import.meta.url), 'utf8');
-  assert.ok(source.includes("temporarySizeMiB: 2048, temporaryExecutable: true"));
 });
 
 test('the separately provisioned executable is exposed read-only to the offline probe', () => {

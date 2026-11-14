@@ -2458,34 +2458,21 @@ describe("IssueProperties", () => {
     act(() => root.unmount());
   });
 
-  it.each([
-    { name: "Copilot", acpxAgent: "copilot", provider: "github", method: "api_key", model: "gpt-5.6-luna", label: "Copilot Luna" },
-    { name: "Antigravity", acpxAgent: "antigravity", provider: "google", method: "subscription", model: "gemini-exact", label: "Personal Gemini" },
-  ] as const)("discovers $name overrides with the assignee connection and environment", async ({ acpxAgent, provider, method, model, label }) => {
-    const binding = { provider, method, mode: "shared", connectionId: "11111111-1111-4111-8111-111111111111", grantId: "33333333-3333-4333-8333-333333333333" };
+  it.each(["copilot", "antigravity"])("keeps saved %s model overrides out of the editable properties", async acpxAgent => {
+    const model = "saved-model";
     mockAgentsApi.list.mockResolvedValue([{ id: "agent-1", name: acpxAgent, role: "engineer", status: "active",
       adapterType: "paperclip_runner", defaultEnvironmentId: "daytona-1",
-      adapterConfig: { provider: "acpx", acpxAgent, model },
-      runtimeConfig: { aiConnection: binding } }]);
-    mockAgentsApi.adapterModels.mockResolvedValue([{ id: model, label }]);
-    const { root, queryClient } = renderPropertiesWithQueryClient(container, {
+      adapterConfig: { provider: "acpx", acpxAgent, model } }]);
+    const onUpdate = vi.fn();
+    const { root } = renderPropertiesWithQueryClient(container, {
       issue: createIssue({ assigneeAgentId: "agent-1", assigneeAdapterOverrides: { adapterConfig: { model } } }),
-      childIssues: [], onUpdate: vi.fn(), inline: true,
+      childIssues: [], onUpdate, inline: true,
     });
     await flush();
     await flush();
     expect(mockAgentsApi.adapterModels).not.toHaveBeenCalled();
-    const modelTrigger = findRowTrigger(container, "Model");
-    expect(modelTrigger).toBeDefined();
-    await act(async () => modelTrigger!.click());
-    await waitForAssertion(() => expect(mockAgentsApi.adapterModels).toHaveBeenCalledWith("company-1", "paperclip_runner", {
-      environmentId: "daytona-1", provider: "acpx", acpxAgent, agentId: "agent-1", aiConnection: binding,
-    }));
-    await act(async () => { await queryClient.invalidateQueries({ type: "active" }, { cancelRefetch: false }); });
-    expect(mockAgentsApi.adapterModels).toHaveBeenCalledTimes(1);
-    await act(async () => modelTrigger!.click());
-    await act(async () => modelTrigger!.click());
-    await waitForAssertion(() => expect(mockAgentsApi.adapterModels).toHaveBeenCalledTimes(2));
+    expect(findRowTrigger(container, "Model")).toBeUndefined();
+    expect(onUpdate).not.toHaveBeenCalled();
     act(() => root.unmount());
   });
 

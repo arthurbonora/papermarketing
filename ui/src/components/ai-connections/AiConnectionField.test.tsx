@@ -176,7 +176,7 @@ it("uses the server's connection-manager permission for company-wide access", as
 });
 
 
-it.each(["openai", "anthropic", "google", "openrouter"] as const)("keeps a matching saved Pi %s API-key account selectable", async provider => {
+it.each(["openai", "anthropic", "google", "openrouter"] as const)("marks a saved Pi %s API-key account incompatible", async provider => {
   const saved = account({ provider, method: "api_key", name: "Pi provider account", accountLabel: "avery@example.test", status: "connected" });
   mocks.list.mockResolvedValue({ currentUserId: "owner", connections: [saved], canManageConnections: true });
   flushSync(() => root.render(<QueryClientProvider client={client}>
@@ -185,15 +185,14 @@ it.each(["openai", "anthropic", "google", "openrouter"] as const)("keeps a match
   </QueryClientProvider>));
   await settle();
   expect(container.textContent).toContain("Pi provider account");
-  expect(container.textContent).not.toContain("incompatible");
-  expect(container.textContent).not.toContain("does not support");
+  expect(container.textContent).toContain("This connection does not support the current harness and model");
   const trigger = container.querySelector('[role="combobox"][aria-label="Connection"]')!;
   expect(trigger.getAttribute("title")).toBe("Pi provider account · API key · Personal · avery@example.test");
   flushSync(() => trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })));
   await settle();
   const choice = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(node => node.textContent?.includes("Pi provider account"));
-  expect(choice).toBeDefined();
-  expect(choice?.getAttribute("aria-disabled")).not.toBe("true");
+  expect(choice?.textContent).toContain("Incompatible");
+  expect(choice?.getAttribute("aria-disabled")).toBe("true");
 });
 
 it("keeps loaded connections usable when a refetch fails during an outage", async () => {

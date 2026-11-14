@@ -18,6 +18,7 @@ import {
   readProviderRateLimits,
   summarizeProviderRateLimits,
   isArtifactReviewDocumentKey,
+  isRemovedAgentHarness,
   type ExecutionWorkspace,
   type Issue,
   type IssueLabel,
@@ -754,7 +755,8 @@ export function IssueProperties({
     : null;
   const assigneeAdapterType = assignee?.adapterType ?? null;
   const assigneeAdapterOverrides = issue.assigneeAdapterOverrides ?? null;
-  const showAssigneeAdapterOptions = assigneeAdapterOverrides !== null;
+  const showAssigneeAdapterOptions = assigneeAdapterOverrides !== null
+    && !(assigneeAdapterType && isRemovedAgentHarness(assigneeAdapterType, assignee?.adapterConfig));
   const supportsAssigneeOverrides = Boolean(
     assigneeAdapterType && ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeAdapterType),
   );
