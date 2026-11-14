@@ -76,7 +76,7 @@ Sources: [Feedback CLI](../../cli/src/commands/client/feedback.ts), [company tra
 
 ## Gotchas
 
-- Personal MCP login/proxy is covered by [assistant connections](./assistant-connections.md); outbound mail by [chat channels](./chat-channels.md#outbound-agentmail); managed-profile setup by [agents](./agents.md#managed-agent-cli); verified runtime installation/import by [instance operations](./instance-operations.md#runtime-provisioning).
+- Personal MCP login/proxy is covered by [assistant connections](./assistant-connections.md); outbound mail by [chat channels](./chat-channels.md#outbound-agentmail); managed-profile setup by [agents](./agents.md#managed-agent-cli).
 - Feedback export can contain detailed traces. Use an owned output directory and the actual permitted board identity; --shared-only is a read filter, not an upload or consent action.
 
 - API success proves its contract, not the equivalent browser creation journey.

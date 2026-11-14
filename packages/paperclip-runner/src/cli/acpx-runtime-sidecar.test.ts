@@ -1766,7 +1766,7 @@ describe("qualified ACPX runtime sidecar", () => {
     expect(ACPX_CAPABILITY_PROFILES[agent].qualification).toBe(qualification);
     if (agent === "kimi" && profile.qualificationStatus === "pending") {
       expect(frame).toMatchObject({ id: 1, ok: false,
-        error: { message: expect.stringContaining("qualification is pending"), retryable: false } });
+        error: { message: expect.stringContaining("is no longer supported"), retryable: false } });
       return;
     }
     expect(frame).toMatchObject({ id: 1, ok: true });
@@ -1807,11 +1807,11 @@ describe("qualified ACPX runtime sidecar", () => {
     expect(await sidecar.next(value => value.id === 2)).toMatchObject({ ok: false, error: { message: expect.stringContaining("candidate admission") } });
   });
 
-  it("refuses pending Antigravity bootstrap before any native process opens", async () => {
+  it("refuses retired Antigravity bootstrap before any native process opens", async () => {
     const sidecar = startSidecar();
     sidecar.write(initializeRequest(1, "antigravity", "caller-exact-model"));
     expect(await sidecar.next(frame => frame.id === 1)).toMatchObject({ id: 1, ok: false,
-      error: { message: expect.stringContaining("qualification is pending"), retryable: false } });
+      error: { message: expect.stringContaining("is no longer supported"), retryable: false } });
   });
 
   it.skipIf(process.platform !== "darwin" || process.arch !== "arm64")("admits only matching candidate startup and rejects session replay before provider launch", async () => {

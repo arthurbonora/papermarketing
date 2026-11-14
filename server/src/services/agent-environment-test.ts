@@ -20,7 +20,6 @@ import { prepareManagedAiRuntime, assertManagedAiProjectAuth } from "./ai-connec
 import { isRunnerRevisionMismatch, runnerRevisionMismatchTestResult } from "./runner-revision-mismatch.js";
 import { aiConnectionService } from "./ai-connections.js";
 import { validateAiApiKey } from "./ai-api-key-test.js";
-import { probeCopilotExecutionTarget } from "./copilot-connection-probe.js";
 import type { PluginWorkerManager } from "./plugin-worker-manager.js";
 import { assertEnvironmentSelectionForCompany } from "./environment-selection.js";
 import { pluginEnvironmentRequiresAgent } from "./plugin-environment-driver.js";
@@ -45,12 +44,7 @@ export function agentEnvironmentTestService(db: Db, pluginWorkerManager?: Plugin
   // A null agent override inherits the instance default, just like dispatch.
   // Resolve this before secrets or probes so a default remote environment can
   // never accidentally validate the account on the control-plane host.
-  async function resolveAdapterTestEnvironmentId(companyId: string, environmentId: string | null | undefined, copilot = false) {
-    if (copilot && (await instanceSettings.getGeneral()).executionMode === "kubernetes") {
-      const kubernetes = await environmentsSvc.findKubernetesEnvironment(companyId);
-      if (!kubernetes) throw unprocessable("The Kubernetes execution environment is unavailable.", { code: "copilot_environment_unavailable" });
-      return kubernetes.id;
-    }
+  async function resolveAdapterTestEnvironmentId(companyId: string, environmentId: string | null | undefined) {
     if (environmentId) return environmentId;
     const settings = await instanceSettings.get();
     if (settings.defaultEnvironmentId) return settings.defaultEnvironmentId;
@@ -552,7 +546,7 @@ export function agentEnvironmentTestService(db: Db, pluginWorkerManager?: Plugin
     // missing CLI, unavailable environment, or other runtime error does not.
     if (result.status === "fail" && result.checks.some(check =>
       check.code === ADAPTER_AUTH_MISSING_CHECK_CODE || /_hello_probe_auth_required$/.test(check.code)
-        || check.code === "ai_connection_api_key_rejected" || check.code === "COPILOT_AUTH_REQUIRED",
+        || check.code === "ai_connection_api_key_rejected",
     )) {
       await aiConnectionService(db).markAuthenticationFailed({
         companyId: context.companyId, agentId, runStartedAt: startedAt,
@@ -563,18 +557,6 @@ export function agentEnvironmentTestService(db: Db, pluginWorkerManager?: Plugin
   }
 
   async function probeManagedEnvironment(adapterType: string, context: Parameters<ReturnType<typeof requireServerAdapter>["testEnvironment"]>[0], binding: AiConnectionBinding, managed: Awaited<ReturnType<typeof prepareManagedAiRuntime>>): Promise<AdapterEnvironmentTestResult> {
-    if (binding.provider === "github") {
-      try {
-        const token = parseObject(context.config.env).COPILOT_GITHUB_TOKEN;
-        if (typeof token !== "string" || !token) throw unprocessable("Select a saved Copilot token.", { code: "COPILOT_AUTH_REQUIRED" });
-        const model = typeof context.config.model === "string" ? context.config.model.trim() : null;
-        if (!model || ["auto", "default"].includes(model.toLowerCase())) throw unprocessable("Select an available Copilot model.", { code: "COPILOT_MODEL_UNAVAILABLE" });
-        await probeCopilotExecutionTarget(token, context.executionTarget, model);
-        return { adapterType, status: "pass" as const, testedAt: new Date().toISOString(), checks: [{ code: "copilot_metadata_verified", level: "info" as const, message: "The verified Copilot runtime authenticated this account and accepted the selected model. No model prompt was sent." }] };
-      } catch (error) {
-        return { adapterType, status: "fail" as const, testedAt: new Date().toISOString(), checks: [{ code: error instanceof HttpError ? String(asRecord(error.details)?.code ?? "COPILOT_REQUEST_FAILED") : "COPILOT_REQUEST_FAILED", level: "error" as const, message: error instanceof HttpError ? error.message : "Copilot metadata verification failed." }] };
-      }
-    }
     const target = context.executionTarget;
     // A preconfigured Runner home does not use the managed connection, so run admission refuses it.
     if (adapterType === "paperclip_runner" && context.config.homeMode === "preconfigured"
@@ -593,13 +575,6 @@ export function agentEnvironmentTestService(db: Db, pluginWorkerManager?: Plugin
           home: managed.home ? join(managed.home, "provider") : undefined })
       : await requireServerAdapter(adapterType).testEnvironment(context);
     if (result.status === "fail") return result;
-    // Antigravity's native admission checks the selected managed account and
-    // exact model without a billable turn. Do not invoke another Google CLI.
-    if (adapterType === "paperclip_runner" && context.config.provider === "acpx" && context.config.acpxAgent === "antigravity") {
-      if (result.status === "pass" && result.checks.some(check => check.code === "antigravity_metadata_verified" && check.level === "info")) return result;
-      return { ...result, status: "fail", checks: [...result.checks, { code: "ai_connection_validation_incomplete", level: "error",
-        message: "The selected Google account has not completed native account and model verification. Retry before adopting it." }] };
-    }
     // The resolved method, not binding.method — on a responsible_user binding
     // that field is wire-compat only and the default connection decides.
     if (adapterType === "paperclip_runner" && context.executionTarget?.kind === "remote"

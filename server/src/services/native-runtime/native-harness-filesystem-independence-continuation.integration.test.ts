@@ -107,14 +107,14 @@ describeEmbeddedPostgres("legacy harness continuation without provider-home file
         expect(recover.mock.calls[0]![0]).toMatchObject({ providerRecoveryPolicy: policy });
         expect(fresh).toHaveBeenCalledTimes(policy === "allow_replacement_after_resume_failure" ? 1 : 0);
         const digest = `sha256:${"a".repeat(64)}`;
-        const artifacts = Object.fromEntries(Object.entries({ grokLauncher: "dist/providers/grok/launcher.cjs", nodeCommand: "node_modules/node/bin/node",
+        const artifacts = Object.fromEntries(Object.entries({ nodeCommand: "node_modules/node/bin/node",
           productionLock: "pnpm-lock.yaml", opencodeCommand: "node_modules/.bin/opencode", opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
           opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs" }).map(([key, path]) => [key, { path, sha256: digest }]));
         const payload = { compatibility: { opencode: 1, acpx: 1 }, contractDigest: digest, target: { platform: "linux", architecture: "x64" },
           runnerSourceRevision: "a".repeat(40), pins: { nodeMinimum: "24.11.0", codex: QUALIFIED_ACPX_PROFILES.codex.agentRuntimeVersion,
-            opencode: "1.18.34", acpx: QUALIFIED_ACPX_VERSION, grok: QUALIFIED_ACPX_PROFILES.grok.agentRuntimeVersion,
+            opencode: "1.18.34", acpx: QUALIFIED_ACPX_VERSION,
             claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion, codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion },
-          acpxProfileDigests: Object.fromEntries(["grok", "claude", "codex"].map(agent => [agent, QUALIFIED_ACPX_PROFILES[agent as "grok" | "claude" | "codex"].commandDigest])),
+          acpxProfileDigests: Object.fromEntries(["claude", "codex"].map(agent => [agent, QUALIFIED_ACPX_PROFILES[agent as "claude" | "codex"].commandDigest])),
           distDigest: digest, artifacts, bridgeDigest: `sha256:${createHash("sha256").update(`${digest}\n${digest}\n${digest}`).digest("hex")}` };
         const pack = { schema: "paperclip-runner/remote-provider-pack/v1", payload, digest: `sha256:${nativeSha256(payload)}` };
         remoteBoundary.packPath = join(home, "provider-pack.json"); remoteBoundary.binaryPath = join(home, "fixture-runnerd");

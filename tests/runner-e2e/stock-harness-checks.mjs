@@ -28,7 +28,6 @@ export const stockHarnessGates = [
     "packages/adapter-utils/src/prompt-sections.test.ts",
     "packages/adapter-utils/src/acpx-engine/execute.test.ts",
     "packages/adapter-utils/src/acpx-engine/ephemeral-session-environment.test.ts",
-    "packages/adapters/pi-local/src/server/execute.remote.test.ts",
     "packages/adapters/opencode-local/src/server/execute.test.ts",
     "packages/adapters/cursor-cloud/src/server/execute.test.ts",
     "server/src/__tests__/codex-local-execute.test.ts",

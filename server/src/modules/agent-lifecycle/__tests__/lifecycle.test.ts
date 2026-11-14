@@ -373,40 +373,7 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
     }
   });
 
-  it("holds an incomplete Copilot setup but still requires a model at final hire", async () => {
-    await db.insert(companyMemberships).values({ companyId, principalType: "user", principalId: "board", membershipRole: "owner" });
-    const app = express(); app.use(express.json());
-    app.use((req, _res, next) => { req.actor = { type: "board", source: "local_implicit", userId: "board", companyIds: [companyId] }; next(); });
-    app.use("/api", agentRoutes(db)); app.use(errorHandler);
-    const setupId = randomUUID();
-    const body = { name: "Copilot setup", adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "copilot" } };
-    const created = await request(app).post(`/api/companies/${companyId}/agents`).send({ ...body, setupId });
-    expect(created.status, JSON.stringify(created.body)).toBe(201);
-    expect(created.body).toMatchObject({ id: setupId, pauseReason: "setup", lifecycleState: "paused" });
-    const finished = await request(app).post(`/api/companies/${companyId}/agent-hires`).send({ ...body, setupAgentId: setupId });
-    expect(finished.status, JSON.stringify(finished.body)).toBe(422);
-    expect(finished.body.details?.code ?? finished.body.code).toBe("paperclip_runner_acpx_model_required");
-    expect((await current(setupId)).lifecycleHolds).toContain("setup");
-    await request(app).post(`/api/companies/${companyId}/agents`).send(body).expect(422);
-  });
 
-  it("lets a held name-only record choose Copilot before connecting an account", async () => {
-    await db.insert(companyMemberships).values({ companyId, principalType: "user", principalId: "board", membershipRole: "owner" });
-    const app = express(); app.use(express.json());
-    app.use((req, _res, next) => { req.actor = { type: "board", source: "local_implicit", userId: "board", companyIds: [companyId] }; next(); });
-    app.use("/api", agentRoutes(db)); app.use(errorHandler);
-    const setupId = randomUUID();
-    await request(app).post(`/api/companies/${companyId}/agents`).send({ setupId, name: "Name-only Copilot", adapterType: "process", metadata: { setupAdapterPending: true } }).expect(201);
-    const config = { provider: "acpx", acpxAgent: "copilot" };
-    const saved = await request(app).patch(`/api/agents/${setupId}`).send({ adapterType: "paperclip_runner", adapterConfig: config, metadata: { setupAdapterPending: false } });
-    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
-    expect(saved.body).toMatchObject({ id: setupId, pauseReason: "setup", adapterConfig: config });
-    expect(saved.body.runtimeConfig.aiConnection).toBeUndefined();
-    const finished = await request(app).post(`/api/companies/${companyId}/agent-hires`).send({ setupAgentId: setupId, name: "Name-only Copilot", adapterType: "paperclip_runner", adapterConfig: { ...config, model: "gpt-5.6-luna" } });
-    expect(finished.status, JSON.stringify(finished.body)).toBe(422);
-    expect(finished.body.error).toMatch(/connection|account/i);
-    expect((await current(setupId)).lifecycleHolds).toContain("setup");
-  });
 
   it("saves the immediate hire budget and actual operator audit in its transaction", async () => {
     const agent = await createAgentLifecycle(db).requestHire(companyId, { name: "Capped hire", adapterType: "process", budgetMonthlyCents: 5000 }, { createdByUserId: "operator-user", initialBudgetPolicyUserId: "operator-user" });

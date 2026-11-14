@@ -16,7 +16,7 @@ const execFile = promisify(execFileCallback);
 // never drift between callers.
 
 const DECISION_SCRIPT_PATH = fileURLToPath(
-  new URL("./grok-auth-merge-decision.cjs", import.meta.url),
+  new URL("./scripts/grok-auth-merge-decision.cjs", import.meta.url),
 );
 
 /** Exit code: install the source credential over the destination. */

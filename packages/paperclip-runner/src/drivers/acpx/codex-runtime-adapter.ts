@@ -1,3 +1,4 @@
+import { assertAcpxProfileReleased } from "./qualified-profiles.js";
 import { admitAcpxSessionContext } from "./session-context-admission.js";
 import { createKimiInstructionAdmission } from "./kimi-instructions.js";
 import { kimiReadOnlyPermissionAllowed } from "./kimi-config.js";
@@ -215,6 +216,7 @@ export async function openQualifiedAcpxRuntime(
     options.retainFailedAdmissionCleanup(Promise.resolve());
     throw options.signal.reason;
   }
+  assertAcpxProfileReleased(options.profile.agent);
   // Verified ACPX command admission already fails closed on Windows because
   // Node cannot atomically open the provider executable with O_NOFOLLOW there.
   // Reject at the adapter boundary too: allowing a fabricated command lease to

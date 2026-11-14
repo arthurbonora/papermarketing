@@ -18,7 +18,7 @@ import type {
   CompanyPortabilityAdapterOverride,
   CompanyPortabilityCollisionStrategy,
 } from "@paperclipai/shared";
-import { AGENT_ADAPTER_TYPES } from "@paperclipai/shared";
+import { AGENT_ADAPTER_TYPES, isRemovedAgentHarness } from "@paperclipai/shared";
 import { teamCatalogApi } from "../api/teamCatalog";
 import { agentsApi } from "../api/agents";
 import { getAdapterLabel } from "../adapters/adapter-display-registry";
@@ -127,7 +127,7 @@ export function listTeamInstallAdapterTypes(
 ) {
   return AGENT_ADAPTER_TYPES.filter(
     (type) =>
-      !TEAM_INSTALL_FORBIDDEN_ADAPTER_TYPES.has(type) &&
+      !isRemovedAgentHarness(type) && !TEAM_INSTALL_FORBIDDEN_ADAPTER_TYPES.has(type) &&
       !disabledTypes.has(type) &&
       (type !== "paperclip_runner" || adapterRegistryLoaded),
   );

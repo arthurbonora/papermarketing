@@ -1,5 +1,4 @@
 import { useCompany } from "@/context/CompanyContext";
-import { PAPERCLIP_RUNNER_ACPX_PROFILES } from "@paperclipai/adapter-utils";
 import { useAgentAppearanceDraft } from "@/hooks/useAgentAppearanceDraft";
 import { AdapterMark } from "../AdapterMark";
 import { AgentCharacter } from "../AgentCharacter";
@@ -110,14 +109,7 @@ export function AgentBasicsDialog({
   });
   const adaptersView = useQueryView(adaptersQuery);
   const adapters = adaptersView.data;
-  const nativeRunner = adapters?.find(adapter => adapter.type === "paperclip_runner" && adapter.loaded && !adapter.disabled && adapter.supportedRunners?.length !== 0);
-  const copilotAvailable = Boolean(nativeRunner) && PAPERCLIP_RUNNER_ACPX_PROFILES.some(profile => profile.value === "copilot" && profile.qualified);
-  const kimiAvailable = Boolean(nativeRunner) && experimental.data?.enableNativeRunner === true
-    && PAPERCLIP_RUNNER_ACPX_PROFILES.some(profile => profile.value === "kimi" && profile.qualified);
-  const antigravityQualified = PAPERCLIP_RUNNER_ACPX_PROFILES.some(profile => profile.value === "antigravity" && profile.qualified);
-  const antigravityCandidate = nativeRunner?.candidateHarnesses?.some(candidate => candidate.agent === "antigravity");
-  const antigravityAvailable = Boolean(nativeRunner);
-  const choices = [...(adapters ?? []).filter(
+  const choices = (adapters ?? []).filter(
     (adapter) =>
       adapter.loaded &&
       !adapter.disabled &&
@@ -130,13 +122,11 @@ export function AgentBasicsDialog({
       (!cloud || adapter.type !== "cursor_cloud" || adapter.supportedRunners?.includes("paperclip")) &&
       !["process", "http", "grok_bot", "muse", "openai_dot"].includes(adapter.type) &&
       !getAdapterDisplay(adapter.type).comingSoon,
-  ), ...(copilotAvailable ? [{ ...nativeRunner!, type: "copilot_runtime" }] : []),
-    ...(antigravityAvailable ? [{ ...nativeRunner!, type: "antigravity_runtime" }] : []),
-    ...(kimiAvailable ? [{ ...nativeRunner!, type: "kimi_runtime" }] : [])];
+  );
   const experimentalRunnerAvailable = experimental.data?.enableNativeRunner === true
     && adapters?.some(adapter => adapter.type === "paperclip_runner" && adapter.loaded && !adapter.disabled && adapter.supportedRunners?.length !== 0);
   const validAdapter = choices.some((adapter) => adapter.type === adapterType)
-    || (experimentalRunnerAvailable && adapterType === "paperclip_runner" && (runnerProvider !== "antigravity" || antigravityQualified));
+    || (experimentalRunnerAvailable && adapterType === "paperclip_runner");
   async function submit() {
     if (busy.current || profileLoading || !name.trim() || !marketingAgentProfileSchema.safeParse(marketingProfile).success
       || (step === "adapter" && !validAdapter)) return;
@@ -163,8 +153,7 @@ export function AgentBasicsDialog({
           setupId: setupId.current, name: name.trim(), appearance: appearanceDraft.appearance,
           role: marketingAgentRole(profile.typeId, Boolean(leader)), reportsTo: managerId,
           title: template.label, capabilities: profile.responsibilities,
-          adapterType: ["copilot_runtime", "antigravity_runtime", "kimi_runtime"].includes(provisionalAdapter) ? "paperclip_runner" : provisionalAdapter,
-          ...(["copilot_runtime", "antigravity_runtime", "kimi_runtime"].includes(provisionalAdapter) ? { adapterConfig: { provider: "acpx", acpxAgent: provisionalAdapter === "copilot_runtime" ? "copilot" : provisionalAdapter === "kimi_runtime" ? "kimi" : "antigravity" } } : {}),
+          adapterType: provisionalAdapter,
           metadata: { setupAdapterPending: true, marketingAgent: profile },
           runtimeConfig: buildNewAgentRuntimeConfig({ heartbeatEnabled: false }),
         });
@@ -172,11 +161,9 @@ export function AgentBasicsDialog({
       }
       saved.current = agent;
       const hostedCursor = cloud && adapterType === "cursor_cloud";
-      const nextAdapter = hostedCursor || ["openai_dot", "copilot_runtime", "antigravity_runtime", "kimi_runtime"].includes(adapterType) ? "paperclip_runner" : adapterType;
-      const nextProvider = hostedCursor ? "cursor_cloud" : adapterType === "kimi_runtime" ? "kimi" : adapterType === "antigravity_runtime" ? "antigravity" : adapterType === "copilot_runtime" ? "copilot" : adapterType === "openai_dot" ? "openai_dot" : adapterType === "paperclip_runner" ? runnerProvider : "codex";
+      const nextAdapter = hostedCursor || adapterType === "openai_dot" ? "paperclip_runner" : adapterType;
+      const nextProvider = hostedCursor ? "cursor_cloud" : adapterType === "openai_dot" ? "openai_dot" : adapterType === "paperclip_runner" ? runnerProvider : "codex";
       const nextRunner = hostedCursor ? "paperclip" as const : "auto" as const;
-      // Pending providers can show setup while the saved name-only draft stays held.
-      const pendingAntigravity = nextProvider === "antigravity" && !antigravityQualified;
       if (step === "adapter" || !creatingRecord) {
         const coordinator = (await agentsApi.list(companyId)).some(item => item.id !== agent!.id && item.role === "ceo" && item.status !== "terminated");
         const { setupAdapterChoice: _previousChoice, ...existingMetadata } = agent.metadata ?? {};
@@ -185,17 +172,12 @@ export function AgentBasicsDialog({
           name: name.trim(),
           title: template.label, capabilities: profile.responsibilities,
           role: marketingAgentRole(profile.typeId, coordinator), metadata,
-          ...(step === "adapter" && pendingAntigravity ? {
-            metadata: { ...metadata, setupAdapterPending: true,
-              setupAdapterChoice: { adapterType: nextAdapter, runnerProvider: nextProvider, runner: "auto" } },
-          } : {}),
-          ...(step === "adapter" && !pendingAntigravity ? {
+          ...(step === "adapter" ? {
             adapterType: nextAdapter, runner: nextRunner,
             adapterConfig: {
               ...(nextAdapter === "paperclip_runner" ? {
-              provider: ["claude", "grok", "copilot", "antigravity", "kimi"].includes(nextProvider) ? "acpx" : nextProvider,
-              ...(["claude", "grok", "copilot", "antigravity", "kimi"].includes(nextProvider) ? { acpxAgent: nextProvider } : {}),
-              ...(nextProvider === "grok" ? { model: "grok-4.7" } : {}),
+              provider: nextProvider === "claude" ? "acpx" : nextProvider,
+              ...(nextProvider === "claude" ? { acpxAgent: nextProvider } : {}),
               } : {}),
               ...(initialModel && adapterType === initialAdapter ? { model: initialModel } : {}),
             },
@@ -332,9 +314,6 @@ export function AgentBasicsDialog({
                           <span className="text-sm font-medium">
                             {display.label}
                           </span>
-                          {adapter.type === "antigravity_runtime" && !antigravityQualified && (
-                            <span className="text-xs text-muted-foreground">{antigravityCandidate ? "Candidate" : "Not available yet"}</span>
-                          )}
                           {adapterType === adapter.type && (
                             <Check className="absolute right-2 top-2 size-3.5" />
                           )}
@@ -352,7 +331,6 @@ export function AgentBasicsDialog({
                       placeholder="Choose a native harness…"
                       onValueChange={provider => { setRunnerProvider(provider); setAdapterType("paperclip_runner"); }}
                       options={[
-                        { value: "grok", label: "Grok Build (PaperMarketing Runner)" },
                         { value: "opencode", label: "OpenCode (PaperMarketing Runner)" },
                       ]} />
                   </div>

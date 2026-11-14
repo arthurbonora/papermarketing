@@ -29,29 +29,14 @@ import { persistedCursorUsageNotice } from "../drivers/acpx/usage-accounting.js"
 import { captureTurnRejection } from "../../test/capture-turn-rejection.js";
 import * as workspaceDiff from "./workspace-diff.js";
 
-it.each(["copilot"] as const)("requires separately bound evaluation opt-in for %s", async (acpxAgent) => {
-  const service = new CapabilityLiveSessionService();
-  await expect(service.create({ provider: "acpx", acpxAgent, requestedModel: "explicit-model" }))
-    .rejects.toThrow("explicit evaluation opt-in");
-  const mismatched = new CapabilityLiveSessionService({ transportOptions: {
-    acpxCandidateProfile: "pi",
-  } });
-  await expect(mismatched.create({ provider: "acpx", acpxAgent, requestedModel: "explicit-model" }))
-    .rejects.toThrow("explicit evaluation opt-in");
-});
-
-it("admits Pi live sessions without candidate opt-in while preserving the exact profile", async () => {
-  const service = new CapabilityLiveSessionService({ transportFactory: fakeTransportFactory(providerState()) });
-  const session = await service.create({ provider: "acpx", acpxAgent: "pi", piThinkingLevel: "low", requestedModel: "openrouter/deepseek/deepseek-v4-flash-0731" });
-  try {
-    expect(session.snapshot().config.acpxProfile).toMatchObject({
-      ...resolveQualifiedAcpxProfile("pi", "openrouter/deepseek/deepseek-v4-flash-0731"), agent: "pi",
-    });
-    const custom = await service.create({ provider: "acpx", acpxAgent: "pi", piThinkingLevel: "low", requestedModel: "another-model" });
-    expect(custom.snapshot().config.acpxProfile).toMatchObject({ qualificationModel: "another-model", reportedModelId: "another-model" });
-    await custom.shutdown("test complete");
-  } finally { await session.shutdown("test complete"); }
-});
+it.each(["antigravity", "copilot", "cursor", "grok", "kimi", "pi"] as const)(
+  "rejects a new live session for retired ACPX agent %s",
+  async (acpxAgent) => {
+    const service = new CapabilityLiveSessionService();
+    await expect(service.create({ provider: "acpx", acpxAgent, requestedModel: "explicit-model" }))
+      .rejects.toMatchObject({ code: "agent_harness_removed", retryable: false });
+  },
+);
 
 class AsyncNotifications implements AsyncIterable<CodexRpcNotification> {
   #values: CodexRpcNotification[] = [];

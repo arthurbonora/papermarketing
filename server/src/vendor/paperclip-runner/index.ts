@@ -181,11 +181,8 @@ export const runnerProviderLaunchRequirements = runner.runnerProviderLaunchRequi
 export const createRunnerProviderLaunch = runner.createRunnerProviderLaunch;
 export const parseAcpxCandidateAdmission = runner.parseAcpxCandidateAdmission;
 export const resolveClaudeEffort = runner.resolveClaudeEffort;
-export const resolveGrokEffort = runner.resolveGrokEffort;
 export const QUALIFIED_ACPX_PROFILES = runner.QUALIFIED_ACPX_PROFILES;
 export const QUALIFIED_ACPX_VERSION = runner.QUALIFIED_ACPX_VERSION;
-export const CURSOR_DISTRIBUTION_PINS = runner.CURSOR_DISTRIBUTION_PINS;
-export const KIMI_DISTRIBUTION_CLOSURE_SHA256 = runner.KIMI_DISTRIBUTION_CLOSURE_SHA256;
 export const resolveSourceCodexHome = runner.resolveSourceCodexHome;
 export const resolveCodexCommand = runner.resolveCodexCommand;
 export const resolvePinnedCodexCommand = runner.resolvePinnedCodexCommand;
@@ -209,13 +206,6 @@ export const onNativeSessionCleanupSettled = runner.onNativeSessionCleanupSettle
 export const onNativeSessionCleanupQuarantined = runner.onNativeSessionCleanupQuarantined;
 
 export const probeAcpxClaudeInstallation = runner.probeAcpxClaudeInstallation;
-export const probeAcpxGrokInstallation = runner.probeAcpxGrokInstallation;
-export const probeAcpxPiInstallation = runner.probeAcpxPiInstallation;
-export const startAntigravityBrowserLogin = runner.startAntigravityBrowserLogin;
-export const verifyAntigravityCredential = runner.verifyAntigravityCredential;
-export const sanitizeAntigravityCredential = runner.sanitizeAntigravityCredential;
-export const discoverAntigravityModels = runner.discoverAntigravityModels;
-export const AntigravityModelDiscoveryCleanupError = runner.AntigravityModelDiscoveryCleanupError;
 export const PROVIDER_PACK_COMPATIBILITY = runner.PROVIDER_PACK_COMPATIBILITY;
 export const bundledRemoteProviderPackManifestPath = runner.bundledRemoteProviderPackManifestPath;
 export const bundledRemoteRunnerBinary = runner.bundledRemoteRunnerBinary;
@@ -232,7 +222,6 @@ export const PROVIDER_CREDENTIAL_ENVIRONMENT_KEYS = runner.PROVIDER_CREDENTIAL_E
 
 export const probeNativeRunnerEnvironment = runner.probeNativeRunnerEnvironment;
 
-export const resolveGrokDisableWebSearch = runner.resolveGrokDisableWebSearch;
 
 export const CursorCloudClient = runner.CursorCloudClient;
 export const parseNativeCursorCloudConfig = runner.parseNativeCursorCloudConfig;

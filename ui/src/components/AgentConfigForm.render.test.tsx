@@ -731,7 +731,6 @@ describe("AgentConfigForm environment selector", () => {
 
   it.each([
     { harness: "claude_local", label: "Claude", profile: { provider: "acpx", acpxAgent: "claude" } },
-    { harness: "pi_local", label: "Pi", profile: { provider: "acpx", acpxAgent: "pi" } },
     { harness: "codex_local", label: "Codex", profile: { provider: "codex" } },
     { harness: "opencode_local", label: "OpenCode", profile: { provider: "opencode" } },
   ])("uses only Harness to choose $label for new and saved native agents", async ({ harness, label, profile }) => {
@@ -739,13 +738,11 @@ describe("AgentConfigForm environment selector", () => {
     const created = await renderCreateForm([], { adapterType: harness, runner: "auto" });
     roots.push(created.root);
     expect(created.container.querySelector('[aria-label="ACP agent"]')).toBeNull();
-    if (harness === "pi_local") expect(created.container.querySelector('[aria-label="Pi thinking level"]')).not.toBeNull();
 
     const edited = await renderForm([], { adapterType: "paperclip_runner", adapterConfig: profile }, { showAdapterTypeField: true });
     roots.push(edited.root);
     expect(edited.container.querySelector('[aria-label="Harness"]')?.textContent).toContain(label);
     expect(edited.container.querySelector('[aria-label="ACP agent"]')).toBeNull();
-    if (harness === "pi_local") expect(edited.container.querySelector('[aria-label="Pi thinking level"]')).not.toBeNull();
     await act(async () => setInputValue(edited.container.querySelector<HTMLInputElement>('[placeholder="Agent name"]')!, "Renamed agent"));
     await flushReact();
     await clickByText(edited.container, "Save");
@@ -763,7 +760,8 @@ describe("AgentConfigForm environment selector", () => {
     const options = document.querySelector('[role="listbox"][aria-label="Harness"]');
     expect(options).not.toBeNull();
     const values = Array.from(options!.querySelectorAll('[role="option"]'), option => option.getAttribute("data-value"));
-    expect(values).toEqual(expect.arrayContaining(["claude_local", "codex_local", "opencode_local", "pi_local"]));
+    expect(values).toEqual(expect.arrayContaining(["claude_local", "codex_local", "opencode_local"]));
+    expect(values).not.toContain("pi_local");
     expect(values).not.toContain("process");
     expect(values).not.toContain("http");
     expect(options!.textContent).not.toContain("Coming soon");
@@ -774,7 +772,22 @@ describe("AgentConfigForm environment selector", () => {
     expect(result.onSave).toHaveBeenCalledWith({ name: "Renamed saved agent" });
   });
 
-  it.each(["codex_local", "claude_local", "grok_local"])("upgrades a saved %s in one click with pending edits", async adapterType => {
+  it("preserves the name of a saved retired native harness and offers supported replacements", async () => {
+    const result = await renderForm([], {
+      adapterType: "paperclip_runner",
+      adapterConfig: { provider: "acpx", acpxAgent: "pi", model: "saved-model" },
+    }, { showAdapterTypeField: true });
+    roots.push(result.root);
+    expect(result.container.querySelector('[role="alert"]')?.textContent).toContain("This harness is no longer available");
+    expect(result.container.querySelector('[aria-label="Harness"]')?.textContent).toContain("Pi");
+    await clickElement(result.container.querySelector('[aria-label="Harness"]'));
+    const values = Array.from(document.querySelectorAll('[role="option"]'), option => option.getAttribute("data-value"));
+    expect(values).toContain("codex_local");
+    expect(values).not.toContain("pi_local");
+    expect(result.onSave).not.toHaveBeenCalled();
+  });
+
+  it.each(["codex_local", "claude_local"])("upgrades a saved %s in one click with pending edits", async adapterType => {
     mockAdaptersApi.list.mockResolvedValueOnce([{ type: adapterType, supportedRunners: ["legacy", "paperclip"], defaultRunner: "paperclip" }]);
     const result = await renderForm([], { adapterType, adapterConfig: { model: "existing-model", effort: "high" } });
     roots.push(result.root);
@@ -999,7 +1012,7 @@ describe("AgentConfigForm environment selector", () => {
     }
   });
 
-  it.each(["codex", "claude", "grok"].flatMap(harness => ["modelReasoningEffort", "reasoningEffort", "effort"].map(key => ({ harness, key }))))("hydrates saved effort and clears explicit Auto for $harness ($key)", async ({ harness, key }) => {
+  it.each(["codex", "claude"].flatMap(harness => ["modelReasoningEffort", "reasoningEffort", "effort"].map(key => ({ harness, key }))))("hydrates saved effort and clears explicit Auto for $harness ($key)", async ({ harness, key }) => {
     const profile = harness === "codex" ? { provider: "codex", model: "gpt-5.6-sol" } : { provider: "acpx", acpxAgent: harness, model: harness === "grok" ? "grok-4.7" : "claude-opus-5-5" };
     const result = await renderForm([], { adapterType: "paperclip_runner", adapterConfig: { ...profile, [key]: "high" } });
     roots.push(result.root);
@@ -1088,20 +1101,16 @@ describe("AgentConfigForm environment selector", () => {
     expect(result.onSave).toHaveBeenCalledWith({ name: "Renamed Claude" });
   });
 
-  it.each([{ provider: "opencode", model: "openrouter/anthropic/claude-sonnet-4.6" }, { provider: "acpx", acpxAgent: "pi", model: "openrouter/anthropic/claude-sonnet-4.6", piThinkingLevel: "max", acpxPermissionMode: "approve-reads", lifecycleMode: "warm" }, { provider: "unknown-provider" }])("preserves saved native $provider configuration with the experimental gate off", async adapterConfig => {
+  it.each([{ provider: "opencode", model: "openrouter/anthropic/claude-sonnet-4.6" }, { provider: "unknown-provider" }])("preserves saved native $provider configuration with the experimental gate off", async adapterConfig => {
     mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableNativeRunner: false });
     const result = await renderForm([], { adapterType: "paperclip_runner", adapterConfig }, { showAdapterTypeField: true });
     roots.push(result.root);
-    if (adapterConfig.provider === "opencode" || adapterConfig.acpxAgent === "pi") {
-      expect(result.container.querySelector('[aria-label="Harness"]')?.textContent).toContain(adapterConfig.provider === "opencode" ? "OpenCode" : "Pi");
+    if (adapterConfig.provider === "opencode") {
+      expect(result.container.querySelector('[aria-label="Harness"]')?.textContent).toContain("OpenCode");
       expect(result.container.querySelector('[aria-label="Runner"]')).toBeNull();
       expect(result.container.querySelector('[data-config-section="configuration"]')?.textContent).not.toContain("Advanced");
     }
     expect(result.container.querySelector('[aria-label="Runner"]')).toBeNull();
-    if (adapterConfig.acpxAgent === "pi") {
-      expect(result.container.querySelector('[aria-label="Pi thinking level"]')).not.toBeNull();
-      expect(result.container.querySelector('[aria-label="Thinking effort"]')).toBeNull();
-    }
     await act(async () => setInputValue(result.container.querySelector<HTMLInputElement>('[placeholder="Agent name"]')!, "Renamed native agent"));
     await flushReact();
     await clickByText(result.container, "Save");
@@ -1201,24 +1210,6 @@ describe("AgentConfigForm environment selector", () => {
     vi.clearAllMocks();
   });
 
-  it.each([false, true])("uses Grok connection verification without native controls (compact: %s)", async compactTestFeedback => {
-    const result = await renderForm([], {
-      adapterType: "paperclip_runner",
-      adapterConfig: { provider: "grok_bot", cwd: "/old/local/path", model: "old-model" },
-    }, { showAdapterTypeField: true, showAdapterTestEnvironmentButton: true, compactTestFeedback });
-    roots.push(result.root);
-
-    expect(result.container.querySelector('[aria-label="Grok Bot connection"]')).not.toBeNull();
-    expect(result.container.textContent).toContain("Reconnect agent access");
-    expect(result.container.querySelector('[data-config-section="adapter"]')?.textContent).toContain("Grok Bot");
-    expect(result.container.querySelector('[aria-label="Model"]')).toBeNull();
-    expect(result.container.textContent).not.toContain("AI connection");
-    expect(result.container.textContent).not.toContain("Working directory");
-    expect(result.container.textContent).not.toContain("Test your agent");
-    expect(findButton(result.container, "Test")).toBeUndefined();
-    expect(mockAgentsApi.adapterModels).not.toHaveBeenCalled();
-    expect(mockAgentsApi.testEnvironment).not.toHaveBeenCalled();
-  });
 
   it("promotes environment drafts through the page Save action and discards them through the page Discard action", async () => {
     const dirty = vi.fn();
@@ -1248,22 +1239,6 @@ describe("AgentConfigForm environment selector", () => {
     expect(result.container.querySelector('input[aria-label="Variable name"]')).toBeNull();
   });
 
-  it("reads and saves Pi thinking effort using the Pi runtime key", async () => {
-    const result = await renderForm([], { adapterType: "pi_local", adapterConfig: { model: "openrouter/anthropic/claude-sonnet-4.6", thinking: "high" } });
-    roots.push(result.root);
-    const effort = [...result.container.querySelectorAll("button")].find(button => button.textContent?.trim() === "high")!;
-    expect(effort).toBeTruthy();
-    await act(async () => effort.click());
-    await flushReact();
-    const low = [...document.querySelectorAll("button")].find(button => button.textContent?.trim() === "lowlow")!;
-    expect(low).toBeTruthy();
-    await act(async () => low.click());
-    await flushReact();
-    const save = [...result.container.querySelectorAll("button")].find(button => button.textContent?.trim() === "Save")!;
-    await act(async () => save.click());
-    expect(result.onSave).toHaveBeenCalledWith(expect.objectContaining({ adapterConfig: expect.objectContaining({ thinking: "low" }) }));
-    expect(result.onSave.mock.calls[0][0].adapterConfig.effort).toBeUndefined();
-  });
 
   it.each([
     ["Codex", "codex_local"],
@@ -1299,22 +1274,6 @@ describe("AgentConfigForm environment selector", () => {
     }
   });
 
-  it.each(["grok_local", "paperclip_runner"])("saves Grok 4.7 reasoning effort using the runtime key on %s", async adapterType => {
-    const result = await renderForm([], { adapterType, adapterConfig: { ...(adapterType === "paperclip_runner" ? { provider: "acpx", acpxAgent: "grok" } : {}), model: "grok-4.7", reasoningEffort: "high" } });
-    roots.push(result.root);
-    const effort = [...result.container.querySelectorAll("button")].find(button => button.textContent?.trim() === "High")!;
-    expect(effort).toBeTruthy();
-    await act(async () => effort.click());
-    await flushReact();
-    const xhigh = [...document.querySelectorAll("button")].find(button => button.textContent?.trim() === "X-Highxhigh")!;
-    expect(xhigh).toBeTruthy();
-    await act(async () => xhigh.click());
-    await flushReact();
-    const save = [...result.container.querySelectorAll("button")].find(button => button.textContent?.trim() === "Save")!;
-    await act(async () => save.click());
-    expect(result.onSave).toHaveBeenCalledWith(expect.objectContaining({ adapterConfig: expect.objectContaining({ reasoningEffort: "xhigh" }) }));
-    expect(result.onSave.mock.calls[0][0].adapterConfig.effort).toBeUndefined();
-  });
 
   it("hides the environment override when Local is the only configured environment", async () => {
     const result = await renderForm([
@@ -1371,72 +1330,8 @@ describe("AgentConfigForm environment selector", () => {
     }));
   });
 
-  it("requests the native Kimi model catalog while preserving an explicit saved model", async () => {
-    mockAgentsApi.adapterModels.mockResolvedValue([]);
-    const result = await renderForm([], {
-      adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "kimi", model: "explicit-kimi-model" },
-    });
-    roots.push(result.root);
-    await vi.waitFor(() => expect(mockAgentsApi.adapterModels).toHaveBeenCalledWith("company-1", "paperclip_runner", expect.objectContaining({ provider: "acpx", acpxAgent: "kimi" })));
-    expect(result.container.textContent).toContain("explicit-kimi-model");
-  });
 
-  it.each(["api_key", "subscription"] as const)("loads saved Antigravity %s models through its selected connection without a Claude fallback", async method => {
-    const binding = { provider: "google", method, mode: "responsible_user" } as const;
-    const accounts = vi.spyOn(aiConnectionsApi, "list").mockResolvedValue({ currentUserId: "you", canManageConnections: true, connections: [{
-      id: "google-account", grantId: "google-grant", companyId: "company-1", provider: "google", method, name: "Verified Google",
-      ownership: "personal", ownerUserId: "you", isDefault: true, status: "connected",
-    }] });
-    mockAgentsApi.adapterModels.mockResolvedValue([{ id: "google-exact-model", label: "My Google model" }]);
-    try {
-      const result = await renderForm([makeEnvironment({ id: "local-1", name: "Local", driver: "local" })], {
-        adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "antigravity", model: "google-exact-model" }, runtimeConfig: { aiConnection: binding },
-      });
-      roots.push(result.root);
-      await vi.waitFor(() => expect(mockAgentsApi.adapterModels).toHaveBeenCalledWith("company-1", "paperclip_runner", expect.objectContaining({
-        provider: "acpx", acpxAgent: "antigravity", aiConnection: binding, agentId: "agent-1",
-      })));
-      expect(result.container.textContent).toContain("My Google model");
-      expect(mockAgentsApi.adapterModels.mock.calls.every(call => call[1] === "paperclip_runner" && call[2]?.acpxAgent === "antigravity")).toBe(true);
-      await clickByText(result.container, "My Google model");
-      const search = document.body.querySelector<HTMLInputElement>('[placeholder="Search models... (type to create)"]');
-      expect(search).not.toBeNull();
-      await act(() => setInputValue(search!, "manual-exact-google-model"));
-      await flushReact();
-      await clickElement(Array.from(document.body.querySelectorAll('[role="option"]')).find(option => option.textContent?.includes("Use manual model")));
-      await clickByText(result.container, "Save");
-      expect(result.onSave).toHaveBeenCalledWith(expect.objectContaining({ adapterConfig: expect.objectContaining({
-        provider: "acpx", acpxAgent: "antigravity", model: "manual-exact-google-model",
-      }) }));
-    } finally { accounts.mockRestore(); }
-  });
 
-  it("refreshes Copilot models after reconnecting the same responsible-user account", async () => {
-    const binding = { mode: "responsible_user", provider: "github", method: "api_key" } as const;
-    const account = { id: "copilot-account", grantId: "copilot-grant", companyId: "company-1", provider: "github", method: "api_key", name: "My Copilot", ownership: "personal", ownerUserId: "you", isDefault: true, status: "needs_attention" } as const;
-    const accountList = vi.spyOn(aiConnectionsApi, "list").mockResolvedValue({ currentUserId: "you", canManageConnections: true, connections: [account] });
-    const reconnect = vi.spyOn(aiConnectionsApi, "create").mockResolvedValue({ connectionId: account.id, grantId: account.grantId });
-    mockAgentsApi.adapterModels.mockResolvedValueOnce([{ id: "old-model", label: "Old token model" }])
-      .mockResolvedValue([{ id: "gpt-5.6-luna", label: "New token model" }]);
-    try {
-      const result = await renderForm([makeEnvironment({ id: "local-1", name: "Local", driver: "local" })], {
-        adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "copilot", model: "gpt-5.6-luna" }, runtimeConfig: { aiConnection: binding },
-      });
-      roots.push(result.root);
-      await vi.waitFor(() => expect(mockAgentsApi.adapterModels).toHaveBeenCalledTimes(1));
-      await clickByText(result.container, "Reconnect account");
-      const token = document.querySelector<HTMLInputElement>('input[placeholder="github_pat_..."]');
-      expect(token).not.toBeNull();
-      await act(async () => setInputValue(token!, "github_pat_test_reconnect"));
-      await flushReact();
-      await clickByText(document.body, "Connect");
-      await vi.waitFor(() => expect(reconnect).toHaveBeenCalledWith("company-1", expect.objectContaining({ provider: "github", connectionId: account.id, apiKey: "github_pat_test_reconnect" })));
-      await vi.waitFor(() => expect(mockAgentsApi.adapterModels).toHaveBeenCalledTimes(2));
-      expect(mockAgentsApi.adapterModels).toHaveBeenLastCalledWith("company-1", "paperclip_runner", expect.objectContaining({ provider: "acpx", acpxAgent: "copilot", aiConnection: binding }));
-      await flushReact();
-      expect(result.container.textContent).toContain("New token model");
-    } finally { accountList.mockRestore(); reconnect.mockRestore(); }
-  });
 
   it("renders GPT-6 Astra and its model-specific reasoning efforts", async () => {
     mockAgentsApi.adapterModels.mockResolvedValue([
@@ -1633,33 +1528,7 @@ describe("AgentConfigForm environment selector", () => {
     expect(text).not.toContain("Inherit instance default");
   });
 
-  it("shows the environment override for Grok local agents", async () => {
-    const result = await renderForm(
-      e2bEnvironments(),
-      { adapterType: "grok_local" },
-    );
-    roots.push(result.root);
 
-    const text = result.container.textContent ?? "";
-    const selector = await environmentOptions(result.container);
-
-    expect(text).toContain("Environment override");
-    expect(selector?.textContent).toContain("E2B · sandbox");
-  });
-
-  it("shows the environment override for Kimi local agents", async () => {
-    const result = await renderForm(
-      e2bEnvironments(),
-      { adapterType: "kimi_local" },
-    );
-    roots.push(result.root);
-
-    const text = result.container.textContent ?? "";
-    const selector = await environmentOptions(result.container);
-
-    expect(text).toContain("Environment override");
-    expect(selector?.textContent).toContain("E2B · sandbox");
-  });
 
   it("keeps an existing non-runnable override visible so it can be cleared", async () => {
     const result = await renderForm(
@@ -2088,25 +1957,6 @@ describe("AgentConfigForm environment selector", () => {
     expect(result.container.querySelector('input[aria-label="Browser code"]')).toBeFalsy();
   });
 
-  it("shows the login affordance and the displayed-code panel for a Grok sandbox with a projected login capability", async () => {
-    // The panel dispatcher reads the projected `displayed_code` mode from the
-    // capability, the same way it does for Codex. It shows the Grok code and
-    // URL.
-    mockAgentsApi.testEnvironment.mockResolvedValue(GROK_AUTH_MISSING_RESULT);
-    const result = await renderGrokSandbox();
-    roots.push(result.root);
-
-    expect(findButton(result.container, "Sign in")).toBeFalsy();
-
-    await runTest(result.container);
-
-    expect(findButton(result.container, "Sign in")).toBeTruthy();
-
-    await startLogin(result.container);
-
-    expect(result.container.textContent).toContain("WXYZ-1234");
-    expect(result.container.querySelector('input[aria-label="Browser code"]')).toBeFalsy();
-  });
 
   it("hides the Login button before Test and shows it after the adapter_auth_missing check for a Claude sandbox", async () => {
     mockAgentsApi.testEnvironment.mockResolvedValue(CLAUDE_AUTH_MISSING_RESULT);

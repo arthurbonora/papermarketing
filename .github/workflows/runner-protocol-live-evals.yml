@@ -489,12 +489,6 @@ jobs:
       - name: Materialize the pinned OpenCode executable before packaging
         run: node packages/paperclip-runner/scripts/materialize-opencode-binary.mjs
 
-      - name: Materialize the pinned Grok executable when the target includes it
-        run: |
-          if [ -f packages/paperclip-runner/scripts/provision-grok.mjs ]; then
-            sudo node packages/paperclip-runner/scripts/provision-grok.mjs /opt/paperclip/providers/grok/1.0.13/grok
-          fi
-
       - name: Build runner CLI, daemon, and canonical attempt viewer
         run: |
           set -euo pipefail

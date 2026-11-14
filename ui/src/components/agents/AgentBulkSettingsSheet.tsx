@@ -7,7 +7,6 @@ import { agentsApi, type AdapterModel } from "@/api/agents";
 import { aiConnectionsApi } from "@/api/ai-connections";
 import { getAdapterLabel } from "@/adapters/adapter-display-registry";
 import { agentConnection, agentDefaultModel, bulkAgentHarness, bulkConnectionName, mapBulkAgents, resolveBulkConnection, sameBinding } from "@/lib/bulk-agent-settings";
-import { nativeTaskModelCatalogOptions } from "@/lib/native-model-catalog";
 import { queryKeys } from "@/lib/queryKeys";
 import { AgentIdentityChipContent, agentIdentityChipClass } from "./AgentIdentityChip";
 import { ModelDropdown } from "@/components/AgentConfigForm";
@@ -38,7 +37,7 @@ export function AgentBulkSettingsSheet({ companyId, agents, totalSelected, onClo
   const [failures, setFailures] = useState<Failure[] | null>(null);
   const targets = failures ? failures.map(f => f.agent) : agents;
   const catalogs = useQuery({
-    queryKey: ["bulk-agent-models", companyId, targets.map(a => [a.id, a.defaultEnvironmentId ?? null, nativeTaskModelCatalogOptions(a) ?? null]), changeConnection ? binding : null],
+    queryKey: ["bulk-agent-models", companyId, targets.map(a => [a.id, a.defaultEnvironmentId ?? null]), changeConnection ? binding : null],
     queryFn: async () => {
       const modelRequests = new Map<string, Promise<AdapterModel[]>>();
       const results = await mapBulkAgents(targets, async agent => {
@@ -48,27 +47,20 @@ export function AgentBulkSettingsSheet({ companyId, agents, totalSelected, onClo
         const connection = resolveBulkConnection(effective, accounts);
         const routing = connection?.routing;
         const openRouter = routing?.kind === "openrouter" || (!routing && effective?.provider === "openrouter");
-        const nativeCatalog = nativeTaskModelCatalogOptions(agent);
         let models: AdapterModel[];
         if (routing?.models.length) {
           models = routing.models.map(m => ({ id: aiRoutingModel(routing, harness, m.id), label: m.label ?? m.id }));
-        } else if (nativeCatalog?.acpxAgent === "antigravity" && (connection?.method ?? effective?.method) === "api_key") {
-          // Native discovery uses a saved subscription. API-key users retain
-          // the existing unrestricted manual-model configuration path.
-          models = [];
         } else {
-          const type = nativeCatalog ? "paperclip_runner" : openRouter ? "opencode_local" : harness;
-          const options = nativeCatalog
-            ? { provider: "acpx", ...nativeCatalog, aiConnection: effective, environmentId: agent.defaultEnvironmentId }
-            : openRouter ? { provider: "openrouter" }
+          const type = openRouter ? "opencode_local" : harness;
+          const options = openRouter ? { provider: "openrouter" }
             : { environmentId: agent.defaultEnvironmentId };
           const key = JSON.stringify([type, options]);
           let request = modelRequests.get(key);
           if (!request) { request = agentsApi.adapterModels(companyId, type, options); modelRequests.set(key, request); }
           models = await request;
-          if (openRouter && !["opencode_local", "pi_local"].includes(harness)) models = models.map(m => ({ ...m, id: m.id.replace(/^openrouter\//, "") }));
+          if (openRouter && harness !== "opencode_local") models = models.map(m => ({ ...m, id: m.id.replace(/^openrouter\//, "") }));
         }
-        const restricted = Boolean(routing?.models.length || openRouter || harness === "copilot_runtime");
+        const restricted = Boolean(routing?.models.length || openRouter);
         return { agent, accounts, binding: effective, models, restricted } satisfies Catalog;
       });
       return results.map((result, index) => result.status === "fulfilled" ? result.value : { agent: targets[index], error: result.reason instanceof Error ? result.reason.message : "Couldn’t load connections or models" });

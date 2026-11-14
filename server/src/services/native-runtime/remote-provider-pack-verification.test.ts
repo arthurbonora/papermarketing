@@ -21,7 +21,7 @@ const manifest = (revision: string): ProviderPackIdentity => {
       nodeCommand: "node_modules/node/bin/node", opencodeCommand: "node_modules/.bin/opencode",
       productionLock: "pnpm-lock.yaml", opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
       opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs",
-      grokLauncher: "dist/providers/grok/launcher.cjs",
+
     }).map(([name, path]) => [name, { path, sha256: sha(`${revision}-${name}`) }])) as ProviderPackIdentity["payload"]["artifacts"],
   };
   return { schema: "paperclip-runner/remote-provider-pack/v1", payload, digest: sha(canonicalProviderPackJson(payload)) };

@@ -1,5 +1,3 @@
-import { ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS } from "@/lib/native-model-catalog";
-import { PAPERCLIP_RUNNER_ACPX_PROFILES } from "@paperclipai/adapter-utils";
 import { useConnectionModels } from "../ai-connections/useConnectionModels";
 import { AgentCharacter } from "../AgentCharacter";
 import { useAgentAppearanceDraft } from "../../hooks/useAgentAppearanceDraft";
@@ -18,9 +16,9 @@ import { testAgentSetup } from "@/lib/test-agent-setup";
 import { needsClaudeSetupQualification, qualifyClaudeSetup } from "@/lib/qualify-claude-setup";
 import { useCloudInstance } from "@/hooks/useCloudInstance";
 import { isNewAgentAdapterAllowed } from "@/lib/new-agent-adapters";
-import { pendingAgentSetupChoice } from "@/lib/agent-setup-choice";
+import { isRemovedAgentHarness } from "@paperclipai/shared";
 import { useEffect, useRef, useState } from "react";
-import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, Settings2 } from "lucide-react";
 import type {
@@ -79,7 +77,7 @@ import { adapterCuratesModelOrder } from "../../lib/model-utils";
 
 const controlClass = nativeSelectClassName;
 const nativeSetupHarnesses: Record<string, string> = {
-  codex: "codex_local", claude: "claude_local", opencode: "opencode_local", pi: "pi_local", cursor_cloud: "cursor_cloud",
+  codex: "codex_local", claude: "claude_local", opencode: "opencode_local", cursor_cloud: "cursor_cloud",
 };
 const blocking = (result: AdapterEnvironmentTestResult) =>
   result.status === "fail" ||
@@ -104,7 +102,7 @@ export function NewAgentSetup() {
       companyId={selectedCompanyId}
       name={params.get("name") ?? ""}
       adapterType={params.get("adapterType") === "paperclip_runner" && Object.hasOwn(nativeSetupHarnesses, params.get("runnerProvider") ?? "codex") ? nativeSetupHarnesses[params.get("runnerProvider") ?? "codex"] : params.get("adapterType") ?? ""}
-      initialRunner={params.get("runner") ?? (params.get("adapterType") === "paperclip_runner" && Object.hasOwn(nativeSetupHarnesses, params.get("runnerProvider") ?? "codex") ? "paperclip" : params.has("setupAgentId") && ["codex_local", "claude_local", "opencode_local", "pi_local", "cursor_cloud"].includes(params.get("adapterType") ?? "") ? "legacy" : "auto")}
+      initialRunner={params.get("runner") ?? (params.get("adapterType") === "paperclip_runner" && Object.hasOwn(nativeSetupHarnesses, params.get("runnerProvider") ?? "codex") ? "paperclip" : params.has("setupAgentId") && ["codex_local", "claude_local", "opencode_local", "cursor_cloud"].includes(params.get("adapterType") ?? "") ? "legacy" : "auto")}
       preserveNativeHarness={params.get("adapterType") === "paperclip_runner" && Object.hasOwn(nativeSetupHarnesses, params.get("runnerProvider") ?? "codex")}
       runnerProvider={params.get("runnerProvider") ?? "codex"}
       createdAgentId={params.get("createdAgentId")}
@@ -139,39 +137,17 @@ function Setup({
   const [runner, setRunner] = useState<AgentRunnerChoice>(initialRunner === "legacy" || initialRunner === "paperclip" ? initialRunner : "auto");
   const isRunner = adapterType === "paperclip_runner";
   const isDot = isRunner && runnerProvider === "openai_dot";
-  const isKimi = isRunner && runnerProvider === "kimi";
-  const brandType = isDot ? "openai_dot" : isRunner
-    ? isKimi ? "kimi_runtime" : runnerProvider === "antigravity"
-      ? "antigravity_runtime"
-      : runnerProvider === "copilot"
-      ? "copilot_runtime"
-      : runnerProvider === "grok"
-      ? "grok_local"
-      : runnerProvider === "claude"
-      ? "claude_local"
-      : runnerProvider === "opencode"
-        ? "opencode_local"
-        : runnerProvider === "pi" ? "pi_local" : runnerProvider === "codex" ? "codex_local" : runnerProvider
-    : adapterType;
-  const connectionAdapter =
-    brandType === "claude_local" || brandType === "codex_local" || brandType === "grok_local" || brandType === "antigravity_runtime"
-      ? brandType
-      : null;
-  const unreleasedAntigravity = brandType === "antigravity_runtime"
-    && !PAPERCLIP_RUNNER_ACPX_PROFILES.some(profile => profile.value === "antigravity" && profile.qualified);
-  const multiProvider =
-    brandType === "opencode_local" || brandType === "pi_local";
+  const brandType = isRunner ? nativeSetupHarnesses[runnerProvider] ?? runnerProvider : adapterType;
+  const connectionAdapter = brandType === "claude_local" || brandType === "codex_local" ? brandType : null;
+  const multiProvider = brandType === "opencode_local";
   const providerKeys = setupProviderKeys(brandType);
   const chooseProvider = multiProvider || brandType === "hermes_local";
   const hasCredentialField =
-    isKimi || chooseProvider || Boolean(SETUP_CREDENTIAL_KEYS[adapterType]);
+    chooseProvider || Boolean(SETUP_CREDENTIAL_KEYS[adapterType]);
   const nativeCursorCloud = adapterType === "cursor_cloud" && runner === "paperclip";
   const showModel = !isDot && adapterType !== "hermes_gateway" && (adapterType !== "cursor_cloud" || nativeCursorCloud);
   const [allowUnmeteredProvider, setAllowUnmeteredProvider] = useState(false);
   const [gatewayUrl, setGatewayUrl] = useState("");
-  const [kimiModel, setKimiModel] = useState("");
-  const [kimiBaseUrl, setKimiBaseUrl] = useState("");
-  const [kimiProtocol, setKimiProtocol] = useState("kimi");
   const [screen, setScreen] = useState<"connect" | "runtime" | "saved">(
     createdAgentId ? "saved" : connectionAdapter ? "connect" : "runtime",
   );
@@ -185,9 +161,7 @@ function Setup({
     null,
   );
   const [runtimeAiBinding, setRuntimeAiBinding] = useState<AiConnectionBinding | undefined>(() =>
-    brandType === "copilot_runtime"
-      ? { provider: "github", method: "api_key", mode: "responsible_user" }
-      : brandType === "opencode_local"
+    brandType === "opencode_local"
       ? { provider: "openrouter", method: "api_key", mode: "responsible_user" }
       : undefined,
   );
@@ -215,23 +189,12 @@ function Setup({
   });
   const created =
     (savedAgent.data?.companyId === companyId ? savedAgent.data : null) ?? currentCreated;
-  const savedSetupChoice = pendingAgentSetupChoice(created);
-  const resumeSavedChoice = savedSetupChoice && (adapterType !== savedSetupChoice.adapterType || runnerProvider !== savedSetupChoice.runnerProvider);
-  useEffect(() => {
-    if (!resumeSavedChoice || !created || !savedSetupChoice) return;
-    navigate(`/agents/new?${new URLSearchParams({ name: created.name, setupAgentId: created.id, ...savedSetupChoice })}`, { replace: true });
-  }, [resumeSavedChoice, created?.id, created?.name, savedSetupChoice?.adapterType, savedSetupChoice?.runnerProvider, navigate]);
+  const removedHarness = isRemovedAgentHarness(adapterType, { provider: "acpx", acpxAgent: runnerProvider })
+    || Boolean(created && isRemovedAgentHarness(created.adapterType, created.adapterConfig));
   const completed = Boolean(created && created.pauseReason !== "setup");
   const runtimeReady = Boolean(created && isAgentStatusInvokable(created.status)
     && (!created.lifecycleState || created.lifecycleState === "ready"));
   const finishingSetup = !isDot && ["preparing", "verifying", "resuming", "pausing"].includes(created?.lifecycleState ?? "");
-  useEffect(() => {
-    if (brandType !== "pi_local" || created?.adapterType !== "paperclip_runner"
-      || created.runtimeConfig.aiConnection) return;
-    const env = (created.adapterConfig.env ?? {}) as Record<string, unknown>;
-    if (Object.values(PROVIDER_ENV_KEYS).some(key => env[key] !== undefined)) return;
-    setRuntimeAiBinding(current => current ?? { provider: "openrouter", method: "api_key", mode: "responsible_user" });
-  }, [brandType, created?.id, created?.adapterType]);
   const savedNativeMultiProvider = multiProvider && (Boolean(setupAgentId) || runner === "legacy")
     && created?.adapterType === "paperclip_runner";
   const requestAdapterType = savedNativeMultiProvider || (preserveNativeHarness && runner === "paperclip")
@@ -331,24 +294,11 @@ function Setup({
     environmentError =
       describeError(cause).body;
   }
-  const accountBoundCatalog = brandType === "copilot_runtime" || brandType === "antigravity_runtime";
-  const accountCatalogAvailable = brandType === "copilot_runtime" || (brandType === "antigravity_runtime" && aiBinding?.method === "subscription");
-  const requestAccountModels = accountCatalogAvailable && showModel && !connectionModels && Boolean(aiBinding)
-    && envs.isSuccess && settings.isSuccess && experimental.isSuccess && general.isSuccess && !environmentError;
-  const accountModelScope = JSON.stringify([companyId, environmentId, aiBinding]);
   const models = useQuery({
-    queryKey: queryKeys.agents.adapterModels(companyId, brandType, environmentId, accountBoundCatalog ? JSON.stringify(aiBinding ?? null) : aiBinding?.provider),
-    queryFn: () => agentsApi.adapterModels(companyId, isKimi || accountBoundCatalog ? "paperclip_runner" : brandType, isKimi
-      ? { provider: "acpx", acpxAgent: "kimi", environmentId } : accountBoundCatalog
-      ? { provider: "acpx", acpxAgent: runnerProvider, aiConnection: aiBinding, environmentId }
-      : { provider: aiBinding?.provider, environmentId }),
-    ...(accountBoundCatalog ? ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS : {}),
-    enabled: Boolean(brandType) && showModel && !connectionModels && (!accountBoundCatalog || requestAccountModels),
-    });
-  const refreshAccountModels = models.refetch;
-  useEffect(() => {
-    if (requestAccountModels) void refreshAccountModels();
-  }, [requestAccountModels, accountModelScope, refreshAccountModels]);
+    queryKey: queryKeys.agents.adapterModels(companyId, brandType, environmentId, aiBinding?.provider),
+    queryFn: () => agentsApi.adapterModels(companyId, brandType, { provider: aiBinding?.provider, environmentId }),
+    enabled: !removedHarness && Boolean(brandType) && showModel && !connectionModels,
+  });
   const environment = envs.data?.find((env) => env.id === environmentId);
   const setupEnvironmentKey = JSON.stringify([companyId, environmentId, environment?.config]);
   const setupEnvironmentRef = useRef("");
@@ -358,13 +308,8 @@ function Setup({
     queryKey: queryKeys.adapters.availability(companyId, environmentId),
     queryFn: () => adaptersApi.list({ companyId, environmentId }),
   });
-  const candidateHarnesses = adapters.data?.find(adapter => adapter.type === "paperclip_runner" && adapter.loaded && !adapter.disabled)?.candidateHarnesses;
-  const antigravityCandidate = brandType === "antigravity_runtime" ? candidateHarnesses?.find(candidate => candidate.agent === "antigravity") : undefined;
-  const pendingAntigravity = unreleasedAntigravity && !antigravityCandidate;
-  useEffect(() => { if (antigravityCandidate) setModel(current => current || antigravityCandidate.model); }, [antigravityCandidate?.model]);
   const defaultRunner = adapters.data?.find(adapter => adapter.type === adapterType)?.defaultRunner;
-  const efforts = brandType === "pi_local" && (runner === "paperclip" || (runner === "auto" && defaultRunner === "paperclip"))
-    ? ["off", "low", "high", "max"] : isRunner ? [] : setupEfforts(adapterType, model);
+  const efforts = isRunner ? [] : setupEfforts(adapterType, model);
   useEffect(() => {
     const transition = qualificationTransition.current;
     if (transition?.run === generation.current && transition.companyId === companyId
@@ -379,7 +324,7 @@ function Setup({
     environment?.driver === "sandbox" &&
     caps.data?.sandboxProviders?.[sandboxProvider]?.supportsLoginPty === true;
   const envKey =
-    isKimi ? "KIMI_API_KEY" : SETUP_CREDENTIAL_KEYS[adapterType] ?? providerKeys[provider] ?? "API_KEY";
+    SETUP_CREDENTIAL_KEYS[adapterType] ?? providerKeys[provider] ?? "API_KEY";
   const savedKey = userSecrets.data?.find(
     (entry) => entry.definition.key === envKey && entry.secret,
   );
@@ -403,8 +348,6 @@ function Setup({
                 version: "latest" as const,
               }
             : null));
-  const usingKimiApi =
-    adapterType === "kimi_local" && Boolean(apiKey.trim() || selectedBinding);
   const cloud = Boolean(useCloudInstance());
   const available =
     (!nativeCursorCloud || experimental.data?.enableNativeRunner === true) &&
@@ -414,7 +357,6 @@ function Setup({
       nativeRunnerEnabled: experimental.data?.enableNativeRunner === true,
       openAiDotEnabled: experimental.data?.enableOpenAiDot === true,
       runnerProvider,
-      candidateHarnesses,
     }) &&
     adapterInventory.data?.some(
       (adapter) =>
@@ -423,12 +365,10 @@ function Setup({
         !adapter.disabled &&
         !getAdapterDisplay(adapterType).comingSoon,
     ) && (requestAdapterType !== "paperclip_runner" || adapterType === "paperclip_runner" || adapterInventory.data?.some(adapter => adapter.type === "paperclip_runner" && adapter.loaded && !adapter.disabled));
-  const configurationAvailable = available || (pendingAntigravity && adapterInventory.data?.some(
-    adapter => adapter.type === "paperclip_runner" && adapter.loaded && !adapter.disabled,
-  ));
+  const configurationAvailable = available && !removedHarness;
   const connectionSettingsReady = Boolean(
     configurationAvailable &&
-    (!["codex_local", "claude_local", "opencode_local", "pi_local"].includes(adapterType) || runner !== "auto" || Boolean(adapters.data)) &&
+    (!["codex_local", "claude_local", "opencode_local"].includes(adapterType) || runner !== "auto" || Boolean(adapters.data)) &&
     !environmentError &&
     !envs.isPending &&
     !settings.isPending &&
@@ -444,12 +384,12 @@ function Setup({
     !caps.error &&
     (nativeCursorCloud || !(managedOnly || forced.forced) || environmentId),
   );
-  const needsCurrentSetup = ["codex_local", "claude_local", "opencode_local", "pi_local"].includes(adapterType);
+  const needsCurrentSetup = ["codex_local", "claude_local", "opencode_local"].includes(adapterType);
   const preparingComputer = created?.pauseReason === "setup" && ["preparing", "pausing"].includes(created.lifecycleState ?? "");
   const environmentSelectionSaved = nativeCursorCloud
     || (!environmentOverride && created?.defaultEnvironmentId == null)
       || (created?.defaultEnvironmentId ?? null) === (environmentOverride || (forced.forced || managedOnly ? environmentId : null));
-  const ready = (pendingAntigravity || Boolean(created) && environmentSelectionSaved) && !environmentSaving && !preparingComputer && connectionSettingsReady && (!needsCurrentSetup || (
+  const ready = Boolean(created) && environmentSelectionSaved && !environmentSaving && !preparingComputer && connectionSettingsReady && (!needsCurrentSetup || (
     envs.isSuccess && !envs.isFetching
     && settings.isSuccess && !settings.isFetching
     && experimental.isSuccess && !experimental.isFetching
@@ -476,9 +416,9 @@ function Setup({
       ...(isRunner
         ? {
             adapterSchemaValues: {
-              provider: ["claude", "grok", "copilot", "pi", "antigravity", "kimi"].includes(runnerProvider) ? "acpx" : runnerProvider,
+              provider: runnerProvider === "claude" ? "acpx" : runnerProvider,
               ...(isDot ? { allowUnmeteredProvider } : {}),
-              ...(["claude", "grok", "copilot", "pi", "antigravity", "kimi"].includes(runnerProvider) ? { acpxAgent: runnerProvider } : {}),
+              ...(runnerProvider === "claude" ? { acpxAgent: runnerProvider } : {}),
             },
           }
         : {}),
@@ -487,17 +427,15 @@ function Setup({
     const nativeSchema = profile ? {
       ...profile,
       ...(profile.provider === "acpx" ? { acpxPermissionMode: "approve-all" } : {}),
-      ...(brandType === "pi_local" && effort ? { piThinkingLevel: effort } : {}),
     } : {};
-    const config = getUIAdapter(preserveNativeHarness && runner === "paperclip" && brandType !== "pi_local" ? "paperclip_runner" : adapterType).buildAdapterConfig(preserveNativeHarness && runner === "paperclip" ? { ...values, adapterSchemaValues: nativeSchema } : values,
-      antigravityCandidate ? { candidateHarnesses: [antigravityCandidate] } : undefined);
+    const config = getUIAdapter(preserveNativeHarness && runner === "paperclip" ? "paperclip_runner" : adapterType).buildAdapterConfig(preserveNativeHarness && runner === "paperclip" ? { ...values, adapterSchemaValues: nativeSchema } : values);
     if (preserveNativeHarness && runner === "paperclip" && profile) {
       Object.assign(config, nativeSchema, profile.provider === "opencode" ? { opencodePermissionMode: "allow" } : profile.provider === "codex" ? { codexPermissionMode: "never" } : {}, paperclipRunnerCreationLifecycle(profile));
     }
     if (isRunner)
       Object.assign(config, {
-        provider: ["claude", "grok", "copilot", "pi", "antigravity", "kimi"].includes(runnerProvider) ? "acpx" : runnerProvider,
-        ...(["claude", "grok", "copilot", "pi", "antigravity", "kimi"].includes(runnerProvider) ? { acpxAgent: runnerProvider } : {}),
+        provider: runnerProvider === "claude" ? "acpx" : runnerProvider,
+        ...(runnerProvider === "claude" ? { acpxAgent: runnerProvider } : {}),
         ...(model ? { model } : {}),
       });
     if (multiProvider && created) {
@@ -508,10 +446,6 @@ function Setup({
       }
       for (const key of ["dangerouslySkipPermissions", "opencodePermissionMode", "acpxPermissionMode", "acpxSessionMode", "lifecycleMode", "idleTimeoutMs"]) {
         if (saved[key] !== undefined) config[key] = saved[key];
-      }
-      if (brandType === "pi_local" && created.adapterType === "paperclip_runner" && runner !== "legacy" && effort) {
-        config.piThinkingLevel = effort;
-        delete config.thinking;
       }
       config.model = model;
       config.env = { ...((saved.env as object) ?? {}), ...((config.env as object) ?? {}) };
@@ -527,31 +461,10 @@ function Setup({
         ...(branch.trim() ? { repoStartingRef: branch.trim() } : {}),
       });
     if (adapterType === "hermes_gateway") config.apiBaseUrl = gatewayUrl.trim();
-    if (usingKimiApi) {
-      // --model overrides Kimi's environment-defined model. Let KIMI_MODEL_NAME win.
-      delete config.model;
-      config.kimiApi = { model: kimiModel.trim(), protocol: kimiProtocol, baseUrl: kimiBaseUrl.trim() };
-      config.env = {
-        ...((config.env as object) ?? {}),
-        KIMI_MODEL_NAME: { type: "plain", value: kimiModel.trim() },
-        KIMI_MODEL_PROVIDER_TYPE: { type: "plain", value: kimiProtocol },
-        ...(kimiBaseUrl.trim()
-          ? {
-              KIMI_MODEL_BASE_URL: { type: "plain", value: kimiBaseUrl.trim() },
-            }
-          : {}),
-      };
-    }
     return config;
   }
   function preparedConfig(nextConnection = connection, setupRunner?: AgentRunner) {
     if (nativeCursorCloud && !model.trim()) throw new Error("Enter the exact Cursor Cloud model ID.");
-    if (isKimi && !model.trim()) throw new Error("Enter the exact Kimi model ID.");
-    if (isKimi && !apiKey.trim() && !selectedBinding) throw new Error("Enter KIMI_API_KEY or select an organization secret.");
-    if (brandType === "antigravity_runtime" && (!model.trim() || model !== model.trim() || /\s/.test(model) || ["auto", "default"].includes(model.toLowerCase())))
-      throw new Error("Choose or enter an exact Google Antigravity model ID.");
-    if (brandType === "copilot_runtime" && !models.data?.some(candidate => candidate.id === model))
-      throw new Error("Refresh Copilot models and select an available model before creating this agent.");
     if (isDot && !allowUnmeteredProvider) throw new Error("Acknowledge external provider billing before creating your Dot agent.");
     if (multiProvider && (!model.trim() || !model.includes("/")))
       throw new Error("Choose or enter a model in provider/model format.");
@@ -578,7 +491,6 @@ function Setup({
         throw new Error("Enter the Hermes API base URL.");
       }
     }
-    if (usingKimiApi && !kimiModel.trim())
       throw new Error("Enter the Kimi API model name.");
     return buildConfig(nextConnection, selectedBinding, setupRunner);
   }
@@ -599,17 +511,13 @@ function Setup({
     if (agent.pauseReason !== "setup") { setScreen("saved"); return; }
     const config = agent.adapterConfig;
     if ((multiProvider && initialRunner !== "auto") || adapterType === "cursor_cloud") setRunner(agent.adapterType === "paperclip_runner" ? "paperclip" : "legacy");
-    setModel(typeof config.model === "string" && config.model ? config.model : antigravityCandidate?.model ?? "");
+    setModel(typeof config.model === "string" && config.model ? config.model : "");
     setEffort(String(config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort ?? config.thinkingEffort ?? config.piThinkingLevel ?? config.thinking ?? ""));
     setEnvironmentOverride(agent.defaultEnvironmentId ?? "");
     setRepository(typeof config.repoUrl === "string" ? config.repoUrl : "");
     setBranch(typeof config.repoRef === "string" ? config.repoRef : typeof config.repoStartingRef === "string" ? config.repoStartingRef : "");
     setGatewayUrl(typeof config.apiBaseUrl === "string" ? config.apiBaseUrl : "");
     setAllowUnmeteredProvider(config.allowUnmeteredProvider === true);
-    const kimiApi = config.kimiApi as { model?: string; protocol?: string; baseUrl?: string } | undefined;
-    setKimiModel(kimiApi?.model ?? "");
-    setKimiProtocol(kimiApi?.protocol ?? "kimi");
-    setKimiBaseUrl(kimiApi?.baseUrl ?? "");
     const env = typeof config.env === "object" && config.env !== null ? config.env as Record<string, unknown> : {};
     const providerEntry = Object.entries(providerKeys).find(([, key]) => env[key]);
     if (providerEntry) setProvider(providerEntry[0]);
@@ -623,7 +531,6 @@ function Setup({
   }, [savedAgent.data, companyId, connectionAdapter, brandType]);
 
   async function saveDraft(nextConnection = connection, exit = false, testedConfig?: Record<string, unknown>, selectedEnvironment = environmentOverride) {
-    if (pendingAntigravity) return;
     if (!created || completed) return;
     const binding = runtimeAiBinding ?? nextConnection?.aiConnection;
     const config = testedConfig ?? buildConfig(nextConnection);
@@ -646,7 +553,6 @@ function Setup({
         adapterType: requestAdapterType, runner, adapterConfig: config,
         defaultEnvironmentId: nativeCursorCloud ? null : selectedEnvironment || (forced.forced || managedOnly ? environmentId : null),
         runtimeConfig: { ...created.runtimeConfig, ...(binding ? { aiConnection: binding } : {}) },
-        ...(antigravityCandidate ? { metadata: { ...created.metadata, setupAdapterPending: false, setupAdapterChoice: undefined } } : {}),
         ...(nextConnection?.applyStoredClaudeLogin ? { applyStoredClaudeLogin: true } : {}),
       }, companyId);
       rememberCredentials();
@@ -667,7 +573,6 @@ function Setup({
   }
 
   async function saveAndExit() {
-    if (pendingAntigravity) { navigate("/agents/all"); return; }
     if (savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
@@ -687,7 +592,7 @@ function Setup({
   }
 
   async function runTest(nextConnection = connection): Promise<Record<string, unknown> | null> {
-    if (!ready || pendingAntigravity) return null;
+    if (!ready) return null;
     const run = ++generation.current;
     const setupEnvironment = setupEnvironmentRef.current;
     setTestState("running");
@@ -713,7 +618,7 @@ function Setup({
         agentId: created?.id,
         adapterType: requestAdapterType,
         providerAdapter: brandType,
-        ...(["codex_local", "claude_local", "opencode_local", "pi_local", "cursor_cloud"].includes(adapterType) && (qualified || runner !== "auto") ? { runner: qualified?.runner ?? runner } : {}),
+        ...(["codex_local", "claude_local", "opencode_local", "cursor_cloud"].includes(adapterType) && (qualified || runner !== "auto") ? { runner: qualified?.runner ?? runner } : {}),
         adapterConfig: config,
         testCredentials: pendingCredentials(nextConnection),
         aiConnection: runtimeAiBinding ?? nextConnection?.aiConnection,
@@ -726,8 +631,7 @@ function Setup({
         !blocking(tested) &&
         (tested.checks.some(check => check.code === "environment_agent_approval_required") || !connectionAdapter ||
           tested.checks.some((check) =>
-            check.code.endsWith("hello_probe_passed") || check.code === "ai_connection_api_key_reverified"
-            || (brandType === "antigravity_runtime" && check.code === "antigravity_metadata_verified"),
+            check.code.endsWith("hello_probe_passed") || check.code === "ai_connection_api_key_reverified",
           ))
       ) ? config : null;
     } catch (cause) {
@@ -743,7 +647,6 @@ function Setup({
   async function finish() {
     if (
       savingRef.current ||
-      pendingAntigravity ||
       completed ||
       !created ||
       !ready ||
@@ -773,7 +676,7 @@ function Setup({
         capabilities: created.capabilities,
         metadata: created.metadata,
         adapterType: requestAdapterType,
-        ...(["codex_local", "claude_local", "opencode_local", "pi_local", "cursor_cloud"].includes(adapterType) && runner !== "auto" ? { runner } : {}),
+        ...(["codex_local", "claude_local", "opencode_local", "cursor_cloud"].includes(adapterType) && runner !== "auto" ? { runner } : {}),
         adapterConfig: config,
         defaultEnvironmentId: nativeCursorCloud ? null :
           environmentOverride ||
@@ -843,14 +746,17 @@ function Setup({
           : "Loading your agent…"}
       </p>
     );
-  if (resumeSavedChoice) return <p role="status" className="text-sm text-muted-foreground">Loading your agent setup…</p>;
-  if (choosingAdapter || (!setupAgentId && !createdAgentId) || !name || !adapterType || (created?.metadata?.setupAdapterPending === true && !unreleasedAntigravity))
+  if (removedHarness && !choosingAdapter) return <div className="space-y-4">
+    <p role="alert">This harness is no longer available. Choose a supported harness to continue.</p>
+    <Button onClick={() => setChoosingAdapter(true)}>Choose a harness</Button>
+  </div>;
+  if (choosingAdapter || (!setupAgentId && !createdAgentId) || !name || !adapterType || (created?.metadata?.setupAdapterPending === true))
     return (
       <AgentBasicsDialog
         open
-        initialAdapter={choosingAdapter && savedSetupChoice ? "antigravity_runtime" : created?.metadata?.setupAdapterPending ? "" : adapterType}
+        initialAdapter={removedHarness || created?.metadata?.setupAdapterPending ? "" : adapterType}
         initialName={created?.name ?? name}
-        setupAgentId={created?.metadata?.setupAdapterPending ? created.id : setupAgentId ?? undefined}
+        setupAgentId={choosingAdapter || created?.metadata?.setupAdapterPending ? created?.id ?? setupAgentId ?? undefined : setupAgentId ?? undefined}
         onClose={() => choosingAdapter ? setChoosingAdapter(false) : navigate("/agents/all")}
         onContinue={(basics) => {
           setChoosingAdapter(false);
@@ -860,7 +766,7 @@ function Setup({
         }}
       />
     );
-  if (!created && connectionSettingsReady && !pendingAntigravity) return <div className="space-y-4">
+  if (!created && connectionSettingsReady) return <div className="space-y-4">
     <p role={error ? "alert" : "status"}>{error ?? "Loading your agent…"}</p>
     {error && <Button onClick={() => void savedAgent.refetch()}>Try again</Button>}
   </div>;
@@ -877,15 +783,8 @@ function Setup({
   const confirmationEnvironment = created?.defaultEnvironmentId
     ? envs.data?.find((env) => env.id === created.defaultEnvironmentId)
     : environment;
-  const createdKimiModel = (
-    created?.adapterConfig?.env as Record<string, unknown> | undefined
-  )?.KIMI_MODEL_NAME;
   const confirmationModel =
     created?.adapterConfig?.model ||
-    (created?.adapterConfig?.kimiApi as { model?: string } | undefined)?.model ||
-    (typeof createdKimiModel === "string"
-      ? createdKimiModel
-      : (createdKimiModel as { value?: string } | undefined)?.value) ||
     model ||
     "Default";
   const environmentLabel =
@@ -959,15 +858,6 @@ function Setup({
             onRetry={setupRetry}
           />
         )}
-        {pendingAntigravity && configurationAvailable && (
-          <div className="space-y-2">
-            <p role="status" className="text-sm text-muted-foreground">
-              Google Antigravity is not available yet. You can connect your Google account and review settings. This agent cannot finish setup or run tasks yet. Model and connection settings are not saved to this agent yet.
-            </p>
-            {created && <Button variant="link" className="px-0" onClick={() => setChoosingAdapter(true)}>Change adapter</Button>}
-          </div>
-        )}
-        {antigravityCandidate && <p role="status" className="text-sm text-muted-foreground">Google Antigravity candidate is enabled for testing on this instance.</p>}
         {adapterInventory.data && !configurationAvailable && (
           <p role="alert" className="text-sm text-destructive">
             This adapter is unavailable. Choose an enabled adapter.
@@ -1060,14 +950,7 @@ function Setup({
                         setRuntimeAiBinding(undefined);
                         resetTest();
                       }}
-                      testConnection={async next => {
-                        if (brandType !== "antigravity_runtime") return (await runTest(next)) !== null;
-                        if (next.aiConnection?.method === "subscription") await agentsApi.adapterModels(companyId, "paperclip_runner", {
-                          provider: "acpx", acpxAgent: "antigravity", aiConnection: next.aiConnection, environmentId,
-                          agentId: !created || created.pauseReason === "setup" ? undefined : created.id,
-                        });
-                        return true;
-                      }}
+                      testConnection={async next => (await runTest(next)) !== null}
                       testError={
                         error ??
                         (
@@ -1164,20 +1047,19 @@ function Setup({
                         {!connectionAdapter && aiProviderForAdapter(brandType) && (
                           <AiConnectionField companyId={companyId} agentName={name} adapterType={brandType} model={model} environmentId={environmentId ?? undefined} value={aiBinding}
                             onChange={binding => { binding.mode !== "router" && setRuntimeAiBinding(binding); resetTest();
-                              if (accountCatalogAvailable && hashKey([aiBinding ?? null]) === hashKey([binding ?? null])) void refreshAccountModels();
                             }} />
                         )}
                         {(connectionModels ? connectionModels.error : models.error) && <p role="alert" className="text-sm text-destructive">Could not load models. Retry or enter a model ID manually.</p>}
-                        {((showModel && !usingKimiApi) ||
+                        {((showModel) ||
                           efforts.length > 0) && (
                           <div className="grid items-start gap-5 sm:grid-cols-2">
-                            {showModel && !usingKimiApi && (
+                            {showModel && (
                               <ModelDropdown
                                 presentation={brandType === "codex_local" ? "searchable" : "native"}
                                 models={connectionModels?.models ?? models.data ?? []}
                                 loadingModels={connectionModels?.isLoading ?? models.isLoading}
-                                onRefreshModels={connectionModels?.refreshModels ?? (accountCatalogAvailable ? async () => { await models.refetch(); } : undefined)}
-                                refreshingModels={connectionModels?.refreshing ?? (accountCatalogAvailable ? models.isFetching : undefined)}
+                                onRefreshModels={connectionModels?.refreshModels}
+                                refreshingModels={connectionModels?.refreshing}
                                 value={model}
                                 onChange={(value) => {
                                   setModel(connectionModels?.resolveModel(value) ?? value);
@@ -1202,9 +1084,8 @@ function Setup({
                                 }}
                                 open={modelOpen}
                                 onOpenChange={setModelOpen}
-                                allowDefault={!isKimi && !multiProvider && !accountBoundCatalog && !nativeCursorCloud}
-                                required={isKimi || multiProvider || accountBoundCatalog || nativeCursorCloud}
-                                creatable={brandType !== "copilot_runtime"}
+                                allowDefault={!multiProvider && !nativeCursorCloud}
+                                required={multiProvider || nativeCursorCloud}
                                 groupByProvider={multiProvider && !connectionModels}
                                 preserveOrder={Boolean(connectionModels) || adapterCuratesModelOrder(brandType)}
                               />
@@ -1294,7 +1175,7 @@ function Setup({
                                     placeholder={
                                       selectedBinding
                                         ? "Using saved key"
-                                        : (isKimi || [
+                                        : ([
                                               "cursor_cloud",
                                               "hermes_gateway",
                                             ].includes(adapterType))
@@ -1348,7 +1229,6 @@ function Setup({
                             <p className="text-xs text-muted-foreground sm:col-span-2">
                               New keys are saved as organization secrets when
                               you finish setup.
-                              {isKimi && " Use a Kimi Code API key for this runner."}
                               {multiProvider && ` Use a ${provider}/model ID.`}
                             </p>
                           </div>
@@ -1365,52 +1245,6 @@ function Setup({
                               placeholder="https://hermes.example.com"
                             />
                           </Field>
-                        )}
-                        {usingKimiApi && (
-                          <div className="grid gap-5 sm:grid-cols-2">
-                            <Field label="Kimi API model name">
-                              <Input
-                                aria-label="Kimi API model name"
-                                value={kimiModel}
-                                onChange={(event) => {
-                                  setKimiModel(event.target.value);
-                                  resetTest();
-                                }}
-                                placeholder="kimi-for-coding"
-                              />
-                            </Field>
-                            <Field label="Kimi API protocol">
-                              <select
-                                aria-label="Kimi API protocol"
-                                className={controlClass}
-                                value={kimiProtocol}
-                                onChange={(event) => {
-                                  setKimiProtocol(event.target.value);
-                                  resetTest();
-                                }}
-                              >
-                                {["kimi", "anthropic", "openai"].map(
-                                  (value) => (
-                                    <option key={value}>{value}</option>
-                                  ),
-                                )}
-                              </select>
-                            </Field>
-                            <Field
-                              label="Kimi API base URL"
-                              hint="Optional override for your provider endpoint."
-                            >
-                              <Input
-                                aria-label="Kimi API base URL"
-                                value={kimiBaseUrl}
-                                onChange={(event) => {
-                                  setKimiBaseUrl(event.target.value);
-                                  resetTest();
-                                }}
-                                placeholder="Provider default"
-                              />
-                            </Field>
-                          </div>
                         )}
                         {adapterType === "cursor_cloud" && (
                           <>
@@ -1470,11 +1304,10 @@ function Setup({
                     </fieldset>
                     <RuntimeTestCard
                       variant={isDot ? "prerequisites" : "connection"}
-                      metadataOnly={accountBoundCatalog}
                       state={testState}
                       result={result}
                       error={error}
-                      disabled={pendingAntigravity || !ready || busy || Boolean(connectionAdapter && !connection)}
+                      disabled={!ready || busy || Boolean(connectionAdapter && !connection)}
                       onTest={() => void runTest()}
                     />
                     {error && testState !== "fail" && (
@@ -1486,7 +1319,7 @@ function Setup({
                     {environmentSaveError && !environmentSelectionSaved && <Button disabled={busy} onClick={() => void changeEnvironment()}>Retry saving environment</Button>}
                     <div className="flex justify-between border-t border-border py-5">
                       <div className="flex items-center gap-3">
-                        <Button type="button" variant="ghost" disabled={busy} onClick={() => void saveAndExit()}>{pendingAntigravity ? "Back to agents" : "Save & exit"}</Button>
+                        <Button type="button" variant="ghost" disabled={busy} onClick={() => void saveAndExit()}>Save & exit</Button>
                       {connectionAdapter ? (
                         <Button
                           type="button"
@@ -1512,7 +1345,6 @@ function Setup({
                         type="submit"
                         disabled={
                           !ready ||
-                          pendingAntigravity ||
                           busy ||
                           testState === "fail" ||
                           Boolean(connectionAdapter && !connection)

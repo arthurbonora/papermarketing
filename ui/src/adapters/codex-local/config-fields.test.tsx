@@ -290,9 +290,9 @@ describe("PaperMarketing Runner Codex configuration", () => {
     ["approve-paperclip", "Automatic PaperMarketing actions"],
     ["approve-reads", "Allow PaperMarketing reads"],
     ["deny-all", "Deny all"],
-  ])("displays Grok's default or saved permission mode %s", async (acpxPermissionMode, label) => {
-    const html = await renderRunner({ provider: "acpx", acpxAgent: "grok", acpxPermissionMode });
-    expect(html).toContain('Grok Build');
+  ])("displays Claude ACP default or saved permission mode %s", async (acpxPermissionMode, label) => {
+    const html = await renderRunner({ provider: "acpx", acpxAgent: "claude", acpxPermissionMode });
+    expect(html).toContain('Claude (ACP)');
     expect(html).toContain('aria-label="Permission mode"');
     expect(html).toContain(label);
   });
@@ -302,7 +302,7 @@ describe("PaperMarketing Runner Codex configuration", () => {
 
     expect(html).toContain('aria-label="Harness"');
     expect(html).toContain("OpenCode 1.18.34");
-    expect(html).toContain('ACP agents');
+    expect(html).toContain('Claude (ACP)');
     expect(html).not.toContain("Permission mode");
     expect(html).not.toContain("Ask when requested");
     expect(html).not.toContain("Ask for untrusted operations");
@@ -326,48 +326,8 @@ describe("PaperMarketing Runner Codex configuration", () => {
     expect(html).not.toContain("Ask for untrusted operations");
   });
 
-  it("offers qualified Claude, Cursor, Pi and Copilot", async () => {
-    const html = await renderRunner({
-      provider: "acpx",
-      acpxAgent: "claude",
-      acpxPermissionMode: "approve-reads",
-    }, "ACP agent");
 
-    expect(html).toContain('ACP agents');
-    expect(html).toContain("ACP agent");
-    const options = new DOMParser().parseFromString(html, "text/html").querySelectorAll('[role="option"]');
-    expect(Array.from(options, option => ({ label: option.textContent?.trim(), disabled: option.hasAttribute("data-disabled") })))
-      .toEqual(expect.arrayContaining([
-        { label: "Claude", disabled: false }, { label: "Cursor", disabled: false },
-        { label: "Pi", disabled: false }, { label: "GitHub Copilot", disabled: false },
-      ]));
-    expect(html).not.toContain("Codex via ACPX");
-    expect(html).not.toContain("ACPX Codex");
-    expect(html).not.toContain("Pi via ACPX");
-    expect(html).toContain("Allow PaperMarketing reads");
-  });
 
-  it.each([undefined, "agent", "plan", "ask"])("displays saved Cursor mode %s", async acpxSessionMode => {
-    const selected = acpxSessionMode ?? "agent";
-    await renderRunner({ provider: "acpx", acpxAgent: "cursor", acpxSessionMode }, undefined, container => {
-      const modes = container.querySelectorAll('[aria-label="Cursor mode"]');
-      expect(modes).toHaveLength(1);
-      expect((modes[0] as HTMLSelectElement).value).toBe(selected);
-    });
-  });
-
-  it.each([undefined, "off", "low", "high", "max"])("displays saved Pi thinking level %s", async piThinkingLevel => {
-    await renderRunner({ provider: "acpx", acpxAgent: "pi", piThinkingLevel }, undefined, container => {
-      const mode = container.querySelector('[aria-label="Pi thinking level"]');
-      expect((mode as HTMLSelectElement).value).toBe(piThinkingLevel ?? "low");
-    });
-  });
-  it("shows unsupported saved Pi level without aliasing it", async () => {
-    expect(await renderRunner({ provider: "acpx", acpxAgent: "pi", piThinkingLevel: "medium" })).toContain("Unsupported saved thinking level");
-  });
-  it.each(["claude", "copilot", "pi"])("does not expose Cursor mode for %s", async acpxAgent => {
-    expect(await renderRunner({ provider: "acpx", acpxAgent })).not.toContain('aria-label="Cursor mode"');
-  });
 
   it("falls back to the fail-closed Codex permission mode", async () => {
     const html = await renderRunner({ codexPermissionMode: "unrestricted" });

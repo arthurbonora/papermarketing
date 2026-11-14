@@ -105,7 +105,7 @@ export function agentHarnessVerificationService(db: Db, manager: PluginWorkerMan
     if (binding) config = { ...config, env: stripAiAuthBindings(config.env) };
     config = (await secrets.resolveAdapterConfigForRuntime(agent.companyId, config, context, { adapterType: agent.adapterType })).config;
     let runner: Record<string, unknown> | null = providerApi ? { kind: "provider_api" } : { kind: "local", version: serverVersion };
-    const environmentId = providerApi ? null : await tests.resolveAdapterTestEnvironmentId(agent.companyId, agent.defaultEnvironmentId, agent.adapterType === "paperclip_runner" && config.provider === "acpx" && config.acpxAgent === "copilot");
+    const environmentId = providerApi ? null : await tests.resolveAdapterTestEnvironmentId(agent.companyId, agent.defaultEnvironmentId);
     if (environmentId) {
       await tests.assertAdapterTestEnvironmentForCompany(agent.companyId, environmentId, agent.adapterType);
       const environment = await environments.getById(environmentId);

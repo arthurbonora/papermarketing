@@ -1,7 +1,5 @@
 import { codexLocalReasoningEffortsForModel, isCodexLocalFastModeSupported, isCodexLocalKnownModel } from "@paperclipai/adapter-codex-local";
 import { claudeLocalReasoningEffortsForModel } from "@paperclipai/adapter-claude-local";
-import { DEFAULT_GROK_LOCAL_MODEL, grokLocalReasoningEffortsForModel } from "@paperclipai/adapter-grok-local";
-import { DEFAULT_KIMI_LOCAL_MODEL, modelSupportsEffort, KIMI_SUPPORTED_EFFORTS } from "@paperclipai/adapter-kimi-local";
 import { AGENT_PALETTE_IDS, appearanceForPalette } from "@paperclipai/shared";
 
 export type ModelOption = { id: string; label: string; detail?: string };
@@ -103,14 +101,11 @@ export const effortLabels: Record<string, string> = {
 };
 
 export function effortChoices(agent: ComposerAgent, model: string): readonly string[] {
-  const effectiveModel = model.trim() || (agent.adapterType === "grok_local" ? DEFAULT_GROK_LOCAL_MODEL
-    : agent.adapterType === "kimi_local" ? DEFAULT_KIMI_LOCAL_MODEL : "");
+  const effectiveModel = model.trim();
   if (agent.adapterType === "codex_local" || agent.id === "runner") return isCodexLocalKnownModel(effectiveModel) ? codexLocalReasoningEffortsForModel(effectiveModel) : [];
   if (!agent.models.some((option) => option.id === effectiveModel)) return [];
   if (agent.adapterType === "claude_local") return claudeLocalReasoningEffortsForModel(effectiveModel);
-  if (agent.adapterType === "grok_local") return grokLocalReasoningEffortsForModel(effectiveModel);
   if (agent.adapterType === "pi_local") return ["off", "minimal", "low", "medium", "high", "xhigh"];
-  if (agent.adapterType === "kimi_local" && agent.engine?.trim().toLowerCase() === "cli" && modelSupportsEffort(effectiveModel)) return KIMI_SUPPORTED_EFFORTS;
   // The current model API only returns id/label. OpenCode/OpenRouter variants are
   // model-specific, so a guessed generic slider would send unsupported values.
   return [];

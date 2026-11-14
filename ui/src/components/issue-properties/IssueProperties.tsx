@@ -36,7 +36,6 @@ import { selectArtifactAttachments } from "@/lib/issue-artifacts";
 import { useCompany } from "../../context/CompanyContext";
 import { useSidebar } from "../../context/SidebarContext";
 import { queryKeys } from "../../lib/queryKeys";
-import { ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS, nativeTaskModelCatalogOptions } from "../../lib/native-model-catalog";
 import { buildCompanyUserInlineOptions, buildCompanyUserLabelMap, buildCompanyUserProfileMap, isAgentTaskTarget } from "../../lib/company-members";
 import { ISSUE_OVERRIDE_ADAPTER_TYPES, type IssueModelLane } from "../../lib/issue-assignee-overrides";
 import { useProjectOrder } from "../../hooks/useProjectOrder";
@@ -753,12 +752,11 @@ export function IssueProperties({
   const assignee = issue.assigneeAgentId
     ? agents?.find((a) => a.id === issue.assigneeAgentId)
     : null;
-  const nativeCatalog = nativeTaskModelCatalogOptions(assignee);
   const assigneeAdapterType = assignee?.adapterType ?? null;
   const assigneeAdapterOverrides = issue.assigneeAdapterOverrides ?? null;
   const showAssigneeAdapterOptions = assigneeAdapterOverrides !== null;
   const supportsAssigneeOverrides = Boolean(
-    assigneeAdapterType && (ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeAdapterType) || nativeCatalog),
+    assigneeAdapterType && ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeAdapterType),
   );
   const assigneeOverrideLane = overrideLane(assigneeAdapterOverrides);
   const assigneeOverrideAdapterConfig = asRecord(assigneeAdapterOverrides?.adapterConfig);
@@ -776,25 +774,18 @@ export function IssueProperties({
     && assigneeOverrideAdapterConfig.chrome === true;
   const catalogProvider = assigneeAdapterType === "paperclip_runner" ? String(normalizeLegacyRunnerProvider(assigneePrimaryAdapterConfig).provider ?? "codex") : undefined;
   const catalogAcpxAgent = catalogProvider === "acpx" ? String(assigneePrimaryAdapterConfig.acpxAgent ?? "claude") : undefined;
-  const catalogEnvironmentId = nativeCatalog ? assignee?.defaultEnvironmentId ?? null : null;
-  const nativeCatalogScope = JSON.stringify(nativeCatalog ?? null);
-  const requestNativeModels = Boolean(nativeCatalog && assigneeOptionsOpen && showAssigneeAdapterOptions && supportsAssigneeOverrides);
-  const { data: assigneeAdapterModels, refetch: refreshAssigneeModels } = useQuery({
+  const catalogEnvironmentId = null;
+  const { data: assigneeAdapterModels } = useQuery({
     queryKey:
       companyId && assigneeAdapterType
-        ? [...queryKeys.agents.adapterModels(companyId, assigneeAdapterType, catalogEnvironmentId, catalogProvider), catalogAcpxAgent ?? null, nativeCatalog ?? null]
+        ? [...queryKeys.agents.adapterModels(companyId, assigneeAdapterType, catalogEnvironmentId, catalogProvider), catalogAcpxAgent ?? null]
         : ["agents", "none", "adapter-models", assigneeAdapterType ?? "none"],
     queryFn: () => agentsApi.adapterModels(companyId!, assigneeAdapterType!, {
       provider: catalogProvider,
       ...(catalogAcpxAgent ? { acpxAgent: catalogAcpxAgent } : {}),
-      ...(nativeCatalog ? { environmentId: catalogEnvironmentId, ...nativeCatalog } : {}),
     }),
-    ...(nativeCatalog ? ACCOUNT_BOUND_MODEL_DISCOVERY_QUERY_OPTIONS : {}),
-    enabled: Boolean(companyId) && showAssigneeAdapterOptions && supportsAssigneeOverrides && (!nativeCatalog || requestNativeModels),
+    enabled: Boolean(companyId) && showAssigneeAdapterOptions && supportsAssigneeOverrides,
   });
-  useEffect(() => {
-    if (requestNativeModels) void refreshAssigneeModels();
-  }, [requestNativeModels, nativeCatalogScope, catalogEnvironmentId, companyId, refreshAssigneeModels]);
   const modelOverrideOptions = useMemo<InlineEntityOption[]>(() => {
     const models = sortAdapterModels(assigneeAdapterModels ?? []);
     const options = models.map((model) => ({

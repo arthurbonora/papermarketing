@@ -210,16 +210,14 @@ describe("Codex ACPX harness driver", () => {
     await session.close({ reason: "native attribution verified" });
   });
 
-  it("enforces the current Kimi release gate before opening a direct runtime host", () => {
+  it("rejects Kimi before opening a direct runtime host", () => {
     const openHost = vi.fn();
     const construct = () => driverFixture({ agent: "kimi", model: "kimi-for-coding", providerPolicy: { readOnly: true } }, { openHost });
-    if (QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending") {
-      expect(construct).toThrow(expect.objectContaining({ code: "ACPX_PROFILE_QUALIFICATION_PENDING", retryable: false }));
-    } else expect(construct).not.toThrow();
+    expect(construct).toThrow(expect.objectContaining({ code: "agent_harness_removed", retryable: false }));
     expect(openHost).not.toHaveBeenCalled();
   });
 
-  it.skipIf(QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending").each(["exact-final", "tool-only", "empty-final", "missing-end", "cancelled", "filtered", "paused", "max-tokens"])("qualified Kimi direct-driver step boundaries separate commentary from the actual final response: %s", async scenario => {
+  it.skip.each(["exact-final", "tool-only", "empty-final", "missing-end", "cancelled", "filtered", "paused", "max-tokens"])("qualified Kimi direct-driver step boundaries separate commentary from the actual final response: %s", async scenario => {
     const id = (n: number) => `kimi-message-${String(n).padStart(64, "0")}`;
     const chunk = (n: number, kind: string, text = "", stream: "output" | "thought" = "output"): AcpRuntimeEvent => ({
       type: "text_delta", text, stream, messageId: id(n), meta: { origin: "kimi-native-assistant", source: "kimi-turn-step-v1", kind },

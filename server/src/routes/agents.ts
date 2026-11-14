@@ -47,9 +47,7 @@ import {
 } from "@paperclipai/shared";
 import { toolConnections } from "@paperclipai/db";
 import { aiConnectionService } from "../services/ai-connections.js";
-import { probeCopilotConnection, probeCopilotExecutionTarget } from "../services/copilot-connection-probe.js";
-import { antigravityConnectionModels } from "../services/antigravity-connection-models.js";
-import { resolveAntigravityCandidateAdmission, resolveKimiCandidateAdmission } from "../services/native-runtime/acpx-qualification.js";
+import { isRemovedAgentHarness } from "@paperclipai/shared";
 import { defaultAiConnectionForHire } from "../services/agent-ai-connection-default.js";
 import { assertAiConnectionCreateAccess, canInstallSharedAiConnectionForNewAgent, responsibleUserForAiRequest } from "./ai-connections.js";
 import { isAiConnectionCompatible } from "@paperclipai/shared";
@@ -57,7 +55,7 @@ import { applyConnectorSkills, resolveConnectorAssignments, annotateConnectorSki
 import { getExecutionBlocker } from "../services/execution-blocker.js";
 import { canRetryStoppedRun } from "../services/cancelled-native-startup.js";
 import { getNativeReviewAssignment, readNativeReviewAssignmentContext, type NativeReviewAssignmentContext } from "../services/native-runtime/native-review-participant.js";
-import { paperclipRunnerTransitionConfig, normalizeLegacyRunnerProvider, isPaperclipRunnerProvider, PAPERCLIP_RUNNER_ACPX_PROFILES } from "@paperclipai/adapter-utils";
+import { paperclipRunnerTransitionConfig, normalizeLegacyRunnerProvider, isPaperclipRunnerProvider } from "@paperclipai/adapter-utils";
 import { applyMcpReasoningEffort } from "../services/public-mcp/agent-config.js";
 import { executionProjectionForRun, executionProjectionsForRuns } from "../services/execution-projection.js";
 import { issueRunPresenceService } from "../services/issue-run-presence.js";
@@ -264,10 +262,6 @@ import {
   withCodexAccountHomePromotionLock,
 } from "@paperclipai/adapter-codex-local/server";
 import {
-  checkStagedGrokCredentialReadiness,
-  promoteGrokDeviceLoginCredential,
-} from "@paperclipai/adapter-grok-local/server";
-import {
   AdapterAuthSessionConflictError,
   createDeviceLoginService,
   createWorkerBoundLoginPtyOpener,
@@ -278,9 +272,6 @@ import {
   type CredentialPromotion,
 } from "../services/device-login-service.js";
 import type { AdapterAuthSessionOwnerResponse } from "@paperclipai/shared";
-import { DEFAULT_CURSOR_LOCAL_MODEL } from "@paperclipai/adapter-cursor-local";
-import { DEFAULT_GEMINI_LOCAL_MODEL } from "@paperclipai/adapter-gemini-local";
-import { DEFAULT_KIMI_LOCAL_MODEL } from "@paperclipai/adapter-kimi-local";
 import { DEFAULT_OPENCODE_LOCAL_MODEL } from "@paperclipai/adapter-opencode-local";
 import { requireOpenCodeModelId } from "@paperclipai/adapter-opencode-local/server";
 import {
@@ -1148,60 +1139,6 @@ export function agentRoutes(
           });
         },
       },
-      grok_local: {
-        async promote(authBytes, context) {
-          const managedSession = await adapterLoginStore.get(context.sessionId);
-          if (managedSession?.aiConnection) {
-            await adapterLoginStore.withCompanyAdapterPromotionLock(context.companyId, context.startedByUserId, context.adapterType, async () => {
-              if (!(await checkStagedGrokCredentialReadiness(authBytes)).ready) throw new Error("Provider credential is not ready");
-              await aiConnectionService(db).save(context.companyId, context.startedByUserId, managedSession.aiConnection!, authBytes.toString("utf8"), { id: context.sessionId }, undefined, context.managementContext);
-            });
-            return;
-          }
-
-          // The same promotion critical-section lock as the Codex entry above,
-          // keyed by the same `(companyId, startedByUserId, adapterType)` tuple,
-          // so a Grok reclaim and a Grok write never interleave.
-          const outcome = await adapterLoginStore.withCompanyAdapterPromotionLock(
-            context.companyId,
-            context.startedByUserId,
-            context.adapterType,
-            () =>
-              promoteGrokDeviceLoginCredential({
-                authBytes,
-                companyId: context.companyId,
-                userInitiated: true,
-                checkReadiness: (bytes) => checkStagedGrokCredentialReadiness(bytes),
-                isSoleActiveOwner: async () => {
-                  const row = await adapterLoginStore.get(context.sessionId);
-                  return row?.status === "promoting" && row.companyId === context.companyId;
-                },
-                log: (line) => {
-                  // The promotion lines carry no token bytes and no personal
-                  // field, so it is safe to log them with the session identifier.
-                  logger.info({ sessionId: context.sessionId }, line);
-                },
-              }),
-          );
-          if (outcome === "kept_foreign_identity") {
-            // The login produced a different account than the one the company
-            // credential home already holds. Fail the session, so the operator
-            // never sees a false `authenticated` for an account the system will
-            // not use.
-            throw new Error(
-              "device-login credential promotion rejected: the login is a different account than the one already set for this company; the existing account was kept",
-            );
-          }
-          // A `kept` outcome is a successful login too: the company home
-          // already holds a same-account credential that is not older than
-          // this one (for example, a teardown copy-back installed a fresher
-          // copy while this login was in progress), so a later run still
-          // authenticates as the same account.
-          if (outcome !== "promoted" && outcome !== "kept") {
-            throw new Error(`device-login credential promotion rejected: ${outcome}`);
-          }
-        },
-      },
     } satisfies Partial<Record<AgentAdapterType, CredentialPromotion>>,
     recordActivity: (event) => {
       // The event carries no URL, no code, no credential, no account identifier,
@@ -1870,6 +1807,9 @@ export function agentRoutes(
     if (!adapterType) {
       throw unprocessable("Adapter type is required");
     }
+    if (isRemovedAgentHarness(adapterType)) {
+      throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+    }
     if (!findServerAdapter(adapterType)) {
       throw unprocessable(`Unknown adapter type: ${adapterType}`);
     }
@@ -1886,20 +1826,11 @@ export function agentRoutes(
    */
   async function assertSelectableAdapterType(type: string | null | undefined, config?: unknown, companyId?: string): Promise<string> {
     const adapterType = assertKnownAdapterType(type);
+    if (isRemovedAgentHarness(adapterType, asRecord(config) ?? undefined)) {
+      throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+    }
     if (adapterType === "paperclip_runner") {
       const experimental = await instanceSettings.getExperimental();
-      const selected = asRecord(config);
-      let antigravityCandidate: ReturnType<typeof resolveAntigravityCandidateAdmission>;
-      if (companyId && selected?.provider === "acpx" && selected.acpxAgent === "antigravity"
-        && typeof selected.model === "string" && selected.model.trim()) {
-        try { antigravityCandidate = resolveAntigravityCandidateAdmission({ companyId, model: selected.model }); }
-        catch { throw unprocessable("This Google Antigravity candidate requires the exact enabled model and a current operator authorization.", { code: "paperclip_runner_antigravity_candidate_invalid" }); }
-      }
-      let kimiCandidate: ReturnType<typeof resolveKimiCandidateAdmission>;
-      if (companyId && selected?.provider === "acpx" && selected.acpxAgent === "kimi" && typeof selected.model === "string") {
-        try { kimiCandidate = resolveKimiCandidateAdmission({ companyId, model: selected.model }); }
-        catch { throw unprocessable("This Kimi candidate requires the exact enabled model and a current operator authorization.", { code: "paperclip_runner_kimi_candidate_invalid" }); }
-      }
       if (asRecord(config)?.provider === "openai_dot") {
         if (experimental.enableOpenAiDot !== true) throw unprocessable(
           "OpenAI Dot is experimental and disabled on this instance.",
@@ -1910,9 +1841,8 @@ export function agentRoutes(
       } else if (asRecord(config)?.provider === "grok_bot" && (experimental.enableGrokBot !== true || experimental.enablePublicMcp !== true || experimental.enableNativeRunner !== true)) {
         throw unprocessable("Enable Grok Bot, Assistant connections (MCP), and PaperMarketing Runner before connecting this agent.", { code: "paperclip_runner_grok_disabled" });
       } else if (!([undefined, "codex", "opencode"].includes(asRecord(config)?.provider as string | undefined)) &&
-        !(asRecord(config)?.provider === "acpx" && asRecord(config)?.acpxAgent === "copilot") &&
-        !["claude_local", "pi_local", "grok_local"].includes(agentHarnessType("paperclip_runner", asRecord(config) ?? {})) &&
-        experimental.enableNativeRunner !== true && !antigravityCandidate && !kimiCandidate) {
+        agentHarnessType("paperclip_runner", asRecord(config) ?? {}) !== "claude_local" &&
+        experimental.enableNativeRunner !== true) {
         throw unprocessable(
           "PaperMarketing Runner is experimental and disabled on this instance.",
           { code: "paperclip_runner_rollout_disabled" },
@@ -1985,40 +1915,11 @@ export function agentRoutes(
     // Legacy Cursor conversion still retains its provider-specific defaults.
     if (input.nextAdapterConfig.provider === "cursor_cloud" && input.previousAdapterType !== "cursor_cloud") return input.nextAdapterConfig;
     const defaults = paperclipRunnerTransitionConfig(input.previousAdapterType, input.previousAdapterConfig.model, input.nextAdapterConfig.provider);
-    if (!["claude_local", "codex_local", "opencode_local", "pi_local", "grok_local"].includes(input.previousAdapterType)
+    if (!["claude_local", "codex_local", "opencode_local"].includes(input.previousAdapterType)
       && !isPaperclipRunnerProvider(input.nextAdapterConfig.provider)) {
       throw unprocessable("Select a PaperMarketing Runner provider before converting this agent.");
     }
     const next = { ...defaults, ...input.nextAdapterConfig };
-    if (next.provider === "acpx" && (next.acpxAgent === "pi" || next.acpxAgent === "kimi")) {
-      next.model = input.nextAdapterConfig.model
-        ?? (input.previousAdapterType === `${next.acpxAgent}_local` ? input.previousAdapterConfig.model : "");
-    } else if (!asNonEmptyString(next.model)) next.model = defaults.model;
-    return normalizeLegacyRunnerProvider(next);
-  }
-
-  function assertProviderTraceSettingTransition(
-    req: Request,
-    nextRuntimeConfig: unknown,
-    previousRuntimeConfig?: unknown,
-  ): void {
-    const previousRaw =
-      asRecord(asRecord(previousRuntimeConfig)?.debug)?.providerTrace === "raw";
-    const nextRaw =
-      asRecord(asRecord(nextRuntimeConfig)?.debug)?.providerTrace === "raw";
-    if (previousRaw !== nextRaw) assertInstanceAdmin(req);
-  }
-
-  async function assertAgentDefaultEnvironmentSelection(
-    companyId: string,
-    environmentId: string | null | undefined,
-    options?: { allowedDrivers?: string[]; allowedSandboxProviders?: string[] },
-  ) {
-    if (environmentId === undefined || environmentId === null) return;
-    const environment = await environmentsSvc.getById(environmentId);
-    if (!environment) {
-      throw unprocessable("Selected environment was not found");
-    }
     if (options?.allowedDrivers && !options.allowedDrivers.includes(environment.driver)) {
       throw unprocessable(`Environment driver "${environment.driver}" is not allowed here`);
     }
@@ -2202,13 +2103,6 @@ export function agentRoutes(
       const binding = defaultAiConnectionForHire(adapterType, adapterConfig, manager.runtimeConfig?.aiConnection);
       if (binding) normalized.aiConnection = binding;
     }
-    // Copilot has no ambient-auth setup path. Omitting a binding still selects
-    // the responsible user's saved account and must pass the same metadata
-    // admission as an explicit connection before configuration is persisted.
-    if (!normalized.aiConnection && adapterType === "paperclip_runner"
-      && adapterConfig.provider === "acpx" && adapterConfig.acpxAgent === "copilot") {
-      normalized.aiConnection = { provider: "github", method: "api_key", mode: "responsible_user" };
-    }
     return normalized;
   }
 
@@ -2229,8 +2123,7 @@ export function agentRoutes(
     );
     const incompleteModelSetup = input.setupOnly && input.adapterType === "paperclip_runner"
       && (normalizedAdapterConfig.provider === "opencode"
-        || normalizedAdapterConfig.provider === "cursor_cloud"
-        || (normalizedAdapterConfig.provider === "acpx" && ["pi", "kimi"].includes(String(normalizedAdapterConfig.acpxAgent))))
+        || normalizedAdapterConfig.provider === "cursor_cloud")
       && (normalizedAdapterConfig.model === undefined || normalizedAdapterConfig.model === "");
     // Inactive drafts can precede model selection. Test/hire always validate the complete profile.
     if (!incompleteModelSetup) await assertAdapterConfigConstraints(
@@ -2399,20 +2292,9 @@ export function agentRoutes(
       }
       return ensureGatewayDeviceKey(adapterType, next);
     }
-    if (adapterType === "gemini_local" && !asNonEmptyString(next.model)) {
-      next.model = DEFAULT_GEMINI_LOCAL_MODEL;
-      return ensureGatewayDeviceKey(adapterType, next);
-    }
-    if (adapterType === "kimi_local" && !asNonEmptyString(next.model)) {
-      next.model = DEFAULT_KIMI_LOCAL_MODEL;
-      return ensureGatewayDeviceKey(adapterType, next);
-    }
     if (adapterType === "opencode_local" && !asNonEmptyString(next.model)) {
       next.model = DEFAULT_OPENCODE_LOCAL_MODEL;
       return ensureGatewayDeviceKey(adapterType, next);
-    }
-    if (adapterType === "cursor" && !asNonEmptyString(next.model)) {
-      next.model = DEFAULT_CURSOR_LOCAL_MODEL;
     }
     return ensureGatewayDeviceKey(adapterType, next);
   }
@@ -3082,13 +2964,9 @@ export function agentRoutes(
     const companyId = req.params.companyId as string;
     assertCompanyAccess(req, companyId);
     const type = assertKnownAdapterType(req.params.type as string);
-    const pendingAcpxProfile = type === "paperclip_runner" && req.query.provider === "acpx"
-      ? PAPERCLIP_RUNNER_ACPX_PROFILES.find(profile => profile.value === req.query.acpxAgent && !profile.qualified)
-      : undefined;
-    // Antigravity's setup-only catalog cannot open a session or send a prompt.
-    // Its execution/save/Test gates continue to require a qualified profile.
-    if (pendingAcpxProfile && req.query.acpxAgent !== "antigravity") throw unprocessable(`${pendingAcpxProfile.label} is awaiting native Runner acceptance. Its profile is not enabled for production runs.`,
-      { code: "paperclip_runner_acpx_agent_unavailable" });
+    if (isRemovedAgentHarness(type, { provider: req.query.provider, acpxAgent: req.query.acpxAgent })) {
+      throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+    }
     const poolId = asNonEmptyString(req.query.poolId);
     if (poolId) {
       const pool = (await aiConnectionRouterService(db).selectable(companyId, responsibleUserForAiRequest(req) ?? "")).find(pool => pool.id === poolId);
@@ -3114,61 +2992,6 @@ export function agentRoutes(
       return;
     }
     const provider = asNonEmptyString(req.query.provider);
-    if (type === "paperclip_runner" && provider === "acpx" && req.query.acpxAgent === "kimi") {
-      res.json([]);
-      return;
-    }
-    if (type === "paperclip_runner" && provider === "acpx" && req.query.acpxAgent === "antigravity") {
-      if (environment && environment.driver !== "local") throw unprocessable("Google Antigravity account model discovery requires the PaperMarketing host.");
-      let binding: AiConnectionBinding = { provider: "google", method: "subscription", mode: "responsible_user" };
-      if (typeof req.query.aiConnection === "string") {
-        if (req.query.aiConnection.length > 4096) throw unprocessable("Invalid AI connection binding");
-        try { binding = aiConnectionBindingSchema.parse(JSON.parse(req.query.aiConnection)); }
-        catch { throw unprocessable("Invalid AI connection binding"); }
-      }
-      if (binding.provider !== "google") throw unprocessable("Select a Google runtime connection");
-      const modelAgentId = asNonEmptyString(req.query.agentId);
-      if (modelAgentId) {
-        const modelAgent = await svc.getById(modelAgentId);
-        if (!modelAgent || modelAgent.companyId !== companyId) throw notFound("Agent not found");
-        await assertCanUpdateAgent(req, modelAgent);
-        if (modelAgent.defaultEnvironmentId && !environmentId) {
-          const target = await environmentsSvc.getById(modelAgent.defaultEnvironmentId);
-          if (!target || target.driver !== "local") throw unprocessable("Google Antigravity account model discovery requires the PaperMarketing host.");
-        }
-      } else await assertCanCreateAgentsForCompany(req, companyId);
-      const allowUninstalledShared = !modelAgentId && await canInstallSharedAiConnectionForNewAgent(db, req, companyId, binding);
-      res.setHeader("Cache-Control", "no-store");
-      res.json(await antigravityConnectionModels(db, { companyId, userId: responsibleUserForAiRequest(req),
-        agentId: modelAgentId ?? undefined, binding, allowUninstalledShared }));
-      return;
-    }
-    if (type === "paperclip_runner" && provider === "acpx" && req.query.acpxAgent === "copilot") {
-      const userId = responsibleUserForAiRequest(req);
-      let binding: AiConnectionBinding = { provider: "github", method: "api_key", mode: "responsible_user" };
-      if (typeof req.query.aiConnection === "string") {
-        if (req.query.aiConnection.length > 4096) throw unprocessable("Invalid AI connection binding");
-        try { binding = aiConnectionBindingSchema.parse(JSON.parse(req.query.aiConnection)); }
-        catch { throw unprocessable("Invalid AI connection binding"); }
-      }
-      if (binding.provider !== "github") throw unprocessable("Select a GitHub Copilot AI connection");
-      const modelAgentId = asNonEmptyString(req.query.agentId);
-      let modelEnvironmentId = environmentId;
-      if (modelAgentId) {
-        const modelAgent = await svc.getById(modelAgentId);
-        if (!modelAgent || modelAgent.companyId !== companyId) throw notFound("Agent not found");
-        await assertCanUpdateAgent(req, modelAgent);
-        modelEnvironmentId ??= modelAgent.defaultEnvironmentId ?? null;
-      } else await assertCanCreateAgentsForCompany(req, companyId);
-      const allowUninstalledShared = !modelAgentId && await canInstallSharedAiConnectionForNewAgent(db, req, companyId, binding);
-      const service = aiConnectionService(db);
-      const selection = await service.select({ companyId, userId, agentId: modelAgentId ?? "00000000-0000-0000-0000-000000000000",
-        adapterType: type, runnerProvider: "acpx", acpxAgent: "copilot", binding, allowUninstalledPersonal: true, allowUninstalledShared });
-      const metadata = await probeCopilotConnection(db, companyId, await service.credential(selection), modelEnvironmentId, undefined, { pluginWorkerManager: options.pluginWorkerManager, targetAgentId: modelAgentId ?? undefined });
-      res.setHeader("Cache-Control", "no-store");
-      res.json(metadata.models);
-      return;
-    }
     if (type === "opencode_local" && provider === "openrouter") {
       res.json(await listOpenRouterModels(refresh));
       return;
@@ -3177,7 +3000,7 @@ export function agentRoutes(
       throw unprocessable("Unknown PaperMarketing Runner provider");
     }
     const modelAdapterType = type === "paperclip_runner"
-      ? provider === "acpx" && req.query.acpxAgent === "grok" ? "grok_local"
+      ? provider === "acpx" && req.query.acpxAgent === "codex" ? "codex_local"
         : provider === "acpx" || provider === "claude_managed" ? "claude_local"
         : provider === "opencode" ? "opencode_local"
           : provider === "aws_agentcore" ? type : "codex_local"
@@ -3189,10 +3012,7 @@ export function agentRoutes(
     const models = refresh
       ? await refreshAdapterModels(modelAdapterType)
       : await listAdapterModels(modelAdapterType);
-    // The Legacy default marker is not an explicit native ACP model ID.
-    res.json(type === "paperclip_runner" && modelAdapterType === "grok_local"
-      ? models.filter(model => model.id !== "grok-build")
-      : models);
+    res.json(models);
   });
 
   router.get("/companies/:companyId/adapters/:type/detect-model", async (req, res) => {
@@ -3249,15 +3069,14 @@ export function agentRoutes(
       aiRoutingModel(routing, agentHarnessType(adapterType, config), model.id) === config.model)) {
       throw unprocessable("Choose a default model available on the selected connection");
     }
-    const testEnvironmentId = probe !== "none" || binding.provider === "github"
-      ? await resolveAdapterTestEnvironmentId(companyId, environmentId, binding.provider === "github")
+    const testEnvironmentId = probe !== "none"
+      ? await resolveAdapterTestEnvironmentId(companyId, environmentId)
       : null;
     if (testEnvironmentId) await assertAdapterTestEnvironmentForCompany(companyId, testEnvironmentId, adapterType);
     // Healthy saved accounts were verified when connected. Configuration saves
     // must not acquire a computer or send another hello prompt. Legacy adoption
-    // and explicit task adoption still need proof. Copilot retains its metadata-only
-    // packaged-runtime check because model availability is account-specific.
-    if (probe === "always" || (probe === "legacy" && selection.connection.config.aiLegacyAdoption === true) || binding.provider === "github") {
+    // and explicit task adoption still need proof.
+    if (probe === "always" || (probe === "legacy" && selection.connection.config.aiLegacyAdoption === true)) {
       const hasSavedAgent = !newAgent || (isUuidLike(agentId) && Boolean(await svc.getById(agentId)));
       if (newAgent && probe === "none" && testEnvironmentId && (await environmentsSvc.getById(testEnvironmentId))?.driver === "plugin") {
         // The lifecycle verifies the saved agent after its plugin can create the agent-owned computer.
@@ -3273,14 +3092,9 @@ export function agentRoutes(
       try {
         if (!target.executionTarget && target.fallbackChecks.length > 0) throw unprocessable("The agent environment is not available for adoption");
         await withManagedAiProbe(db, { companyId, agentId, responsibleUserId: userId, adapterType, binding, config, allowUninstalledPersonal: newAgent, allowUninstalledShared, allowLegacyValidation: true }, async managed => {
-        const managedAiCredentialHome = adapterType === "paperclip_runner" && (asRecord(managed.config)?.provider === "codex"
-          || (asRecord(managed.config)?.provider === "acpx" && asRecord(managed.config)?.acpxAgent === "antigravity")) && managed.home
+        const managedAiCredentialHome = adapterType === "paperclip_runner" && asRecord(managed.config)?.provider === "codex" && managed.home
           ? path.join(managed.home, "provider") : undefined;
         const result = await testManagedEnvironment(adapterType, { companyId, adapterType, config: managed.config, managedAiCredentialHome, executionTarget: target.executionTarget, environmentName: target.environmentName }, binding, managed, agentId);
-        if (binding.provider === "github" && result.status === "fail") {
-          const failure = result.checks.find(check => check.level === "error");
-          throw unprocessable(failure?.message ?? "Copilot metadata verification failed.", { code: failure?.code ?? "COPILOT_REQUEST_FAILED" });
-        }
         if (result.status === "fail" || result.checks.some(check => check.code === ADAPTER_AUTH_MISSING_CHECK_CODE)) throw unprocessable("The selected AI connection failed validation in this agent’s environment. Run the agent test to see the failing checks.", {
           code: "ai_connection_validation_failed",
           checks: result.checks.filter(check => check.level === "error" || check.code === ADAPTER_AUTH_MISSING_CHECK_CODE).map(check => ({ code: check.code, level: check.level })),
@@ -3340,7 +3154,6 @@ export function agentRoutes(
         req.body.environmentId === undefined
           ? savedAgent?.defaultEnvironmentId
           : asNonEmptyString(req.body.environmentId),
-        aiBinding?.provider === "github",
       );
       // Fail closed on a foreign environment before any secret resolution, env
       // merge, target resolution, sandbox lease, or adapter test runs. The
@@ -3547,8 +3360,7 @@ export function agentRoutes(
           }
         }
         const result = aiBinding ? await withManagedAiProbe(db, { companyId, agentId: req.body.agentId ?? "", responsibleUserId: responsibleUserForAiRequest(req), adapterType: type, binding: aiBinding, config: effectiveAdapterConfig, allowUninstalledPersonal: !savedAgentId || testingSetup, allowUninstalledShared: (!savedAgentId || testingSetup) && await canInstallSharedAiConnectionForNewAgent(db, req, companyId, aiBinding) }, async managed => {
-          const managedAiCredentialHome = type === "paperclip_runner" && (asRecord(managed.config)?.provider === "codex"
-            || (asRecord(managed.config)?.provider === "acpx" && asRecord(managed.config)?.acpxAgent === "antigravity")) && managed.home
+          const managedAiCredentialHome = type === "paperclip_runner" && asRecord(managed.config)?.provider === "codex" && managed.home
             ? path.join(managed.home, "provider") : undefined;
           const tested = await testManagedEnvironment(type, { companyId, adapterType: type, config: managed.config, managedAiCredentialHome, executionTarget, environmentName }, aiBinding, managed, savedAgentId ?? undefined);
           tested.checks.unshift({ code: "ai_connection_tested", level: "info", message: `Tested ${managed.accountName} — ${managed.accountOwnerUserId ? managed.accountOwnerUserId === responsibleUserForAiRequest(req) ? "your personal account" : "the owner’s account authorized for this agent" : "company-shared account"}. Responsible user: ${req.actor.type === "agent" ? responsibleUserForAiRequest(req) ?? "unavailable" : "the signed-in user"}.` });
@@ -5610,19 +5422,12 @@ export function agentRoutes(
     // one since disabled) stays allowed, so a disabled harness does not make an
     // existing agent uneditable.
     let configurationWarnings: AgentConfigurationWarning[] = [];
-    const requestedRunnerConfig = asRecord(patchData.adapterConfig) ?? {};
-    const convertingPi = existing.adapterType === "pi_local" && patchData.adapterType === "paperclip_runner"
-      && (requestedRunnerConfig.provider === undefined
-        || (requestedRunnerConfig.provider === "acpx" && [undefined, "pi"].includes(requestedRunnerConfig.acpxAgent as string | undefined)));
-    const convertingGrok = existing.adapterType === "grok_local" && patchData.adapterType === "paperclip_runner"
-      && [undefined, "acpx"].includes(requestedRunnerConfig.provider as string | undefined)
-      && [undefined, "grok"].includes(requestedRunnerConfig.acpxAgent as string | undefined);
-    if (runner !== undefined || convertingPi || convertingGrok) {
+    if (runner !== undefined) {
       await assertCanConfigureAgentSetup(req, existing);
       const config = hasOwn(patchData, "adapterConfig") ? { ...(replaceAdapterConfig ? {} : existing.adapterConfig), ...asRecord(patchData.adapterConfig) } : existing.adapterConfig;
       Object.assign(patchData, await resolveNewAgentRunnerForCompany(db, existing.companyId, {
-        adapterType: convertingPi || convertingGrok ? existing.adapterType : typeof patchData.adapterType === "string" ? patchData.adapterType : existing.adapterType,
-        adapterConfig: config, runner: runner ?? "paperclip", setupOnly: existing.lifecycleHolds?.includes("setup"),
+        adapterType: typeof patchData.adapterType === "string" ? patchData.adapterType : existing.adapterType,
+        adapterConfig: config, runner, setupOnly: existing.lifecycleHolds?.includes("setup"),
         onConfigurationWarnings: warnings => { configurationWarnings = warnings; },
         defaultEnvironmentId: hasOwn(patchData, "defaultEnvironmentId") ? patchData.defaultEnvironmentId as string | null : existing.defaultEnvironmentId,
       }));
@@ -5771,14 +5576,6 @@ export function agentRoutes(
         requestedRuntimeConfig.aiConnection = existingBinding;
       }
     }
-    if (!requestedRuntimeConfig?.aiConnection && !existing.runtimeConfig.aiConnection
-      && !isAgentSetupDraft(existing)
-      && requestedAdapterType === "paperclip_runner" && nextAiConfig.provider === "acpx"
-      && nextAiConfig.acpxAgent === "copilot"
-      && (touchesAdapterConfiguration || Object.prototype.hasOwnProperty.call(patchData, "defaultEnvironmentId"))) {
-      requestedRuntimeConfig = { ...(requestedRuntimeConfig ?? existing.runtimeConfig),
-        aiConnection: { provider: "github", method: "api_key", mode: "responsible_user" } };
-    }
     const nextAiBinding = aiRuntimeConnectionBindingSchema.safeParse(requestedRuntimeConfig ? requestedRuntimeConfig.aiConnection : existing.runtimeConfig.aiConnection).data;
     if (nextAiBinding) {
       await assertCanConfigureAgentSetup(req, existing);
@@ -5799,9 +5596,7 @@ export function agentRoutes(
           key => aiConfig[key] !== existing.adapterConfig[key],
         ));
       if (nextAiBinding.mode !== "router" && !isAiConnectionCompatible(nextAiBinding, requestedAdapterType, aiConfig.model, aiConfig.provider, aiConfig.acpxAgent)) throw unprocessable("Select an AI connection compatible with the new harness and model");
-      const copilotConfigurationChanged = requestedAdapterType === "paperclip_runner" && aiConfig.provider === "acpx" && aiConfig.acpxAgent === "copilot"
-        && (touchesAdapterConfiguration || Object.prototype.hasOwnProperty.call(patchData, "defaultEnvironmentId"));
-      if (runtimeSettings || changed || runtimeSelectionChanged || copilotConfigurationChanged) {
+      if (runtimeSettings || changed || runtimeSelectionChanged) {
         const configuringSetup = isAgentSetupDraft(existing);
         await validateManagedAgentBinding(req, existing.companyId, existing.id, requestedAdapterType, aiConfig, nextAiBinding,
           (patchData.defaultEnvironmentId !== undefined ? patchData.defaultEnvironmentId : existing.defaultEnvironmentId) as string | null,

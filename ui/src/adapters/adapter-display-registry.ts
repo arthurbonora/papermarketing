@@ -6,7 +6,7 @@
  * `getAdapterDisplay()`.
  */
 import type { ComponentType } from "react";
-import { agentHarnessType } from "@paperclipai/shared";
+import { agentHarnessType, agentRuntimeSettingsHarness, isRemovedAgentHarness } from "@paperclipai/shared";
 import {
   Bot,
   Code,
@@ -127,8 +127,9 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
     description: "Pi harness",
     icon: Terminal,
   },
+  cursor_local: { label: "Cursor CLI", description: "Retired Cursor CLI harness", icon: MousePointer2 },
   cursor: {
-    label: "Cursor",
+    label: "Cursor CLI",
     description: "Cursor CLI harness",
     icon: MousePointer2,
   },
@@ -208,6 +209,9 @@ export function getAdapterLabels(): Record<string, string> {
 
 export function getAdapterDisplay(type: string): AdapterDisplayInfo {
   const known = adapterDisplayMap[type];
+  if (isRemovedAgentHarness(type)) {
+    return { label: getAdapterLabel(type), icon: known?.icon ?? Cpu, description: "This harness is no longer available", comingSoon: true, hideFromVisualSelection: true };
+  }
   if (known) return known;
 
   const suffix = getTypeSuffix(type);
@@ -227,7 +231,8 @@ export function agentDisplayAdapterType(agent: { adapterType: string; adapterCon
     return agent.adapterConfig.provider;
   }
   const harness = agentHarnessType(agent.adapterType, agent.adapterConfig);
-  return ["codex_local", "claude_local", "opencode_local", "pi_local", "antigravity_runtime"].includes(harness) ? harness : agent.adapterType;
+  if (isRemovedAgentHarness(agent.adapterType, agent.adapterConfig)) return agentRuntimeSettingsHarness(agent.adapterType, agent.adapterConfig);
+  return ["codex_local", "claude_local", "opencode_local", "cursor_cloud"].includes(harness) ? harness : agent.adapterType;
 }
 
 export function isKnownAdapterType(type: string): boolean {

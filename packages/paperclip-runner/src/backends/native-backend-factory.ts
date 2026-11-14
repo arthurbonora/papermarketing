@@ -1,3 +1,4 @@
+import { assertAcpxProfileReleased } from "../drivers/acpx/qualified-profiles.js";
 import { RunnerdMuseDriver, type RunnerdMuseDriverOptions } from "../drivers/muse/runnerd-muse-driver.js";
 import { RunnerdDotDriver, type RunnerdDotDriverOptions } from "../drivers/dot/runnerd-dot-driver.js";
 import { HarnessDriverBackend } from "./harness-driver-backend.js";
@@ -98,6 +99,7 @@ export function createNativeSessionBackend(
     });
   }
   if (input.provider.kind === "acpx") {
+    assertAcpxProfileReleased(input.provider.agent);
     if (!options.acpxRuntimeDirectory?.trim()) {
       throw new Error("ACPX backend requires an instance runtime directory");
     }

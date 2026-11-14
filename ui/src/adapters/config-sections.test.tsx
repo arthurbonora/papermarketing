@@ -9,7 +9,6 @@ import { TooltipProvider } from "../components/ui/tooltip";
 import type { AdapterConfigFieldsProps, AdapterConfigSection } from "./types";
 import { CodexLocalConfigFields } from "./codex-local/config-fields";
 import { ClaudeLocalAdvancedFields } from "./claude-local/config-fields";
-import { GeminiLocalConfigFields } from "./gemini-local/config-fields";
 import { ProcessConfigFields } from "./process/config-fields";
 import { OpenClawGatewayConfigFields } from "./openclaw-gateway/config-fields";
 import { HermesGatewayConfigFields } from "./hermes-gateway/config-fields";
@@ -111,7 +110,6 @@ describe("adapter configuration sections", () => {
   it.each([
     ["claude_local", ClaudeLocalAdvancedFields],
     ["codex_local", CodexLocalConfigFields],
-    ["gemini_local", GeminiLocalConfigFields],
   ] as const)(
     "separates ACP commands and lifecycle for %s",
     async (type, Component) => {

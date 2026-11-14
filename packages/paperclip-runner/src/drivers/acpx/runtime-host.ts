@@ -14,10 +14,8 @@ import { resolvePiThinkingLevel, type PiThinkingLevel } from "./pi-thinking.js";
 import { preparedHarnessHome, preconfiguredHomeEnvironment, usesPreconfiguredHome } from "../preconfigured-home.js";
 import { dirname, join } from "node:path";
 import { bindAcpxAgentFiles } from "./agent-files-binding.js";
-import { assertAcpxProfileEnvironment, assertAcpxProfileWorkspace, classifyAcpxProfileError, verifyAcpxProfileInstallation } from "./profile-installation.js";
+import { verifyAcpxProfileInstallation } from "./profile-installation.js";
 import { createAcpxRuntimeSkillLease } from "./runtime-skill-lease.js";
-import { stageManagedGrokCredential } from "./grok-credentials.js";
-import { stageManagedAntigravityCredential } from "./antigravity-credentials.js";
 import { claudeNativeSkillPrompt } from "./native-skill-prompt.js";
 import { prepareStdioMcpBindings } from "../stdio-mcp.js";
 import { nativeMcpLaunchBinding } from "../native-mcp.js";
@@ -365,6 +363,8 @@ export class AcpxRuntimeHost {
     dependencies: AcpxRuntimeHostDependencies,
   ): Promise<AcpxRuntimeHost> {
     options.signal?.throwIfAborted();
+    const profile = resolveQualifiedAcpxProfile(options.agent, options.model);
+    assertAcpxExecutionAdmission(profile, options.candidateAdmission);
     if (options.agent === "pi" && typeof options.providerPolicy?.readOnly !== "boolean") {
       throw new Error("Pi admission requires an explicit task execution policy");
     }
@@ -387,9 +387,7 @@ export class AcpxRuntimeHost {
       && !(options.assignedMcpTransport === "prp" && options.semanticTools)) {
       throw new Error("assigned native MCP launch binding is unavailable");
     }
-    const profile = resolveQualifiedAcpxProfile(options.agent, options.model);
     if (options.candidateAdmission) {
-      assertAcpxExecutionAdmission(profile, options.candidateAdmission);
       options = { ...options, candidateAdmission: parseAcpxCandidateStartupAdmission(options.candidateAdmission, { agent: options.agent, model: options.model, normalizedSessionId: options.normalizedSessionId }) };
       if (preconfigured || typeof options.providerPolicy?.readOnly !== "boolean") throw new Error("ACPX candidate requires a fresh isolated session and explicit task policy");
     }
@@ -505,7 +503,6 @@ export class AcpxRuntimeHost {
         dependencies.retainAdmissionCleanup,
       );
       admissionStage = "credential";
-      if (options.agent === "antigravity") assertAcpxProfileEnvironment(options.agent, options.environment ?? {});
       if (options.agent === "codex" && !preconfigured) {
         credential = await acquireAbortableAdmissionResource({
           signal: options.signal,
@@ -524,21 +521,6 @@ export class AcpxRuntimeHost {
           releaseLate: (lateCredential) => lateCredential.close(),
           reportFailure: (failure) =>
             dependencies.reportRetainedCleanupFailure(failure),
-        });
-      } else if (options.agent === "antigravity") {
-        credential = await acquireAbortableAdmissionResource({
-          signal: options.signal,
-          acquire: () => stageManagedAntigravityCredential({ agentHomeDirectory: sandbox.agentHomeDirectory,
-            environment: options.environment, retainRefresh: () => admissionSucceeded }),
-          resource: "credential", releaseLate: late => late.close(),
-          reportFailure: failure => dependencies.reportRetainedCleanupFailure(failure),
-        });
-      } else if (options.agent === "grok") {
-        credential = await acquireAbortableAdmissionResource({
-          signal: options.signal,
-          acquire: () => stageManagedGrokCredential({ agentHomeDirectory: sandbox.agentHomeDirectory, environment: options.environment, retainRefresh: () => admissionSucceeded }),
-          resource: "credential", releaseLate: (lease) => lease.close(),
-          reportFailure: (failure) => dependencies.reportRetainedCleanupFailure(failure),
         });
       } else {
         credential = await acquireAbortableAdmissionResource({
@@ -569,10 +551,6 @@ export class AcpxRuntimeHost {
         },
       );
       options.signal?.throwIfAborted();
-      admissionStage = "credential";
-      // Antigravity's selected OAuth document has already been validated and
-      // staged; it is intentionally absent from the native launch environment.
-      if (options.agent !== "antigravity") assertAcpxProfileEnvironment(options.agent, sandbox.launchEnvironment);
       admissionStage = "configuration";
       let launchEnvironment = sandbox.launchEnvironment;
       // This copy is registered by the authenticated controller for its company,
@@ -673,7 +651,6 @@ export class AcpxRuntimeHost {
         acquire: async () => {
           options.assertWorkspaceHeld?.();
           agentFiles?.assertHeld();
-          await assertAcpxProfileWorkspace(options.agent, binding.workspacePath);
           if (options.candidateAdmission) assertAcpxExecutionAdmission(profile, options.candidateAdmission);
           return dependencies.openRuntime({
             ...(options.clientCapabilities === undefined ? {} : {
@@ -792,7 +769,6 @@ export class AcpxRuntimeHost {
           : [],
       });
     } catch (error) {
-      error = classifyAcpxProfileError(options.agent, error) ?? error;
       recordAcpxAdmissionFailure(error, admissionStage);
       const cleanup = cleanupRuntimeResources(
         runtime,

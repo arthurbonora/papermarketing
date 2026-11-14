@@ -272,47 +272,21 @@ it.each(["gate off", "native unavailable"])("keeps hosted Cursor Cloud hidden wh
   await name();
   expect(document.querySelector('input[value="cursor_cloud"]')).toBeNull();
 });
-it.each([true, false, undefined])("opens saved-token Copilot setup without an experimental override (%s)", async enableNativeRunner => {
-  await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableNativeRunner }));
+it.each([true, false])("hides removed harnesses even when native Runner is enabled (%s)", async enableNativeRunner => {
+  await act(async () => {
+    cache.setQueryData(queryKeys.instance.experimentalSettings, { enableNativeRunner });
+    cache.setQueryData(queryKeys.adapters.availability("company-1", null), [...state.adapters,
+      ...["pi_local", "cursor", "gemini_local", "grok_local", "kimi_local", "copilot_runtime", "antigravity_runtime"]
+        .map(type => ({ type, loaded: true })),
+    ]);
+  });
   await name();
-  await act(async () => document.querySelector<HTMLInputElement>('input[value="copilot_runtime"]')!.click());
-  await click("Configure agent");
-  const query = new URL(state.navigate.mock.calls[0][0], "http://local").searchParams;
-  expect(query.get("adapterType")).toBe("paperclip_runner");
-  expect(query.get("runnerProvider")).toBe("copilot");
+  for (const type of ["pi_local", "cursor", "gemini_local", "grok_local", "kimi_local", "copilot_runtime", "antigravity_runtime"]) {
+    expect(document.querySelector(`input[value="${type}"]`)).toBeNull();
+  }
+  expect(document.querySelector('input[value="codex_local"]')).not.toBeNull();
 });
-it("hides Copilot when its runtime adapter is disabled", async () => {
-  await act(async () => cache.setQueryData(queryKeys.adapters.availability("company-1", null), state.adapters.map((entry: any) => entry.type === "paperclip_runner" ? { ...entry, disabled: true } : entry)));
-  await name();
-  expect(document.querySelector('input[value="copilot_runtime"]')).toBeNull();
-});
-it.each([true, false])("offers Google Antigravity in the ordinary picker while execution is pending (experimental=%s)", async enableNativeRunner => {
-  await act(async () => cache.setQueryData(queryKeys.instance.experimentalSettings, { enableNativeRunner }));
-  await name();
-  const choice = document.querySelector<HTMLInputElement>('input[value="antigravity_runtime"]');
-  expect(choice).not.toBeNull();
-  expect(choice!.disabled).toBe(false);
-  expect(choice!.closest("label")?.textContent).toContain("Google Antigravity");
-  expect(choice!.closest("label")?.textContent).toContain("Not available yet");
-  expect(choice!.closest("details")).toBeNull();
-  await act(async () => choice!.click());
-  await click("Configure agent");
-  const query = new URL(state.navigate.mock.calls[0][0], "http://local").searchParams;
-  expect(query.get("adapterType")).toBe("paperclip_runner");
-  expect(query.get("runnerProvider")).toBe("antigravity");
-  expect(query.get("setupAgentId")).toBe(agents.create.mock.calls[0][1].setupId);
-  expect(agents.update).toHaveBeenCalledWith(agents.create.mock.calls[0][1].setupId, expect.objectContaining({
-    name: "Ada & Co", metadata: { marketingAgent: createMarketingAgentProfile("cmo"), setupAdapterPending: true,
-      setupAdapterChoice: { adapterType: "paperclip_runner", runnerProvider: "antigravity", runner: "auto" } },
-  }), "company-1");
-  expect(agents.create.mock.calls[0][1]).toMatchObject({ adapterType: "process", metadata: { setupAdapterPending: true } });
-});
-it("hides Google Antigravity when the runtime adapter is disabled", async () => {
-  await act(async () => cache.setQueryData(queryKeys.adapters.availability("company-1", null), state.adapters.map((entry: any) => entry.type === "paperclip_runner" ? { ...entry, disabled: true } : entry)));
-  await name();
-  expect(document.querySelector('input[value="antigravity_runtime"]')).toBeNull();
-});
-it.each(["grok", "opencode"])("preserves explicit experimental %s creation in Advanced", async provider => {
+it.each(["opencode"])("preserves explicit experimental %s creation in Advanced", async provider => {
   await name();
   await act(async () => (document.querySelector("summary") as HTMLElement).click());
   await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Experimental harness"]')!.click());
@@ -322,7 +296,7 @@ it.each(["grok", "opencode"])("preserves explicit experimental %s creation in Ad
   expect(query.get("adapterType")).toBe("paperclip_runner");
   expect(query.get("runnerProvider")).toBe(provider);
   expect(agents.update).toHaveBeenCalledWith(agents.create.mock.calls[0][1].setupId, expect.objectContaining({
-    adapterType: "paperclip_runner", adapterConfig: provider === "grok" ? { provider: "acpx", acpxAgent: "grok", model: "grok-4.7" } : { provider: "opencode" },
+    adapterType: "paperclip_runner", adapterConfig: { provider: "opencode" },
   }), "company-1");
 });
 it.each(["gate off", "disabled adapter"])("hides experimental native creation when %s", async reason => {

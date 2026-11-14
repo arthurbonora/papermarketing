@@ -78,7 +78,7 @@ import { apiKeyBillingType } from "@paperclipai/adapter-utils/api-billing-type";
 import { agents } from "@paperclipai/db";
 import { isCloudManagedInstance } from "../cloud-instance.js";
 import { dotRunnerBroker } from "../dot-runner-broker.js";
-import { CURSOR_DISTRIBUTION_PINS, KIMI_DISTRIBUTION_CLOSURE_SHA256, QUALIFIED_ACPX_PROFILES, QUALIFIED_ACPX_VERSION } from "../../vendor/paperclip-runner/index.js";
+import { QUALIFIED_ACPX_PROFILES, QUALIFIED_ACPX_VERSION } from "../../vendor/paperclip-runner/index.js";
 import { isProviderMode } from "../../vendor/paperclip-runner/index.js";
 import { codexUsageBaselineForNextRun } from "../../vendor/paperclip-runner/index.js";
 import { PROVIDER_PACK_COMPATIBILITY, bundledRemoteProviderPackManifestPath, runnerBinaryTarget } from "../../vendor/paperclip-runner/index.js";
@@ -87,11 +87,7 @@ import { readNativePlanWait } from "./native-plan-wait.js";
 import { nativeProviderLifecycle } from "./provider-lifecycle.js";
 import { NativePermissionDeclinedError, readCompletedNativePermissionDecline } from "./native-permission-decline.js";
 import { activeIssueInteractionCondition } from "../issue-question-context.js";
-import { resolveAcpxQualification, resolveAntigravityCandidateAdmission, resolveKimiCandidateAdmission } from "./acpx-qualification.js";
 import { readLocalAiCredentialFile } from "../local-ai-credential-file.js";
-import { prepareGrokRunnerCredentials } from "./grok-runner-credentials.js";
-import { bindAntigravityCredentialTurn, bindAntigravityTransportRetirement, prepareAntigravityRunnerCredentials } from "./antigravity-runner-credentials.js";
-import { copyBackGrokAuth } from "@paperclipai/adapter-grok-local/server";
 
 import { inferOpenAiCompatibleBiller, type AdapterUsageCheckpoint } from "@paperclipai/adapter-utils";
 import { createAgentIdentityRedactor } from "../agent-identity-redaction.js";
@@ -118,7 +114,6 @@ import { hasAcknowledgedNativeReassignmentStopIntent, hasAcknowledgedNativeStopI
 import { stoppedCodexTurnIsTextOnly } from "./stopped-codex-turn.js";
 import { prepareVerifiedRemoteProviderPack, useVerifiedPreinstalledRemoteProviderPack, shouldUseBundledAcpxImageAssets } from "./remote-provider-pack.js";
 import { uploadVerifiedProviderPack } from "./provider-pack-upload.js";
-import { selectRemotePiCompanion } from "./remote-pi-companion.js";
 import { scheduledResumeContinuationAllowed } from "./scheduled-resume-continuation.js";
 import { readNativeLocalProcessStop, recordedLocalExecutionStopped, PRIOR_OWNER_FENCE_REFUSED, PROCESS_IDENTITY_RECORDED, PROCESS_START_REQUESTED, withReleasedNativeRunProcess } from "../native-local-process-stop.js";
 import { remoteLeaseCleanupScope } from "../remote-execution-termination.js";
@@ -10212,24 +10207,9 @@ async function executePaperclipNativeSessionAttempt(
   cleanupOnly = false,
   ownDiagnosticLease?: (lease: NativeDiagnosticLease) => void,
 ): Promise<AdapterExecutionResult> {
-  if (input.execution.provider.kind === "acpx" && input.execution.provider.agent === "antigravity") {
-    const candidate = resolveAntigravityCandidateAdmission({
-      companyId: input.execution.binding.companyId, model: input.execution.provider.model,
-    }, process.env);
-    if (!candidate || !input.useRunnerd || input.backend || input.restartRecovery
-      || input.runnerExecutionTarget?.kind === "remote"
-      || input.execution.session.lifecyclePolicy.mode !== "per_turn"
-      || ("homeMode" in input.execution && input.execution.homeMode === "preconfigured")) {
-      throw new Error("paperclip_runner_antigravity_candidate_ineligible: exact local per-turn candidate admission is required");
-    }
-  }
-  if (input.execution.provider.kind === "acpx" && input.execution.provider.agent === "kimi"
-    && QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending") {
-    const target = input.runnerExecutionTarget?.kind === "remote"
-      ? { platform: "linux", architecture: "x64" } : { platform: process.platform, architecture: process.arch };
-    if (!input.useRunnerd || input.backend || !resolveKimiCandidateAdmission({
-      companyId: input.execution.binding.companyId, model: input.execution.provider.model, target,
-    }, process.env)) throw new Error("paperclip_runner_kimi_candidate_ineligible: exact trusted target admission is required");
+  if (!cleanupOnly && input.execution.provider.kind === "acpx"
+    && !["claude", "codex"].includes(input.execution.provider.agent)) {
+    throw Object.assign(new Error("This agent harness has been removed. Select a supported harness before retrying."), { code: "agent_harness_removed" });
   }
   const restoredController = input.restartRecovery?.kind === "reattach_remote_runner"
     ? await restoreNativeRunnerCheckpoint(input.db, input.execution.binding, scopedRunnerdStateRoot(input.execution))
@@ -10253,15 +10233,6 @@ async function executePaperclipNativeSessionAttempt(
     input.execution.schema !== "paperclip.native-execution-input.v8"
   ) {
     throw new Error("paperclip_runner_provider_unsupported");
-  }
-  if (
-    input.execution.provider.kind === "acpx" &&
-    ["copilot"].includes(input.execution.provider.agent) &&
-    !resolveAcpxQualification(input.execution.provider, process.env)
-  ) {
-    throw new Error(
-      "paperclip_runner_provider_unsupported: ACPX candidate requires exact host qualification authorization",
-    );
   }
   const preparationSpans = input.preparationSpans ?? [];
   const preparationStarts = nativeRunPreparationStarts(
@@ -13266,17 +13237,14 @@ const REMOTE_PROVIDER_PACK_PINS = {
   acpx: QUALIFIED_ACPX_VERSION,
   claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion,
   codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion,
-  grok: QUALIFIED_ACPX_PROFILES.grok.agentRuntimeVersion,
 } as const;
 const REMOTE_PROVIDER_PACK_PROFILE_DIGESTS = {
-  grok: QUALIFIED_ACPX_PROFILES.grok.commandDigest,
   claude:
     QUALIFIED_ACPX_PROFILES.claude.commandDigest,
   codex:
     QUALIFIED_ACPX_PROFILES.codex.commandDigest,
 } as const;
 const REMOTE_PROVIDER_PACK_ARTIFACT_PATHS = {
-  grokLauncher: "dist/providers/grok/launcher.cjs",
   nodeCommand: "node_modules/node/bin/node",
   productionLock: "pnpm-lock.yaml",
   opencodeCommand: "node_modules/.bin/opencode",
@@ -13284,8 +13252,6 @@ const REMOTE_PROVIDER_PACK_ARTIFACT_PATHS = {
   opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs",
   acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs",
 } as const;
-const REMOTE_PROVIDER_PACK_PROVIDERS = ["pi", "cursor", "copilot", ...(QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus !== "pending" ? ["kimi"] as const : [])] as const;
-const REMOTE_PROVIDER_PACK_CANDIDATES = ["pi", "cursor", "copilot", ...(QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending" ? ["kimi"] as const : [])] as const;
 
 type RemoteProviderPackManifest = {
   schema: typeof REMOTE_PROVIDER_PACK_SCHEMA;
@@ -13298,16 +13264,9 @@ type RemoteProviderPackManifest = {
     distDigest: string;
     bridgeDigest: string;
     acpxProfileDigests: typeof REMOTE_PROVIDER_PACK_PROFILE_DIGESTS;
-    providers?: Partial<Record<typeof REMOTE_PROVIDER_PACK_PROVIDERS[number], {
-      version: string; profileDigest: string; closureDigest: string; qualification: "qualified" | "pending";
-      path: string; sha256: string;
-    }>>;
-    candidateProviders?: Partial<Record<typeof REMOTE_PROVIDER_PACK_CANDIDATES[number], {
-      version: string; profileDigest: string; closureDigest: string; qualification: "qualified" | "pending";
-      path: string; sha256: string;
-    }>>;
+    providers?: Record<string, never>;
+    candidateProviders?: Record<string, never>;
     artifacts: {
-      grokLauncher: { path: string; sha256: string };
       nodeCommand: { path: string; sha256: string };
       productionLock: { path: string; sha256: string };
       opencodeCommand: { path: string; sha256: string };
@@ -13462,7 +13421,6 @@ function* providerPackIdentityChecks(
     );
   }
   const artifactEntries = [
-    ["Grok builtin launcher", payload.artifacts?.grokLauncher, REMOTE_PROVIDER_PACK_ARTIFACT_PATHS.grokLauncher],
     [
       "provider Node",
       payload.artifacts?.nodeCommand,
@@ -13518,62 +13476,10 @@ function* providerPackIdentityChecks(
       "runner_remote_provider_artifact_incompatible: provider dist tree digest mismatch",
     );
   }
-  for (const [inventory, candidates] of [["providers", payload.providers], ["candidateProviders", payload.candidateProviders]] as const) {
-    if (candidates === undefined) continue;
-    const allowedProviders: readonly string[] = inventory === "providers" ? REMOTE_PROVIDER_PACK_PROVIDERS : REMOTE_PROVIDER_PACK_CANDIDATES;
-    if (!candidates || typeof candidates !== "object" || Array.isArray(candidates) || Object.keys(candidates).length > allowedProviders.length) {
+  for (const candidates of [payload.providers, payload.candidateProviders]) {
+    if (candidates !== undefined && (!candidates || typeof candidates !== "object"
+      || Array.isArray(candidates) || Object.keys(candidates).length !== 0)) {
       throw new Error("runner_remote_provider_artifact_incompatible: invalid candidate inventory");
-    }
-    for (const [provider, candidate] of Object.entries(candidates)) {
-      const expectedPath = `provider-assets/${provider}/${payload.target.platform}-${payload.target.architecture}`;
-      if (!allowedProviders.includes(provider) || !candidate
-        || Object.keys(candidate).some(key => !["version", "profileDigest", "closureDigest", "qualification", "path", "sha256"].includes(key))
-        || candidate.qualification !== (["pi", "cursor"].includes(provider) || inventory === "providers" && (provider === "copilot" || provider === "kimi" && QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus !== "pending") ? "qualified" : "pending") || candidate.path !== expectedPath
-        || typeof candidate.version !== "string" || !candidate.version || candidate.version.length > 120
-        || !/^sha256:[a-f0-9]{64}$/.test(candidate.profileDigest)
-        || !/^sha256:[a-f0-9]{64}$/.test(candidate.closureDigest)
-        || !/^sha256:[a-f0-9]{64}$/.test(candidate.sha256)) {
-        throw new Error("runner_remote_provider_artifact_incompatible: invalid candidate identity");
-      }
-      const candidatePath = providerPackRelativePath(candidate.path, "candidate assets");
-      if (provider === "cursor") {
-        const target = `${payload.target.platform}-${payload.target.architecture}`;
-        const distribution = Object.hasOwn(CURSOR_DISTRIBUTION_PINS, target)
-          ? CURSOR_DISTRIBUTION_PINS[target as keyof typeof CURSOR_DISTRIBUTION_PINS] : undefined;
-        if (!distribution || candidate.version !== QUALIFIED_ACPX_PROFILES.cursor.agentServerVersion
-          || candidate.profileDigest !== QUALIFIED_ACPX_PROFILES.cursor.commandDigest
-          || candidate.closureDigest !== `sha256:${distribution.closureSha256}`) {
-          throw new Error("runner_remote_provider_artifact_incompatible: Cursor profile or closure does not match this release");
-        }
-      }
-      if (provider === "copilot") {
-        const closurePins = {
-  "darwin-arm64": "362f2663e967fb9e34a814bac4619cbf89e6b23069c4051ab1f2f686852d0a32",
-  "darwin-x64": "c08b7c3dd4e7bcf9a3e16ec6eba29cfa10308e865d196c5f120a3a15f6b3116a",
-  "linux-x64": "a3d8f4367cfa1694d79e3f8b7930b6fbfe42a229c272b375b11951d631db8d07"
-} as const;
-        const target = `${payload.target.platform}-${payload.target.architecture}`;
-        const closure = Object.hasOwn(closurePins, target) ? closurePins[target as keyof typeof closurePins] : undefined;
-        if (!closure || (payload.providers?.copilot && payload.candidateProviders?.copilot)
-          || candidate.version !== QUALIFIED_ACPX_PROFILES.copilot.agentServerVersion
-          || candidate.profileDigest !== QUALIFIED_ACPX_PROFILES.copilot.commandDigest
-          || candidate.closureDigest !== `sha256:${closure}`) {
-          throw new Error("runner_remote_provider_artifact_incompatible: Copilot profile or closure does not match this release");
-        }
-      }
-      if (provider === "kimi") {
-        if (inventory !== (QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending" ? "candidateProviders" : "providers")
-          || payload[QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending" ? "providers" : "candidateProviders"]?.kimi
-          || payload.target.platform !== "linux" || payload.target.architecture !== "x64"
-          || candidate.version !== QUALIFIED_ACPX_PROFILES.kimi.agentServerVersion
-          || candidate.profileDigest !== QUALIFIED_ACPX_PROFILES.kimi.commandDigest
-          || candidate.closureDigest !== `sha256:${KIMI_DISTRIBUTION_CLOSURE_SHA256["linux-x64"]}`) {
-          throw new Error("runner_remote_provider_artifact_incompatible: Kimi profile or closure does not match this release");
-        }
-      }
-      if (verifyControllerFiles && (yield { kind: "tree", path: resolve(packRoot, candidatePath) }) !== candidate.sha256) {
-        throw new Error("runner_remote_provider_artifact_incompatible: candidate asset tree digest mismatch");
-      }
     }
   }
   const bridgeDigest = `sha256:${createHash("sha256")
@@ -15038,6 +14944,10 @@ export async function createRunnerdBackend(input: {
     },
   ) => Promise<unknown>;
 }): Promise<ManagedRunnerdBackend> {
+  if (input.recoveryPurpose !== "stop_cleanup" && input.execution.provider.kind === "acpx"
+    && !["claude", "codex"].includes(input.execution.provider.agent)) {
+    throw Object.assign(new Error("This agent harness has been removed."), { code: "agent_harness_removed" });
+  }
   if (input.recoveryPurpose === "stop_cleanup") {
     const [run] = await input.db.select().from(heartbeatRuns).where(and(
       eq(heartbeatRuns.id, input.execution.binding.runId), eq(heartbeatRuns.companyId, input.execution.binding.companyId),
@@ -15603,7 +15513,6 @@ async function createRunnerdBackendWithinSessionClaim(
         } : undefined,
         ...(provider.kind === "codex" ? { disableCodexWebSearch: "webSearch" in provider && provider.webSearch === "disabled" } : {}),
         ...(provider.kind === "acpx" ? { acpxAgent: provider.agent,
-          acpxCandidateProfile: provider.agent === "pi" ? undefined : resolveAcpxQualification(provider, process.env),
           acpxPermissionMode: provider.permissionMode, acpxMode: provider.mode, piThinkingLevel: provider.piThinkingLevel,
           claudeEffort: "claudeEffort" in provider ? provider.claudeEffort : undefined,
           grokEffort: "grokEffort" in provider ? provider.grokEffort : undefined,
@@ -15727,16 +15636,8 @@ async function createRunnerdBackendWithinSessionClaim(
     ? bundledRemoteProviderPackManifestPath(undefined, remoteClaudeTarget) : null;
   const bundledClaudeRoot = bundledClaudeManifest && existsSync(join(dirname(bundledClaudeManifest), "node_modules"))
     ? dirname(bundledClaudeManifest) : null;
-  // Pi's explicit operator import supplies the target-platform authority. Never
-  // substitute a Mac controller daemon or trust an image's self-reported hashes.
-  // Existing explicit overrides and every other provider keep their old path.
-  const remotePiCompanion = adoptingPersistedRemoteRunner ? null : await timeController("companion_selection", () => selectRemotePiCompanion({
-    provider: input.execution.provider, remote: remoteTarget !== null,
-    binaryOverride: input.runnerRemoteBinaryPath, packOverride: input.runnerRemoteProviderPackPath,
-    workspaceRoot: input.execution.workspace.cwd!,
-  }));
   const configuredProviderPackRoot =
-    input.runnerRemoteProviderPackPath?.trim() || remotePiCompanion?.providerPack || bundledClaudeRoot || null;
+    input.runnerRemoteProviderPackPath?.trim() || bundledClaudeRoot || null;
   const useBundledRemoteImageAssets =
     (requiresRemoteProviderPack && !configuredProviderPackRoot &&
       (input.execution.provider.kind === "opencode" || remoteClaude)) ||
@@ -15783,7 +15684,7 @@ async function createRunnerdBackendWithinSessionClaim(
     : targetMatchedCodexArtifact
     ? await timeController("runner_binary", () => resolveRemotePaperclipRunnerBinary({ runner: remoteCommandRunner!, remoteCwd: remoteTarget.remoteCwd, configuredPath: input.runnerRemoteBinaryPath }))
     : remoteTarget
-    ? remoteClaudeRunnerBinary || input.runnerRemoteBinaryPath?.trim() || remotePiCompanion?.runnerBinary || (useBundledRemoteImageAssets ? await verifiedBundledRemoteRunnerBinary() : await resolvePaperclipRunnerBinaryAsync())
+    ? remoteClaudeRunnerBinary || input.runnerRemoteBinaryPath?.trim() || (useBundledRemoteImageAssets ? await verifiedBundledRemoteRunnerBinary() : await resolvePaperclipRunnerBinaryAsync())
     : await resolvePaperclipRunnerBinaryAsync();
   const selectProviderPackAuthority = (reattach: boolean) => requiresRemoteProviderPack ? resolveRemoteProviderPackAuthority({
     stateDirectory: root,
@@ -15912,7 +15813,7 @@ async function createRunnerdBackendWithinSessionClaim(
         remoteRuntimeRoot, remoteCodexBinary, runnerRemoteBinaryPath: input.runnerRemoteBinaryPath,
         runnerRemoteCodexPath: input.runnerRemoteCodexPath, runnerRemoteCodexNpmSpec: input.runnerRemoteCodexNpmSpec,
         model: input.execution.provider.kind === "codex" ? input.execution.provider.model : null,
-        reuseRetainedRunner: sandboxLeaseAcquisition?.outcome === "resumed", targetPlatformArtifactVerified: remotePiCompanion !== null || useBundledRemoteImageAssets || targetMatchedCodexArtifact || remoteClaude,
+        reuseRetainedRunner: sandboxLeaseAcquisition?.outcome === "resumed", targetPlatformArtifactVerified: useBundledRemoteImageAssets || targetMatchedCodexArtifact || remoteClaude,
         trace: input.trace, onLog: input.onLog,
         providerPackRoots: requiresRemoteProviderPack && stagedRemoteProviderPackRoot
           ? [stagedRemoteProviderPackRoot, "/opt/paperclip-runner/provider-pack"] : undefined,
@@ -16976,23 +16877,7 @@ async function createRunnerdBackendWithinSessionClaim(
       }
     : input.execution;
   const preconfiguredHome = "homeMode" in input.execution && input.execution.homeMode === "preconfigured";
-  const isGrok = input.execution.provider.kind === "acpx" && input.execution.provider.agent === "grok";
-  const isAntigravity = input.execution.provider.kind === "acpx" && input.execution.provider.agent === "antigravity";
-  let effectiveRunnerEnvironmentBase: NodeJS.ProcessEnv = {
-    ...(isGrok || isAntigravity
-      ? runnerEnvironment ?? {}
-      : resolveNativeProviderEnvironment(input.execution.provider, runnerEnvironment)),
-  };
-  const grokCredential = isGrok ? await prepareGrokRunnerCredentials({
-    companyId: input.execution.binding.companyId, environment: effectiveRunnerEnvironmentBase, remote: Boolean(remoteTarget),
-    managedHome: input.managedAiCredentialHome,
-  }) : null;
-  if (grokCredential) effectiveRunnerEnvironmentBase = grokCredential.environment;
-  const antigravityCredential = isAntigravity ? await prepareAntigravityRunnerCredentials({
-    environment: effectiveRunnerEnvironmentBase, remote: Boolean(remoteTarget), managedHome: input.managedAiCredentialHome,
-    lifecycleMode: input.execution.session.lifecyclePolicy.mode,
-  }) : null;
-  if (antigravityCredential) effectiveRunnerEnvironmentBase = antigravityCredential.environment;
+  const effectiveRunnerEnvironmentBase = { ...resolveNativeProviderEnvironment(input.execution.provider, runnerEnvironment) };
   if (relayAssignedMcp) {
     // The server-held tool authority owns this credential. Do not deliver a
     // duplicate HTTP MCP server or its bearer token to the remote provider.
@@ -17167,8 +17052,7 @@ async function createRunnerdBackendWithinSessionClaim(
   const diagnosticLease = diagnostics.activate(diagnosticOwner, input.onLog);
   input.onDiagnosticLease?.(diagnosticLease);
   const credentialProvider = input.execution.provider.kind === "codex" ? "codex"
-    : input.execution.provider.kind === "acpx" && (input.execution.provider.agent === "codex" || input.execution.provider.agent === "grok")
-      ? input.execution.provider.agent : null;
+    : input.execution.provider.kind === "acpx" && input.execution.provider.agent === "codex" ? "codex" : null;
   const acpxCredential = input.execution.provider.kind === "acpx";
   const credentialRelativeHome = credentialProvider && acpxCredential
     ? `acpx/acpx/${acpxRuntimeSessionDirectoryName(nativeSessionKey(input.execution))}/${credentialProvider}-home` : "codex-home";
@@ -17251,16 +17135,6 @@ async function createRunnerdBackendWithinSessionClaim(
         ...(input.execution.provider.kind === "acpx"
           ? {
               acpxAgent: input.execution.provider.agent,
-              // Read only the server operator environment, never agent/runtime env.
-              acpxCandidateProfile: input.execution.provider.agent === "pi"
-                ? undefined
-                : resolveAcpxQualification(input.execution.provider, process.env),
-              acpxCandidateAdmission: input.execution.provider.agent === "antigravity"
-                ? resolveAntigravityCandidateAdmission({ companyId: input.execution.binding.companyId, model: input.execution.provider.model }, process.env)
-                : input.execution.provider.agent === "kimi" && QUALIFIED_ACPX_PROFILES.kimi.qualificationStatus === "pending"
-                  ? resolveKimiCandidateAdmission({ companyId: input.execution.binding.companyId, model: input.execution.provider.model,
-                    target: remoteTarget ? { platform: "linux", architecture: "x64" } : { platform: process.platform, architecture: process.arch } }, process.env)
-                  : undefined,
               acpxPermissionMode: input.execution.provider.permissionMode,
               acpxMode: input.execution.provider.mode,
               piThinkingLevel: input.execution.provider.piThinkingLevel,
@@ -17543,7 +17417,7 @@ async function createRunnerdBackendWithinSessionClaim(
           },
         }),
       });
-      return antigravityCredential?.home ? bindAntigravityTransportRetirement(bundle) : bundle.transport;
+      return bundle.transport;
     },
   });
   const boundManagedSessions = new WeakSet<NativeSession>();
@@ -17558,22 +17432,12 @@ async function createRunnerdBackendWithinSessionClaim(
       const detach = session.detachControllerForRestart?.bind(session);
       if (detach) session.detachControllerForRestart = async () => { cursorCloudRuntime.unregister(); return detach(); };
     }
-    if (antigravityCredential?.home && antigravityCredential.credential && !boundManagedSessions.has(session)) {
-      boundManagedSessions.add(session);
-      const runtimeHome = resolve(resolvePaperclipInstanceRoot(), "runtime", "paperclip-runner", "acpx", "acpx",
-        acpxRuntimeSessionDirectoryName(nativeSessionKey(input.execution)), "antigravity-home");
-      return bindAntigravityCredentialTurn(session, {
-        managedHome: antigravityCredential.home, credential: antigravityCredential.credential, runtimeHome,
-      });
-    }
-    const destinationHome = credentialProvider === "grok" ? grokCredential?.home : input.managedAiCredentialHome;
+    const destinationHome = input.managedAiCredentialHome;
     if (!credentialProvider || !credentialStore || !destinationHome || boundManagedSessions.has(session)) return session;
     boundManagedSessions.add(session);
     return bindManagedNativeCredentialTurn(session, {
       copyBack: synchronizeCredentials ? async () => {} : async () => {
-        if (credentialProvider === "grok") await copyBackGrokAuth({ hostHomeDir: destinationHome,
-          readSandboxAuth: async () => Buffer.from(await credentialStore.read()), log: () => {} });
-        else await copyBackCodexAuth({ hostAuthPath: join(destinationHome, "auth.json"),
+        await copyBackCodexAuth({ hostAuthPath: join(destinationHome, "auth.json"),
           readSandboxAuth: async () => Buffer.from(await credentialStore.read()), log: () => {} });
       },
       retire: synchronizeCredentials,

@@ -327,6 +327,10 @@ impl AcpxProviderDescriptor {
         &self,
         context: &AcpxEventProjectionContext,
     ) -> Result<(), DurableRunnerError> {
+        if !matches!(self.agent.as_str(), "claude" | "codex") {
+            return Err(DurableRunnerError::invalid("ACPX agent is no longer supported")
+                .with_classification(PROVIDER_STATE_INCOMPATIBLE));
+        }
         let expected = acpx_release_profile(&self.agent).ok_or_else(|| {
             DurableRunnerError::invalid("ACPX agent must name a known immutable profile")
         })?;

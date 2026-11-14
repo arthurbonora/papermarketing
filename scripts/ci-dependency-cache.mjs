@@ -9,8 +9,6 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const postinstallHooks = new Map([
   [".", "node scripts/link-plugin-dev-sdk.mjs"],
-  ["server", "node scripts/install-copilot-assets.mjs"],
-  ["packages/paperclip-runner", "node scripts/install-copilot-assets.mjs"],
 ]);
 
 export function cachePlan({ files, read, scope, packageDirs }) {

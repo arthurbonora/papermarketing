@@ -12,14 +12,7 @@ import { caseReceiptTask, caseReceiptDefinitionDigest, CASE_RECEIPT_BUDGET_CENTS
 import { TASK_WORKSPACES_SUITE, taskWorkspaceTask, taskWorkspaceProfile, taskWorkspaceDefinitionDigest } from "./task-workspaces-cases.js";
 import { repositoryProofTasks, repositoryProofProfile, repositoryProofDigest } from "./repository-verification.js";
 import { automaticRepositoryTask, automaticRepositoryDigest } from "./automatic-repository.js";
-import { nativeActiveStopTasks } from "./native-active-stop-tasks.js";
 import { CURSOR_CLOUD_SUITE, cursorCloudArtifactTask, cursorCloudStopTask, CURSOR_CLOUD_QUIET_WINDOW_MS, cursorCloudDefinitionDigest } from "./cursor-cloud-cases.js";
-import { kimiLifecycleTasks } from "./kimi-lifecycle-tasks.js";
-import { piControlTasks } from "./pi-controls-cases.js";
-import { cursorNativeTasks } from "./cursor-native-cases.js";
-import { copilotProtectionTasks } from "./copilot-protection-tasks.js";
-import { piNativeTasks } from "./pi-native-cases.js";
-import { piFilePrompt } from "./pi-file-evidence.js";
 import { planTaskCases, planTaskProfile, planDefinitionDigest } from "./plan-task-cases.js";
 import { nativeCompletionTasks, nativeCompletionDefinitionDigest } from "./native-completion-cases.js";
 import { NATIVE_INSTRUCTION_SUITE, NATIVE_INSTRUCTION_BASE_SHA, nativeInstructionDefinitionDigest } from "./native-instruction-consolidation.js";
@@ -27,9 +20,7 @@ import { nativeCompletionProfile, NATIVE_COMPLETION_BUDGET_CENTS } from "./nativ
 import { chatConfirmationTasks } from "./chat-cases.js";
 import { buildConnectionSuite } from "./connection-cases.js";
 import { buildGitHubReviewJourneySuite } from "./github-review-cases.js";
-import { buildAntigravityJourneySuite } from "./antigravity-journey-cases.js";
 import { hiringTemplateTasks, hiringTemplateProfile, hiringTemplateDefinitionDigest } from "./hiring-template-cases.js";
-import { copilotProviderDeathTasks } from "./copilot-active-stop-tasks.js";
 import { instructionPersistenceTask } from "./instruction-persistence.js";
 import { apiResponseReadingTask } from "./api-response-reading.js";
 import { CODEX_PLANNING_READ_ONLY_SUITE, codexPlanningReadOnlyTask } from "./codex-planning-read-only.js";
@@ -46,7 +37,7 @@ import { lifecycleLiveTasks, lifecycleLiveDefinitionDigest } from "./lifecycle-l
 import { publicMcpTasks, publicMcpExpandedDigest, publicMcpSetupDigest, publicMcpWorkflowDigest, publicMcpWorkerInstructions, publicMcpWorkerSkillDigest } from "./public-mcp-cases.js";
 import { graderVersion as publicMcpGraderVersion } from "./public-mcp-grading.js";
 import { everydayTasks, productionStoryProfile } from "./everyday-cases.js";
-import { EVERYDAY_RELIABILITY_GROUP, EVERYDAY_RELIABILITY_SLOW_GROUP, RELIABILITY_FACADE_PROFILE_IDS, RELIABILITY_PLAN_PROFILE_ID, everydayReliabilityExecutionIds, reliabilityPlanCells, everydayReliabilitySignatures, everydayReliabilityTasks } from "./everyday-reliability-cases.js";
+import { EVERYDAY_RELIABILITY_GROUP, EVERYDAY_RELIABILITY_SLOW_GROUP, RELIABILITY_PLAN_PROFILE_ID, everydayReliabilityExecutionIds, reliabilityPlanCells, everydayReliabilitySignatures, everydayReliabilityTasks } from "./everyday-reliability-cases.js";
 import { REMOTE_WORKSPACE_STORAGE_SUITE, remoteWorkspaceStoragePrompt } from "./remote-workspace-storage.js";
 import { CONNECTION_GUIDANCE_SUITE, CONNECTION_GUIDANCE_BUDGET_CENTS, connectionGuidanceTasks, connectionGuidanceDefinitionDigest } from "./connection-guidance-cases.js";
 
@@ -60,8 +51,6 @@ import { createAgentSchema } from "../../packages/shared/src/validators/agent.js
 import { createEnvironmentSchema } from "../../packages/shared/src/validators/environment.js";
 import { DEFAULT_CODEX_LOCAL_MODEL } from "../../packages/adapters/codex-local/src/index.js";
 import { models as claudeModels } from "../../packages/adapters/claude-local/src/index.js";
-import { DEFAULT_KIMI_LOCAL_MODEL } from "../../packages/adapters/kimi-local/src/index.js";
-import { DEFAULT_GROK_LOCAL_MODEL } from "../../packages/adapters/grok-local/src/index.js";
 import { QUALIFIED_ACPX_PROFILES } from "../../packages/paperclip-runner/src/drivers/acpx/qualified-profiles.js";
 import { ACPX_QUALIFICATION_MODELS } from "../acpx-qualification-models.js";
 import { QUALIFIED_OPENCODE_MODEL } from "../../packages/paperclip-runner/src/drivers/opencode/opencode-server-driver.js";
@@ -162,7 +151,7 @@ function commonAgent(
 function legacyProfile(input: {
   id: string;
   label: string;
-  adapterType: "codex_local" | "claude_local" | "opencode_local" | "kimi_local" | "grok_local";
+  adapterType: "codex_local" | "claude_local" | "opencode_local";
   provider: string;
   model: string;
   credential: RunnerProfileFixture["credential"];
@@ -203,7 +192,6 @@ function legacyProfile(input: {
   };
 }
 
-const PI_QUALIFICATION_THINKING_LEVEL = "low" as const;
 
 function nativeProfile(input: {
   id: string;
@@ -211,7 +199,7 @@ function nativeProfile(input: {
   provider: "codex" | "opencode" | "acpx";
   model: string;
   credential: RunnerProfileFixture["credential"];
-  acpxAgent?: "claude" | "codex" | "grok" | "cursor" | "copilot" | "pi" | "kimi";
+  acpxAgent?: "claude" | "codex";
   qualificationCandidate?: RunnerProfileFixture["qualificationCandidate"];
   supportedEnvironments?: readonly (typeof ENVIRONMENT_IDS)[number][];
   modelQualification?: RunnerProfileFixture["modelQualification"];
@@ -256,7 +244,6 @@ function nativeProfile(input: {
         lifecycleMode: "per_turn",
         idleTimeoutMs: 300_000,
         ...permissionConfig,
-        ...(input.acpxAgent === "pi" ? { piThinkingLevel: PI_QUALIFICATION_THINKING_LEVEL } : {}),
         env: {
           ...(credentialRef ? { [input.credential]: credentialRef } : {}),
           // Codex's supported automation credential is CODEX_API_KEY. Keep
@@ -356,14 +343,6 @@ export const runnerProfiles: readonly RunnerProfileFixture[] = [
     credential: "ANTHROPIC_API_KEY",
   }),
   nativeProfile({
-    id: "runner-acpx-grok",
-    label: "Runner Grok Build",
-    provider: "acpx",
-    acpxAgent: "grok",
-    model: ACPX_QUALIFICATION_MODELS.grok,
-    credential: "XAI_API_KEY",
-  }),
-  nativeProfile({
     id: "runner-acpx-codex",
     label: "Runner ACPX Codex",
     provider: "acpx",
@@ -372,27 +351,6 @@ export const runnerProfiles: readonly RunnerProfileFixture[] = [
     credential: "OPENAI_API_KEY",
   }),
 ] as const;
-
-// Explicit qualification choices from authenticated model discovery, not shipped
-// defaults. Cursor has local/Daytona proof; Copilot and Pi remain pending.
-export const extendedHarnessProfiles: readonly RunnerProfileFixture[] = [
-  nativeProfile({
-    id: "runner-acpx-cursor", label: "Runner Cursor", provider: "acpx", acpxAgent: "cursor",
-    qualificationCandidate: "cursor", credential: "CURSOR_AUTH_TOKEN",
-    model: "gpt-5.6-luna[context=272k,reasoning=medium,fast=false]",
-    modelQualification: { source: "qualified_runner_profile", qualificationId: "cursor:2026.09.26-dd393fe:v11:luna:local-daytona-2026-10-04" },
-  }),
-  nativeProfile({
-    id: "runner-acpx-copilot", label: "Runner Copilot (candidate)", provider: "acpx", acpxAgent: "copilot",
-    qualificationCandidate: "copilot", credential: "COPILOT_GITHUB_TOKEN", model: "gpt-5.6-luna",
-    modelQualification: { source: "candidate_runner_profile", qualificationId: "copilot:1.0.88:discovery-2026-09-28" },
-  }),
-  nativeProfile({
-    id: "runner-acpx-pi", label: "Runner Pi (candidate)", provider: "acpx", acpxAgent: "pi",
-    qualificationCandidate: "pi", credential: "OPENROUTER_API_KEY", model: ACPX_QUALIFICATION_MODELS.pi,
-    modelQualification: { source: "candidate_runner_profile", qualificationId: "pi:0.0.33:1.0.0:openrouter" },
-  }),
-];
 
 /** Narrow legacy ACP lanes used only by the explicit context-integrity matrix. */
 export const legacyAcpxProfiles: readonly RunnerProfileFixture[] = [
@@ -416,40 +374,9 @@ export const legacyAcpxProfiles: readonly RunnerProfileFixture[] = [
   }),
 ] as const;
 
-/** Explicit-only context-integrity profiles; admission is blocked until qualification is complete. */
-export const pendingContextIntegrityProfiles: readonly RunnerProfileFixture[] = [
-  legacyProfile({
-    id: "legacy-kimi-cli",
-    label: "Legacy Kimi CLI (pending qualification)",
-    adapterType: "kimi_local",
-    provider: "kimi",
-    model: DEFAULT_KIMI_LOCAL_MODEL,
-    credential: "KIMI_MODEL_API_KEY",
-    extraConfig: { engine: "cli" },
-  }),
-  legacyProfile({
-    id: "legacy-kimi-acp",
-    label: "Legacy Kimi ACP (pending qualification)",
-    adapterType: "kimi_local",
-    provider: "kimi",
-    model: DEFAULT_KIMI_LOCAL_MODEL,
-    credential: "KIMI_MODEL_API_KEY",
-    extraConfig: { engine: "acp", mode: "oneshot" },
-  }),
-  legacyProfile({
-    id: "legacy-grok",
-    label: "Legacy Grok (pending qualification)",
-    adapterType: "grok_local",
-    provider: "grok",
-    model: DEFAULT_GROK_LOCAL_MODEL,
-    credential: "XAI_API_KEY",
-  }),
-] as const;
-
 export const contextIntegrityProfiles: readonly RunnerProfileFixture[] = [
   ...runnerProfiles.filter((profile) => ["runner-codex", "runner-acpx-claude", "runner-opencode", "legacy-codex", "legacy-claude"].includes(profile.id)),
   ...legacyAcpxProfiles,
-  ...pendingContextIntegrityProfiles,
 ];
 
 export const openRouterBreadthExcludedModelIds = ["xiaomi/mimo-v2.5"] as const;
@@ -1118,44 +1045,6 @@ const everydayProfiles = [
   nativeProfile({ id: "runner-codex-mini", label: "Runner Codex Mini", provider: "codex", model: "gpt-5.4-mini", modelQualification: {source:"qualified_runner_profile",qualificationId:"everyday-codex-mini-pilot"}, credential: "OPENAI_API_KEY", supportedEnvironments: ["local"] }),
 ].map(productionStoryProfile);
 
-export const extendedHarnessFileTask: RunnerTaskFixture = {
-  id: "file-edit-validate", label: "Edit a file and validate its contents", groups: [],
-  workMode: "standard", flow: "single_turn", expectedRunCount: 1,
-  attemptTimeoutMs: { local: 180_000, daytona: 300_000 },
-  expectedTerminalState: { issue: "done", run: "succeeded" },
-  buildTitle: nonce => `Extended harness file validation ${nonce}`,
-  buildVisibleMarker: nonce => `EXTENDED-FILE-${nonce}`,
-  buildPrompt: nonce => [
-    `Create extended-${nonce}.txt in the current execution workspace with exactly ready-${nonce} followed by a newline.`,
-    `Edit that file to contain exactly verified-${nonce} followed by a newline, then run a command that reads it and fails unless those exact bytes match.`,
-    `Register the verified file as a deliverable with title extended-${nonce}.txt. Use EXTENDED-FILE-${nonce} only as completion summary and final response, never as a file title or progress message.`,
-    `After successful validation, call paperclip_finish with reportedWorkDisposition done, summary EXTENDED-FILE-${nonce}, the current completion contract revision and satisfied objective criterion, no remaining work, and the actual validation command and result.`,
-    `Wait for paperclip_finish to succeed, then emit exactly EXTENDED-FILE-${nonce} as your final response. Do not create unrelated files or work.`,
-  ].join("\n"),
-  buildMatchers: (nonce, execution) => [
-    ...terminalMatchers(`EXTENDED-FILE-${nonce}`, execution),
-    { kind: "file_exact", path: `extended-${nonce}.txt`, expected: `verified-${nonce}\n` },
-    { kind: "artifact_exact", name: `extended-${nonce}.txt`, expected: `verified-${nonce}\n`, mimeType: "text/plain" },
-  ],
-};
-
-// Keep the create/edit journey and its independent byte/artifact oracles. The
-// explicit read-only check avoids shell operand and newline-escaping ambiguity
-// in the Copilot qualification prompt; it does not repair the provider's file.
-function copilotFilePrompt(nonce: string): string {
-  if (!/^[A-Za-z0-9-]{1,100}$/u.test(nonce)) throw new Error("Invalid Copilot file fixture nonce");
-  const filename = `extended-${nonce}.txt`;
-  const expectedHex = Buffer.from(`verified-${nonce}\n`).toString("hex");
-  const marker = `COPILOT-VALIDATED-${nonce}`;
-  const command = `node -e 'const b=require("node:fs").readFileSync(${JSON.stringify(filename)});if(!b.equals(Buffer.from("${expectedHex}","hex")))process.exit(1);console.log(${JSON.stringify(marker)})'`;
-  return [
-    extendedHarnessFileTask.buildPrompt(nonce),
-    "Use the exact read-only validation command below after editing. It must exit with code 0 and print the validation marker before registration or completion. A failed check requires correcting the file; do not claim success from a failed command or change the check.",
-    "Exact read-only validation command:",
-    command,
-  ].join("\n");
-}
-
 const repositoryModelProfiles = [
   {
     native: nativeProfile({
@@ -1255,27 +1144,6 @@ const remoteWorkspaceStorageSuite: RunnerSuiteFixture = {
       source: "projectless-synthetic-files-and-model-created-git", authentication: "api-key", stagingQualification: false },
   };
 
-export const kimiRunnerProfile = nativeProfile({
-  id: "runner-acpx-kimi", label: "Runner Kimi Code",
-  provider: "acpx", acpxAgent: "kimi", qualificationCandidate: "kimi",
-  credential: "KIMI_API_KEY", model: "kimi-for-coding",
-  modelQualification: { source: "qualified_runner_profile", qualificationId: "kimi:2.3.3:native-qualified-profile17" },
-});
-
-/**
- * ACPX facades admitted only for the reliability long-silent-command case. Like the
- * rolling-deployment matrix, they run as ordinary released profiles: a pending
- * candidate needs its own qualification suite and is rejected here.
- */
-const everydayFacadeProfiles = RELIABILITY_FACADE_PROFILE_IDS
-  .map(id => [...runnerProfiles, ...extendedHarnessProfiles, kimiRunnerProfile].find(profile => profile.id === id)!)
-  .filter(original => !original.qualificationCandidate || QUALIFIED_ACPX_PROFILES[original.qualificationCandidate].qualificationStatus !== "pending")
-  .map(original => {
-    const { qualificationCandidate: _candidate, ...profile } = productionStoryProfile(original);
-    return profile;
-  });
-/** Released facades currently in the reliability group; a pending one drops out. */
-export const everydayReliabilityFacadeProfileIds = everydayFacadeProfiles.map(profile => profile.id);
 /**
  * Native OpenCode with DeepSeek 1017 through OpenRouter. It is the chat-feature
  * candidate and the TestOps Reliability plan profile. The OpenCode server driver
@@ -1285,21 +1153,22 @@ export const everydayReliabilityFacadeProfileIds = everydayFacadeProfiles.map(pr
 const runnerOpenCodeDeepSeek1017Profile = nativeProfile({ id: RELIABILITY_PLAN_PROFILE_ID, label: "Native OpenCode DeepSeek 1017",
   provider: "opencode", model: CHAT_FEATURE_OPENCODE_MODEL, credential: "OPENROUTER_API_KEY", supportedEnvironments: ["local", "daytona"],
   modelQualification: { source: "candidate_runner_profile", qualificationId: "chat-feature-testops:deepseek-v4.1-flash-1017" } });
+export const everydayReliabilityFacadeProfileIds: readonly string[] = [];
 const everydayWorkflowProfiles = [...everydayProfiles,
   productionStoryProfile(runnerProfiles.find(profile => profile.id === "runner-opencode")!),
   productionStoryProfile(runnerOpenCodeDeepSeek1017Profile),
-  ...everydayFacadeProfiles];
+  ];
 
 /** Every reliability cell outside the deliberately small explicit matrix. */
 function everydayReliabilityExcludedIds(suiteId: string): string[] {
-  const allowed = new Set(everydayReliabilityExecutionIds(suiteId, everydayReliabilityFacadeProfileIds));
+  const allowed = new Set(everydayReliabilityExecutionIds(suiteId, []));
   return everydayWorkflowProfiles.flatMap(profile => ["local", "daytona"].flatMap(environmentId =>
     everydayReliabilityTasks.map(task => `${suiteId}.${profile.id}.${environmentId}.${task.id}`)))
     .filter(id => !allowed.has(id));
 }
 
 
-const rollingDeploymentProfiles = [...runnerProfiles, ...extendedHarnessProfiles, kimiRunnerProfile]
+const rollingDeploymentProfiles = runnerProfiles
   .filter(profile => profile.generation === "native" && profile.supportedEnvironments.includes("daytona")
     && (!profile.qualificationCandidate || QUALIFIED_ACPX_PROFILES[profile.qualificationCandidate].qualificationStatus !== "pending"))
   .map(original => {
@@ -1470,58 +1339,8 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
       budgetMonthlyCents: 1000, instructions: "production-default", surface: "paperclip", target: "isolated-development-instance",
       authentication: "api-key", stagingAuthentication: "subscription", remoteLifecycle: "per_turn", stagingQualification: false },
   },
-  {
-    id: "pi-controls", label: "Pi active controls", manualOnly: true,
-    description: "Pending native-write Stop and browser-originated same-turn steering, with exact control receipts and independent retirement/no-effect evidence.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => profile.qualificationCandidate === "pi"),
-    environments: runnerEnvironments, tasks: piControlTasks, expectedMatrixSize: 4,
-    definitionMetadata: { version: 10, remoteProcExit: "separately-confirmed-absence-after-read-failure", taskCreation: "explicit-title-and-creation-response-id", qualification: "pending", scheduling: "explicit-only", profileVersion: QUALIFIED_ACPX_PROFILES.pi.agentProfileVersion,
-      nativeArguments: "streamed-until-exact-target",
-      remoteProcessIdentity: "observer-pid-startTicks-bootId",
-      remoteBootstrapAdmission: "owned-active-lease-with-native-runtime-readiness-rpc-v1", remoteBootstrapApproval: "exact-published-native-read-public-accept-once-v1",
-      controlPlaneSettlement: "required-scoped-result-and-terminal-after-runner",
-      steeringComment: "exact-browser-submitted-markdown",
-      steeringDispatch: "require-public-api-acceptance",
-      pending: "paperclip.e2e.pi-control-pending.v1", stop: "paperclip.e2e.pi-stop-settlement.v1", steering: "paperclip.e2e.pi-steering-settlement.v1",
-      permissionPolicy: "approve-reads", lifecycle: "per_turn", normalCompletionProvesStop: false, nativeFollowUp: "not-covered", providerDeath: "not-covered",
-      remoteObservationCoverage: "continuous-through-owned-process-retirement", filesystemAfterRemoteRetirementObserved: false },
-  },
-  {
-    id: "cursor-native", label: "Cursor native interactions", manualOnly: true,
-    description: "Native question continuation, revision-bound plan decisions and restrictive permission denial with independent process and file evidence.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => profile.qualificationCandidate === "cursor"),
-    environments: runnerEnvironments, tasks: cursorNativeTasks, expectedMatrixSize: 8,
-    definitionMetadata: { version: 2, qualification: "pending", scheduling: "explicit-only", profileVersion: QUALIFIED_ACPX_PROFILES.cursor.agentProfileVersion, modeAdmission: "native-config-ack", artifactExport: "pending-private-home", remoteEvidence: "owned-lease-sealed-observer" },
-  },
-  {
-    id: "pi-native", label: "Pi native boundaries", manualOnly: true,
-    description: "Pi native forms, registered agent files and human permission denial on local and Daytona execution; automatic deny-all remains local-only.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => profile.qualificationCandidate === "pi"),
-    environments: runnerEnvironments, tasks: piNativeTasks, expectedMatrixSize: 10,
-    excludedExecutionIds: ["pi-native.runner-acpx-pi.daytona.restrictive-denial", "pi-native.runner-acpx-pi.local.native-pending-provider-death"],
-    definitionMetadata: { version: 23, remoteProcExit: "separately-confirmed-absence-after-read-failure", taskCreation: "explicit-title-and-creation-response-id", agentMemoryParent: "public-managed-file-seed-before-admission", incompleteTerminalCleanup: "retirement-retained-with-failed-watch", qualification: "pending", scheduling: "explicit-only", profileVersion: QUALIFIED_ACPX_PROFILES.pi.agentProfileVersion, agentMemoryContent: "utf8-nonce-plus-final-lf", agentMemoryPrompt: "single-json-write-and-content-bound-native-read-both-runs", agentMemoryReadAuthority: "local-withheld-or-exact-remote-agent-run-file", taskPromptTransport: "fenced-markdown-paste-and-multiline-literal-escapes", nativeFinish: "current-contract-objective-evidence-refs", providerDeath: "daytona-exact-pi-child-pidfd-production-expiry", providerFaultExecutable: "stable-preinstalled-runner-link-and-snapshot-node-inode-with-held-bootstrap-fd-3-or-7", remoteBootstrapAdmission: "owned-active-lease-with-native-runtime-readiness-rpc-v1", remoteBootstrapApproval: "exact-published-native-read-public-accept-once-v1", remoteDenyAll: "unsupported-native-bootstrap-read-is-denied", remoteEvidence: "owned-lease-sealed-observer", pendingControllerRestart: "same-live-native-request-trusted-ancestry-cleanup" },
-  },
 
 
-  {
-    id: "rich-acp-warm-continuity", label: "Rich ACP warm continuity", manualOnly: true,
-    description: "Three browser-driven turns with stable native session, runner process and workspace identity for Cursor, Copilot and Pi.",
-    groups: ["native", "warm"],
-    profiles: extendedHarnessProfiles.map(profile => ({ ...profile, buildAgent(input: AgentFixtureBuildInput) {
-      const agent = profile.buildAgent(input);
-      return { ...agent, adapterConfig: { ...agent.adapterConfig as Record<string, unknown>, lifecycleMode: "warm", idleTimeoutMs: 300_000 } };
-    } })),
-    environments: [localEnvironment, daytonaWarmEnvironment],
-    // ACP collects changed agent files only after provider retirement. Keep this
-    // process-continuity fixture on workspace writes; Codex retains its separate
-    // managed-home checkpoint fixture, and Pi covers saved files in a fresh run.
-    tasks: [{ ...daytonaWarmContinuityTask,
-      buildPrompt: nonce => warmTurnInstructions(1, nonce),
-      buildFollowupMessages: nonce => [warmTurnInstructions(2, nonce), warmTurnInstructions(3, nonce)],
-      turnTimeoutMs: 120_000, attemptTimeoutMs: { local: 420_000, daytona: 420_000 } }],
-    expectedMatrixSize: 6,
-    definitionMetadata: { version: 3, warmPromptDigest: warmTurnDefinitionDigest, qualification: "pending", scheduling: "explicit-only", identity: "native-session-runner-provider-session-process-start", agentFiles: "unchanged-home-process-continuity" },
-  },
   {
     id: "public-mcp", label: "Paperclip through an assistant", manualOnly: true,
     description: "Paid assistant tool use plus actual team execution, browser OAuth consent, durable outcomes and authorization boundaries.",
@@ -1559,52 +1378,7 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
     definitionMetadata: { version: 1, instructions: "production-coordination-skill", grading: "saved-human-decision-ownership-and-resume", scheduling: "explicit-only" },
   },
 
-  {
-    id: "native-active-stop", label: "Stop an unanswered native permission", manualOnly: true,
-    description: "Stop while one exact Cursor or Copilot native permission remains unanswered; require cancelled provider settlement, caller-owned acknowledgement, stale-answer refusal and independent retirement/no effects.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => ["cursor", "copilot"].includes(profile.qualificationCandidate ?? "")),
-    environments: runnerEnvironments, tasks: nativeActiveStopTasks, expectedMatrixSize: 4,
-    definitionMetadata: { version: 20, copilotDefinition: { version: 19, titleCreation: "explicit-search-composer", taskBinding: "browser-creation-response-id", processAuthority: "local-native-root-or-attested-remote-root", remoteTerminalDiagnostics: "bounded-incomplete-reasons-with-strict-failure", remoteSetupOrder: "observed-action-published-before-context-approval", remoteBootstrapContext: "already-exposed-dedicated-tool-no-http-substitution", bootstrapPrompt: "already-exposed-dedicated-context-before-native-edit", editOrigin: "exact-permission-target-and-native-call-identity", stopAcknowledgement: "retained-current-mainline-api-response", contextPermission: "context-and-bounded-attested-discovery-sequence-await-origin-rows", permissionCard: "current-operation-and-decision-control-excludes-history", qualification: "pending", scheduling: "explicit-only", evidence: "paperclip.e2e.native-active-stop-settlement.v3", pendingObservation: "retained-api-before-stop-with-fixture-correlation", normalCompletionAccepted: false, permissionPolicy: "approve-reads", lifecycle: "per_turn", remoteEvidence: "paperclip.e2e.native-active-stop-remote-retirement.v1", remoteObservationCoverage: "continuous-through-owned-process-retirement", filesystemAfterRemoteRetirementObserved: false, localObservationCoverage: "four-phases-through-cleanup", providerDeath: "not-covered" }, qualification: "pending", scheduling: "explicit-only", evidence: "paperclip.e2e.native-active-stop-settlement.v2", pendingObservation: "retained-api-before-caller-uuid-stop", normalCompletionAccepted: false, permissionPolicy: "approve-reads", lifecycle: "per_turn", remoteEvidence: "paperclip.e2e.native-active-stop-remote-retirement.v1", remoteObservationCoverage: "continuous-through-owned-process-retirement", filesystemAfterRemoteRetirementObserved: false, localObservationCoverage: "four-phases-through-cleanup", providerDeath: "not-covered" },
-  },
-  {
-    id: "copilot-provider-death", label: "Copilot provider death", manualOnly: true,
-    description: "Terminate only the verified owned Copilot child with an unanswered permission; require callback expiry, stale-answer refusal, no replay and independent retirement.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => profile.qualificationCandidate === "copilot"),
-    environments: runnerEnvironments, tasks: copilotProviderDeathTasks, expectedMatrixSize: 2,
-    definitionMetadata: { version: 17, titleCreation: "explicit-search-composer", taskBinding: "browser-creation-response-id", linuxDeathExecutable: "verified-inherited-descriptor-and-live-executable-inode", processAuthority: "local-native-root-or-attested-remote-root", remoteTerminalDiagnostics: "bounded-incomplete-reasons-with-strict-failure", remoteSetupOrder: "observed-action-published-before-context-approval", remoteBootstrapContext: "already-exposed-dedicated-tool-no-http-substitution", finalUiStatus: "blocked-with-current-mainline-attention-label", bootstrapPrompt: "already-exposed-dedicated-context-before-native-edit", editOrigin: "exact-permission-target-and-native-call-identity", contextPermission: "context-and-bounded-attested-discovery-sequence-await-origin-rows", permissionCard: "current-operation-and-decision-control-excludes-history", qualification: "pending", scheduling: "explicit-only", evidence: "paperclip.e2e.copilot-provider-death.v1", signal: "SIGKILL", target: "owned-native-child-only", permissionPolicy: "approve-reads", lifecycle: "per_turn", automaticRetries: 0 },
-  },
-  {
-    id: "copilot-protection", label: "Copilot native protection", manualOnly: true,
-    description: "Exact native denial with independently correlated provider settlement and acknowledged run Stop, plus attached command settlement with independent process evidence.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => profile.qualificationCandidate === "copilot"),
-    environments: runnerEnvironments, tasks: copilotProtectionTasks, expectedMatrixSize: 4,
-    definitionMetadata: { version: 24, denialIssueOutcome: "in-progress-or-proven-blocked-recovery", titleCreation: "explicit-search-composer", taskBinding: "browser-creation-response-id", remoteTerminalDiagnostics: "bounded-incomplete-reasons-with-strict-failure", remoteSetupOrder: "observed-action-published-before-context-approval", remoteBootstrapContext: "already-exposed-dedicated-tool-no-http-substitution", denialContext: "already-exposed-dedicated-tool-before-write", stopAcknowledgement: "retained-current-mainline-api-response", contextPermission: "context-and-bounded-attested-discovery-sequence-await-origin-rows", permissionCard: "current-operation-and-decision-control-excludes-history", semanticCompletionEvidence: "paperclip.e2e.copilot-semantic-completion.v4", qualification: "pending", naturalSettlementObservationMs: 2000, scheduling: "explicit-only", evidence: "copilot_tool_evidence_v1", profileVersion: QUALIFIED_ACPX_PROFILES.copilot.agentProfileVersion, denialTerminal: "correlated-provider-settlement-and-audited-run-stop", denialSettlementEvidence: "paperclip.e2e.copilot-denial-settlement.v4", activeTurnCancellation: "not-implied-by-completed-provider-turn", settlement: "attached-finite-command-released-after-native-finish-receipt", settlementMarker: "private-diagnostic-not-deliverable", remoteEvidence: "owned-lease-sealed-observer" },
-  },
-  {
-    id: "native-provider-loss", label: "Lose a runtime with an unanswered native permission", manualOnly: true,
-    description: "Lose the owned Cursor runtime while a native mutation remains unanswered; require a visible failed run, closed unanswerable input, stale-answer refusal and independent retirement with no effects or replay.",
-    groups: ["native"], profiles: extendedHarnessProfiles.filter(profile => profile.qualificationCandidate === "cursor"),
-    environments: runnerEnvironments,
-    tasks: [{
-      id: "pending-permission-provider-loss", label: "Owned runtime loss with pending permission", groups: [], workMode: "standard", flow: "native_provider_loss",
-      expectedRunCount: 1, attemptTimeoutMs: { local: 300_000, daytona: 300_000 }, turnTimeoutMs: 120_000,
-      expectedTerminalState: { issue: "blocked", run: "failed" },
-      buildTitle: nonce => `Native provider loss ${nonce}`,
-      buildVisibleMarker: nonce => `NATIVE-PROVIDER-LOSS-${nonce}`,
-      buildPrompt: () => "Attempt the supplied exact native shell operation once and leave its permission callback unanswered. Do not retry, use another tool or path, answer your own permission, call paperclip_finish, or claim completion. The qualification fixture will deliberately lose the isolated runtime before any approval.",
-      buildMatchers: () => [],
-    }], expectedMatrixSize: 2,
-    definitionMetadata: { version: 1, qualification: "pending", scheduling: "explicit-only", fault: "observed-per-turn-run-root-loss", remoteFaultAuthority: "pidfd-start-ticks-boot-id", replayAllowed: false },
-  },
 
-  {
-    id: "extended-harnesses", label: "Extended ACP harnesses", manualOnly: true,
-    description: "Explicit candidate qualification through real Paperclip tools, browser interactions, file edits and restart recovery.",
-    groups: ["native"], profiles: extendedHarnessProfiles, environments: runnerEnvironments,
-    tasks: [...openRouterBreadthTasks, localIntegrityTasks[1]!, extendedHarnessFileTask],
-    expectedMatrixSize: 30,
-    definitionMetadata: { version: 6, copilotFileValidation: "exact-read-only-byte-check-v1", qualification: "pending", scheduling: "explicit-only", admission: "host-exact-candidate-and-model", authenticatedDiscoveryDate: "2026-09-28", piFileEvidence: "seed-edit-single-execute-public-download-v2", piFileArtifactTitle: "exact-filename", piFileCommandTransport: "fenced-bash-markdown-paste" },
-  },
   {
     id: "instruction-persistence", label: "Instruction Persistence",
     description: "Agent-owned text and binary files round trip through the editor, survive a server restart and fresh task, and synchronize concurrent edits per file with last-sync-wins.",
@@ -1613,64 +1387,6 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
     excludedExecutionIds: ["instruction-persistence.legacy-codex.daytona.private-copy-persists"],
     expectedMatrixSize: 3, manualOnly: true,
     definitionMetadata: { version: 6, oracle: "current-directory-independent-nonce-binary-last-sync-wins-and-nonblocking-storage-quota", providerTurns: 6, restart: "between-tasks", instructions: "production" },
-  },
-  {
-    id: "grok-subscription-qualification", label: "Grok Build Subscription Qualification", manualOnly: true,
-    description: "Explicit company subscription login across Grok browser workflows in local and Daytona environments.",
-    groups: ["native"],
-    profiles: [nativeProfile({
-      id: "runner-acpx-grok-subscription", label: "Grok Build Subscription",
-      provider: "acpx", acpxAgent: "grok",
-      model: ACPX_QUALIFICATION_MODELS.grok,
-      credential: "GROK_AUTH_JSON",
-    })],
-    environments: [localEnvironment, daytonaWarmEnvironment],
-    tasks: [
-      ...runnerTasks, ...localIntegrityTasks,
-      ...everydayTasks.filter(task => task.id === "build-revise"),
-      ...chatHardeningTasks.filter(task => ["stop-new-resume", "continuity-restart"].includes(task.id)),
-    ], expectedMatrixSize: 16,
-    definitionMetadata: { version: 1, authentication: "company-subscription", binary: "1.0.13", model: "grok-4.7", scheduling: "explicit-only", repetitionsRequired: 3, artifactOracle: "independent-python-contract", stopBoundary: "provider-turn-started" },
-  },
-  {
-    id: "grok-qualification", label: "Grok Build Qualification", manualOnly: true,
-    description: "Grok replies, planning approval, questions, downloadable artifacts, stop/resume and controller restart in local and Daytona environments.",
-    groups: ["native"],
-    profiles: runnerProfiles.filter(profile => profile.id === "runner-acpx-grok"),
-    environments: [localEnvironment, daytonaWarmEnvironment],
-    tasks: [
-      ...runnerTasks, ...localIntegrityTasks,
-      ...everydayTasks.filter(task => task.id === "build-revise"),
-      ...chatHardeningTasks.filter(task => ["stop-new-resume", "continuity-restart"].includes(task.id)),
-    ], expectedMatrixSize: 16,
-    definitionMetadata: { version: 2, binary: "1.0.13", model: "grok-4.7", scheduling: "explicit-only", repetitionsRequired: 3, artifactOracle: "independent-python-contract", stopBoundary: "provider-turn-started" },
-  },
-  {
-    id: "kimi-qualification", label: "Kimi Code Qualification", manualOnly: true,
-    description: "Kimi Code replies, semantic planning and questions, verified file delivery, Stop and controller continuation through local and Daytona user journeys.",
-    groups: ["native"],
-    profiles: [kimiRunnerProfile],
-    environments: [localEnvironment, daytonaWarmEnvironment],
-    environmentOverrides: Object.fromEntries(kimiLifecycleTasks.map(task => [task.id, {
-      daytona: runnerEnvironments.find(environment => environment.id === "daytona")!,
-    }])),
-    tasks: [
-      ...runnerTasks, ...localIntegrityTasks, extendedHarnessFileTask,
-      ...chatHardeningTasks.filter(task => ["stop-new-resume", "continuity-restart"].includes(task.id)),
-      ...kimiLifecycleTasks,
-    ].map(task => ({ ...task, automaticRetryPolicy: "single_attempt" as const })),
-    expectedMatrixSize: 20,
-    definitionMetadata: { version: 7, binary: "2.3.3", model: "kimi-for-coding",
-      candidateAdmission: "ordinary-released-profile-without-candidate-grant-v1", profileVersion: QUALIFIED_ACPX_PROFILES.kimi.agentProfileVersion,
-      stopNewRunAccounting: "three-native-provider-runs-authored-reset-and-verified-predispatch-wait-v1",
-      planPromptContract: "literal-first-line-markers-v2",
-      modelDiscovery: "exact-model-authenticated-observed", qualification: "qualified",
-      scheduling: "explicit-only", maximumAttemptsPerCell: 1, repetitionsRequired: 1,
-      instructionAdmission: "native-effective-prompt-digest-on-create-load",
-      nativeQuestions: "not-claimed", nativePlans: "not-claimed", accounting: "usage-and-cost-unavailable",
-      artifactOracle: "independent-workspace-and-public-download-bytes", stopBoundary: "provider-turn-started",
-      remoteLifecycleBootstrap: "observer-bound-scoped-get-task-context-dual-turn-workspace-binding-full-semantic-command-ack-and-bounded-native-receipt",
-      nativeWriteLifecycle: "pending-permission-stop-and-exact-native-worker-loss", nativeWriteCleanup: "continuous-no-effects-through-owned-tree-retirement" },
   },
   {
     id: "api-response-reading", label: "Bounded API response reading", manualOnly: true,
@@ -1771,7 +1487,7 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
       ? { ...task, automaticRetryPolicy: "single_attempt" as const } : task), ...everydayReliabilityTasks],
     // 52 everyday cells; one native Codex Daytona cell per reliability case, six DeepSeek plan cells (queue-steer needs
     // Codex steering) and released facades for the silent command.
-    expectedMatrixSize: 52 + 2 * everydayReliabilityTasks.length - 1 + everydayFacadeProfiles.length,
+    expectedMatrixSize: 52 + 2 * everydayReliabilityTasks.length - 1,
     excludedExecutionIds: [...everydayProfiles.flatMap(profile => everydayTasks
       .filter(task => !["build-revise", "delegate-feedback", "recover-controller", "create-skill-studio"].includes(task.id))
       .map(task => `everyday-workflows.${profile.id}.daytona.${task.id}`)),
@@ -1780,7 +1496,7 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
         ...(["hire-reuse", "delegate-feedback"].includes(task.id) ? [] : [`everyday-workflows.runner-opencode.local.${task.id}`]),
       ]),
       // ACPX facades and the DeepSeek plan profile join only reliability cells.
-      ...[...everydayFacadeProfiles, runnerOpenCodeDeepSeek1017Profile].flatMap(profile => everydayTasks.flatMap(task =>
+      ...[runnerOpenCodeDeepSeek1017Profile].flatMap(profile => everydayTasks.flatMap(task =>
         ["local", "daytona"].map(environmentId => `everyday-workflows.${profile.id}.${environmentId}.${task.id}`))),
       ...everydayReliabilityExcludedIds("everyday-workflows"),
     ],
@@ -1839,7 +1555,7 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
     manualOnly: true,
     description: "Production-default hires, reduced shared prompts, assigned skills, continuation, and persistent chat.",
     groups: ["stock-harness", "native", "legacy"],
-    profiles: [...contextIntegrityProfiles.filter(profile => !pendingContextIntegrityProfiles.includes(profile)),
+    profiles: [...contextIntegrityProfiles,
       runnerProfiles.find(profile => profile.id === "legacy-opencode")!].map(productionDefaultHireProfile),
     environments: [localEnvironment],
     tasks: [...contextIntegrityTasks, chatTasks.find(task => task.id === "continuity-restart")!, paperclipDocumentTask]
@@ -2000,7 +1716,7 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
     profiles: runnerProfiles,
     environments: runnerEnvironments,
     tasks: runnerTasks,
-    expectedMatrixSize: 48,
+    expectedMatrixSize: runnerProfiles.length * runnerEnvironments.length * runnerTasks.length,
   },
   {
     id: "local-session-integrity",
@@ -2011,7 +1727,7 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
     profiles: runnerProfiles,
     environments: [localEnvironment],
     tasks: localIntegrityTasks,
-    expectedMatrixSize: 16,
+    expectedMatrixSize: runnerProfiles.length * localIntegrityTasks.length,
   },
   {
     id: "openrouter-model-breadth",
@@ -2117,7 +1833,6 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
   },
   buildConnectionSuite(runnerProfiles, runnerEnvironments),
   buildGitHubReviewJourneySuite(runnerProfiles, runnerEnvironments),
-  buildAntigravityJourneySuite(runnerEnvironments),
   {
     id: "repository-skills", label: "Repository skill packages", manualOnly: true,
     description: "Live private Poteto import and byte-for-byte delivery to local and Daytona agent runtimes.",
@@ -2138,7 +1853,6 @@ export function suiteDefinitionHash(suite: RunnerSuiteFixture) {
           id: profile.id,
           model: profile.model,
           qualification: profile.modelQualification,
-          ...(profile.qualificationCandidate === "pi" ? { piThinkingLevel: PI_QUALIFICATION_THINKING_LEVEL } : {}),
         })),
         environments: suite.environments.map((environment) => ({
           id: environment.id,
@@ -2251,14 +1965,11 @@ function assertNoRawSecretValues(value: unknown, label: string) {
 
 export function validateRunnerCatalog(): MatrixExecution[] {
   const connectionSuite = runnerSuites.find(suite => suite.id === "provider-connections")!;
-  const allProfiles = [cursorCloudProfile, ...connectionSuite.profiles, ...extendedHarnessProfiles, ...runnerProfiles, ...legacyAcpxProfiles, ...pendingContextIntegrityProfiles, ...openRouterBreadthProfiles, ...everydayProfiles.filter(p => !runnerProfiles.some(existing => existing.id === p.id))];
+  const allProfiles = [cursorCloudProfile, ...connectionSuite.profiles, ...runnerProfiles, ...legacyAcpxProfiles, ...openRouterBreadthProfiles, ...everydayProfiles.filter(p => !runnerProfiles.some(existing => existing.id === p.id))];
   const allTasks = [
     cursorCloudArtifactTask, cursorCloudFollowupTask, cursorCloudStopTask,
     repositorySkillsTask,
-    ...piNativeTasks,
-    ...copilotProtectionTasks,
     ...connectionSuite.tasks,
-    extendedHarnessFileTask,
     ...contextIntegrityTasks,
     ...blockerTasks,
     ...accountingTasks,

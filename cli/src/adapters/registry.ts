@@ -1,15 +1,10 @@
 import type { CLIAdapterModule } from "@paperclipai/adapter-utils";
 import { printClaudeStreamEvent } from "@paperclipai/adapter-claude-local/cli";
 import { printCodexStreamEvent } from "@paperclipai/adapter-codex-local/cli";
-import { printCursorStreamEvent } from "@paperclipai/adapter-cursor-local/cli";
 import { printCursorCloudEvent } from "@paperclipai/adapter-cursor-cloud/cli";
-import { printGeminiStreamEvent } from "@paperclipai/adapter-gemini-local/cli";
-import { printGrokStreamEvent } from "@paperclipai/adapter-grok-local/cli";
-import { printKimiStreamEvent } from "@paperclipai/adapter-kimi-local/cli";
 import { formatStdoutEvent as printHermesGatewayStreamEvent } from "@paperclipai/hermes-paperclip-adapter/gateway/cli";
 import { printHermesStreamEvent } from "@paperclipai/hermes-paperclip-adapter/cli";
 import { printOpenCodeStreamEvent } from "@paperclipai/adapter-opencode-local/cli";
-import { printPiStreamEvent } from "@paperclipai/adapter-pi-local/cli";
 import { printOpenClawGatewayStreamEvent } from "@paperclipai/adapter-openclaw-gateway/cli";
 import { processCLIAdapter } from "./process/index.js";
 import { httpCLIAdapter } from "./http/index.js";
@@ -29,34 +24,9 @@ const openCodeLocalCLIAdapter: CLIAdapterModule = {
   formatStdoutEvent: printOpenCodeStreamEvent,
 };
 
-const piLocalCLIAdapter: CLIAdapterModule = {
-  type: "pi_local",
-  formatStdoutEvent: printPiStreamEvent,
-};
-
-const cursorLocalCLIAdapter: CLIAdapterModule = {
-  type: "cursor",
-  formatStdoutEvent: printCursorStreamEvent,
-};
-
 const cursorCloudCLIAdapter: CLIAdapterModule = {
   type: "cursor_cloud",
   formatStdoutEvent: printCursorCloudEvent,
-};
-
-const geminiLocalCLIAdapter: CLIAdapterModule = {
-  type: "gemini_local",
-  formatStdoutEvent: printGeminiStreamEvent,
-};
-
-const grokLocalCLIAdapter: CLIAdapterModule = {
-  type: "grok_local",
-  formatStdoutEvent: printGrokStreamEvent,
-};
-
-const kimiLocalCLIAdapter: CLIAdapterModule = {
-  type: "kimi_local",
-  formatStdoutEvent: printKimiStreamEvent,
 };
 
 const hermesGatewayCLIAdapter: CLIAdapterModule = {
@@ -79,12 +49,7 @@ const adaptersByType = new Map<string, CLIAdapterModule>(
     claudeLocalCLIAdapter,
     codexLocalCLIAdapter,
     openCodeLocalCLIAdapter,
-    piLocalCLIAdapter,
-    cursorLocalCLIAdapter,
     cursorCloudCLIAdapter,
-    geminiLocalCLIAdapter,
-    grokLocalCLIAdapter,
-    kimiLocalCLIAdapter,
     hermesGatewayCLIAdapter,
     hermesLocalCLIAdapter,
     openclawGatewayCLIAdapter,
