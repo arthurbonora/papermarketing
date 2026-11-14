@@ -386,6 +386,27 @@ fn pi_prepare_payload(directory: &Path, mode: &str) -> Value {
     payload
 }
 
+fn interactive_acpx_fixture(directory: &Path, mode: &str) -> (DurableRunnerConfig, Value) {
+    let digest = "sha256:9d73d1f0f121fb96cc8badb28c22d5bff02d8582eb2e40360a81c189e1b9422a";
+    let mut config = acpx_config(directory, mode);
+    *config
+        .acpx_launch_profile
+        .as_mut()
+        .unwrap()
+        .args
+        .last_mut()
+        .unwrap() = digest.into();
+    let mut payload = prepare_payload_with_mode(directory, "claude", mode);
+    let provider = &mut payload["provider"];
+    provider["agentServerPackage"] = json!("@agentclientprotocol/claude-agent-acp");
+    provider["agentServerVersion"] = json!("0.73.0");
+    provider["agentRuntimePackage"] = json!("@anthropic-ai/claude-agent-sdk");
+    provider["agentRuntimeVersion"] = json!("0.3.286");
+    provider["commandDigest"] = json!(digest);
+    provider["sidecarArgs"][3] = json!(digest);
+    (config, payload)
+}
+
 fn pending_acpx_runtime_request(
     directory: &Path,
     mode: &str,
@@ -395,27 +416,11 @@ fn pending_acpx_runtime_request(
     String,
     u32,
 ) {
-    let mut config = acpx_config(directory, mode);
-    let mut payload = prepare_payload_with_mode(directory, "codex", mode);
-    if mode.starts_with("permissions-") {
-        // Codex's pinned runner policy does not allow interactive ACP permissions.
-        let digest = "sha256:9d73d1f0f121fb96cc8badb28c22d5bff02d8582eb2e40360a81c189e1b9422a";
-        *config
-            .acpx_launch_profile
-            .as_mut()
-            .unwrap()
-            .args
-            .last_mut()
-            .unwrap() = digest.into();
-        let provider = &mut payload["provider"];
-        provider["agent"] = json!("claude");
-        provider["agentServerPackage"] = json!("@agentclientprotocol/claude-agent-acp");
-        provider["agentServerVersion"] = json!("0.73.0");
-        provider["agentRuntimePackage"] = json!("@anthropic-ai/claude-agent-sdk");
-        provider["agentRuntimeVersion"] = json!("0.3.286");
-        provider["commandDigest"] = json!(digest);
-        provider["sidecarArgs"][3] = json!(digest);
+    let (config, payload) = if mode.starts_with("permissions-") {
+        interactive_acpx_fixture(directory, mode)
     } else {
+        let config = acpx_config(directory, mode);
+        let mut payload = prepare_payload_with_mode(directory, "codex", mode);
         let operations = vec![AuthorizedTool {
             operation_id: "issues.read".into(),
             version: 1,
@@ -426,7 +431,8 @@ fn pending_acpx_runtime_request(
         payload["authorizedTools"]["catalogDigest"] =
             json!(authorized_tool_catalog_digest(&operations).unwrap());
         payload["authorizedTools"]["operations"] = json!(operations);
-    }
+        (config, payload)
+    };
     let mut executor = NativeProviderCommandExecutor::with_runner_config(directory, &config);
     executor
         .execute(&command(1, "run.prepare", payload))
@@ -1304,8 +1310,7 @@ fn acpx_control_failure_keeps_its_classification_in_the_durable_terminal() {
 fn provider_death_expires_input_and_commits_failure_without_querying_the_dead_provider() {
     let directory = temporary_directory("acpx-provider-death");
     let mode = "turns-provider-death";
-    let config = acpx_config(&directory, mode);
-    let payload = prepare_payload_with_mode(&directory, "codex", mode);
+    let (config, payload) = interactive_acpx_fixture(&directory, mode);
     let mut executor = NativeProviderCommandExecutor::with_runner_config(&directory, &config);
     executor
         .execute(&command(1, "run.prepare", payload))

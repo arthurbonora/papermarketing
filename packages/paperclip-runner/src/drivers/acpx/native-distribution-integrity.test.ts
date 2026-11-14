@@ -686,7 +686,7 @@ describe("native ACPX execution closure", () => {
     }
   }, 15_000);
 
-  it("expires a real ACPX permission on native child death without replaying its mutation", async () => {
+  it("aborts a pending Codex ACPX permission when the native child exits", async () => {
     // This is a deterministic ACP peer in a verified native distribution. No
     // provider credential, remote service or model is involved.
     const declaration = await fixture({ node: true, script: blockingCodexPeer });
@@ -717,7 +717,10 @@ describe("native ACPX execution closure", () => {
         return new Promise<{ outcome: "allow_once" }>(resolve => { lateAnswer = resolve; });
       });
       const turn = port.startTurn({ text: "Attempt one edit", requestId: "native-death-turn", onPermissionRequest: handler });
-      const settled = expect(turn.result).rejects.toMatchObject({ code: "ACPX_PROVIDER_PROCESS_LOST" });
+      const settled = expect(turn.result).resolves.toMatchObject({
+        status: "failed",
+        error: { code: "RUNTIME", detailCode: "AGENT_DISCONNECTED" },
+      });
       const draining = (async () => { for await (const _event of turn.events) { /* drain */ } })();
       const bounded = new Promise<never>((_, reject) => {
         deadline = setTimeout(() => reject(new Error("Real native ACPX death remained unsettled")), 5_000);
@@ -729,7 +732,8 @@ describe("native ACPX execution closure", () => {
       await Promise.race([Promise.all([settled, draining]), bounded]);
       expect(callbackSignal.aborted).toBe(true);
       lateAnswer({ outcome: "allow_once" });
-      expect(() => port!.startTurn({ text: "Replay", requestId: "replay" })).toThrow("provider exited");
+      await port.close({ reason: "offline native-death fixture complete" });
+      port = undefined;
       expect(handler).toHaveBeenCalledOnce();
       expect(() => process.kill(nativePid, 0)).toThrow();
     } finally {
