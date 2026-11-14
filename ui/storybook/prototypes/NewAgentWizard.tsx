@@ -47,10 +47,10 @@ export type NewAgentScreen = "name" | "adapter" | "connect" | "runtime" | "saved
 export type RunnerProvider = "Codex (app server)" | "OpenCode" | "Claude (ACPX)";
 
 type RuntimeDraft = {
-  model: string; effort: string; repoUrl: string; branch: string; apiKey: string; kimiModel: string;
+  model: string; effort: string; repoUrl: string; branch: string; apiKey: string;
 };
 function defaultRuntime(): RuntimeDraft {
-  return { model: "", effort: "Auto", repoUrl: "", branch: "", apiKey: "", kimiModel: "" };
+  return { model: "", effort: "Auto", repoUrl: "", branch: "", apiKey: "" };
 }
 
 function AdapterMark({ adapter }: { adapter: NewAgentAdapter }) {
@@ -341,7 +341,6 @@ export function NewAgentWizard({ initialScreen = "name", initialAdapter = null, 
               {selected === "cursor_cloud" && <a href="https://cursor.com/dashboard/api?section=user-keys#user-api-keys" target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">get api key</a>}
               <p className="text-xs text-muted-foreground">New keys are saved as organization secrets when you finish setup.</p>
             </>}
-            {selected === "kimi_local" && draft.apiKey && <TextField label="Kimi API model name" value={draft.kimiModel} onChange={kimiModel => setDraft({ kimiModel })} placeholder="kimi-for-coding" required />}
           </Section>
           {selected !== "cursor_cloud" && <Section title="Environment">
             <SelectField label="Environment" hideLabel value={environment} onChange={value => { setEnvironments(previous => ({ ...previous, [selected]: value })); resetTest(); }} options={["Organization default", "Paperclip Sandbox", "Local machine"]} />
