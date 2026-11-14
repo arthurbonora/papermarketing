@@ -811,7 +811,7 @@ describe("agent routes adapter validation", () => {
     expect(mockAgentService.create).not.toHaveBeenCalled();
   });
 
-  it("rechecks selection policy when a saved native adapter switches to an experimentally gated harness", async () => {
+  it("rejects switching a saved native adapter to a removed harness", async () => {
     mockAgentService.getById.mockResolvedValue({ ...(await mockAgentService.getById()), adapterType: "paperclip_runner", adapterConfig: { provider: "codex" } });
     mockInstanceSettingsService.getExperimental.mockResolvedValue({ enableNativeRunner: false });
     const probe = vi.fn();
@@ -823,7 +823,7 @@ describe("agent routes adapter validation", () => {
         .post("/api/companies/company-1/adapters/paperclip_runner/test-environment")
         .send({ agentId: "11111111-1111-4111-8111-111111111111", adapterConfig: { provider: "acpx", acpxAgent: "cursor" } }));
       expect(res.status, JSON.stringify(res.body)).toBe(422);
-      expect(res.body.details).toMatchObject({ code: "paperclip_runner_rollout_disabled" });
+      expect(res.body.details).toMatchObject({ code: "agent_harness_removed" });
       expect(probe).not.toHaveBeenCalled();
       expect(mockSecretService.normalizeAdapterConfigForPersistence).not.toHaveBeenCalled();
     } finally { await unregisterTestAdapter("paperclip_runner"); }
@@ -939,11 +939,11 @@ describe("agent routes adapter validation", () => {
 
 
 
-  it("keeps other native provider selection behind its existing flag", async () => {
+  it("rejects installing the removed native Cursor CLI profile", async () => {
     const app = await createApp();
     const response = await requestApp(app, baseUrl => request(baseUrl).post("/api/companies/company-1/agents").send({ name: "Native Cursor", adapterType: "paperclip_runner", adapterConfig: { provider: "acpx", acpxAgent: "cursor", model: "provider-model" } }));
     expect(response.status).toBe(422);
-    expect(response.body.details).toMatchObject({ code: "paperclip_runner_rollout_disabled" });
+    expect(response.body.details).toMatchObject({ code: "agent_harness_removed" });
   });
 
   it("allows a new paperclip_runner selection while the rollout flag is on", async () => {
