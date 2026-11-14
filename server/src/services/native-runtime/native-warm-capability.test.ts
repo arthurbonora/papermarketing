@@ -3,9 +3,6 @@ import { supportsManagedNativeWarmSession, supportsNativeWarmFiles } from "./nat
 import type { PaperclipRunnerProviderProfile } from "./provider-profile.js";
 
 describe("native warm credential and file admission", () => {
-  const copilot: PaperclipRunnerProviderProfile = {
-    provider: "acpx", backend: "acpx_runtime", acpxAgent: "copilot", model: "gpt-5.6-luna",
-  };
   it("preserves Codex warm support", () => {
     const profile: PaperclipRunnerProviderProfile = { provider: "codex", backend: "codex_app_server", model: "gpt-5.6-sol" };
     expect(supportsNativeWarmFiles(profile)).toBe(true);

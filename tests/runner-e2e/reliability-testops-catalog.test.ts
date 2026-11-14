@@ -56,8 +56,8 @@ it("keeps a case that steers an active turn on a steering-capable driver", async
   const { readFile } = await import("node:fs/promises");
   const openCode = await readFile(new URL("../../packages/paperclip-runner/src/drivers/opencode/opencode-server-driver.ts", import.meta.url), "utf8");
   const codex = await readFile(new URL("../../packages/paperclip-runner/src/drivers/codex/codex-app-server-driver-impl.ts", import.meta.url), "utf8");
-  expect(openCode).toMatch(/\n {2}steering: false,\n/);
-  expect(codex).toMatch(/\n {6}steering: true,\n/);
+  expect(openCode).toMatch(/\r?\n {2}steering: false,\r?\n/);
+  expect(codex).toMatch(/\r?\n {6}steering: true,\r?\n/);
   const steering = runnerMatrix.find(execution => execution.id === reliabilityDefinitions.find(row => row.name === "queue-steer")!.executionId)!;
   expect(steering.profile.provider).toBe("codex");
   expect(runnerMatrix.some(execution => execution.task.id === "queue-steer" && execution.profile.provider === "opencode")).toBe(false);

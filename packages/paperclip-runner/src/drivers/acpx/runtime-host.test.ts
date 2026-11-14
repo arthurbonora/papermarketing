@@ -1,10 +1,5 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { createPiLaunchSpec } from "./pi-acp-runtime.js";
-import { createCopilotToolEvidence } from "./copilot-tool-evidence.js";
-import { readNativeSemanticReceipt, type SemanticToolResult } from "../semantic-tool-receipt.js";
-import { validateAcpxRichEvent } from "./profile-extensions.js";
-import type { CanonicalProviderEvent } from "../../provider-events.js";
 import { mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -203,16 +198,6 @@ afterEach(async () => {
 });
 
 describe("ACPX runtime host", () => {
-  it.each(["copilot", "cursor"] as const)("reports missing %s credentials as credential admission", async agent => {
-    const fixture = await hostFixture();
-    const openRuntime = vi.fn(async () => runtimePort());
-    const failure = await AcpxRuntimeHost.open({ ...fixture.options, agent, model:"gpt-5.6-sol",
-      permissionMode:"approve-all",environment:{} }, fixture.dependencies({openRuntime})).catch(error => error);
-    expect(failure).toMatchObject({code:agent === "copilot" ? "COPILOT_AUTH_REQUIRED" : "CURSOR_CREDENTIALS_MISSING"});
-    expect(acpxSidecarErrorCode(failure)).toBe("ACPX_ADMISSION_CREDENTIAL");
-    expect(openRuntime).not.toHaveBeenCalled();
-    expect(fixture.commandClose).not.toHaveBeenCalled();
-  });
   it("retains binding admission when the selected workspace is missing", async () => {
     const fixture = await hostFixture();
     await rm(fixture.options.workingDirectory,{recursive:true});
@@ -959,7 +944,7 @@ describe("ACPX runtime host", () => {
     expect(fixture.commandClose).toHaveBeenCalledOnce();
   });
 
-  it.each(["claude", "codex", "copilot"] as const)("preloads essential task tools only for Claude through the host (%s)", async agent => {
+  it.each(["claude", "codex"] as const)("preloads essential task tools only for Claude through the host (%s)", async agent => {
     const fixture = await hostFixture();
     const model = agent === "claude" ? "claude-opus-5-5" : "gpt-5.6-sol";
     let bridge: Extract<AcpxRuntimePortOpenOptions["mcpServers"][number], { url: string }> | undefined;
@@ -1054,60 +1039,6 @@ describe("ACPX runtime host", () => {
         headers: { Authorization: `Bearer ${bridge!.bearerToken}` },
       }),
     ).rejects.toThrow();
-  });
-
-  it.each([undefined, "high"] as const)("retires Pi admission when the runtime reports thinking level %s", async piThinkingLevel => {
-    const fixture = await hostFixture();
-    const model = "custom-provider/caller-selected-model";
-    const runtime = runtimePort({
-      getStatus: async () => ({ models: { currentModelId: model } }),
-      identity: async () => ({ acpxRecordId: "record-1", backendSessionId: "backend-1", agentSessionId: "agent-1",
-        ...(piThinkingLevel === undefined ? {} : { piThinkingLevel }) }),
-    });
-    await expect(AcpxRuntimeHost.open({
-      ...fixture.options, agent: "pi", model, piThinkingLevel: "low", permissionMode: "deny-all",
-      providerPolicy: { readOnly: false },
-    }, fixture.dependencies({ openRuntime: async () => runtime }))).rejects.toThrow(/thinking level/);
-    expect(runtime.startTurn).not.toHaveBeenCalled();
-    expect(runtime.close).toHaveBeenCalledOnce();
-    expect(fixture.commandClose).toHaveBeenCalledOnce();
-  });
-
-  it.each(["cursor", "copilot", "pi"] as const)("binds %s agent files from each registered run copy, never ambient roots", async (agent) => {
-    const fixture = await hostFixture();
-    const copies = await mkdtemp(join(tmpdir(), "paperclip-agent-copies-"));
-    temporaryDirectories.push(copies);
-    const model = agent === "pi" ? "openrouter/deepseek/deepseek-v4-flash-0731" : "explicit-test-model";
-    const options = { ...fixture.options, agent, model, ...(agent === "pi" ? { piThinkingLevel: "low" as const } : {}), permissionMode: "approve-all" as const,
-      providerPolicy: { readOnly: false }, environment: { AGENT_HOME: "/ambient/other-agent", PAPERCLIP_PI_AGENT_HOME: "/ambient/other-agent",
-        ...(agent === "pi" ? { OPENROUTER_API_KEY: "test" } : agent === "cursor" ? { CURSOR_API_KEY: "test" } : { COPILOT_GITHUB_TOKEN: "test" }),
-      },
-    };
-    const opened: AcpxRuntimePortOpenOptions[] = [];
-    const dependencies = fixture.dependencies({ openRuntime: async launch => {
-      opened.push(launch);
-      return runtimePort({ getStatus: async () => ({ models: { currentModelId: model } }), identity: async () => ({ acpxRecordId: "record-1", backendSessionId: "backend-1", agentSessionId: "agent-1", ...(agent === "cursor" ? { mode: launch.mode } : {}), ...(agent === "pi" ? { piThinkingLevel: launch.piThinkingLevel } : {}) }) });
-    } });
-    // Missing trusted context must not turn ambient values into authority.
-    const withoutCopy = await AcpxRuntimeHost.open(options, dependencies);
-    expect(opened.at(-1)!.launchEnvironment.AGENT_HOME).toBeUndefined();
-    expect(opened.at(-1)!.launchEnvironment.PAPERCLIP_PI_AGENT_HOME).toBeUndefined();
-    await withoutCopy.close({ reason: "no registered copy" });
-    for (const run of ["first", "second"]) {
-      const rootPath = join(copies, run); await mkdir(rootPath);
-      const runtimeContext = { instructions: { workingCopy: { kind: "agent_files", rootPath, entryPath: "AGENTS.md" } }, skills: [], mcp: { bindingId: null } } as unknown as NativeRuntimeContextSnapshot;
-      const host = await AcpxRuntimeHost.open({ ...options, runtimeContext }, dependencies);
-      const launch = opened.at(-1)!;
-      expect(launch.launchEnvironment.AGENT_HOME?.endsWith(`/${run}`)).toBe(true);
-      expect(launch.launchEnvironment.PAPERCLIP_PI_AGENT_HOME).toBe(agent === "pi" ? launch.launchEnvironment.AGENT_HOME : undefined);
-      expect(launch.launchEnvironment.HOME).not.toBe(launch.launchEnvironment.AGENT_HOME);
-      if (run === "second") {
-        await rename(rootPath, `${rootPath}-replaced`); await mkdir(rootPath);
-        expect(() => launch.assertWorkspaceHeld?.()).toThrow("changed");
-        expect(() => host.startTurn({ text: "test", requestId: "stale-directory" })).toThrow("changed");
-      }
-      await host.close({ reason: "registered copy test complete" });
-    }
   });
 
   it("selects and verifies Claude's qualified reported model", async () => {

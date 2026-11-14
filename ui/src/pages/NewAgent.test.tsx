@@ -744,8 +744,6 @@ describe("New agent setup", () => {
     expect(api.hire.mock.calls[0][1].adapterConfig.env.CURSOR_API_KEY).toMatchObject({ type: "secret_ref", secretId: "org-secret-1" });
   });
   it.each([
-    ["cursor", "CURSOR_API_KEY"],
-    ["gemini_local", "GEMINI_API_KEY"],
     ["hermes_local", "OPENROUTER_API_KEY"],
   ])("provides %s credentials to tests and stores only a secret reference", async (adapter, key) => {
     await render(adapter);

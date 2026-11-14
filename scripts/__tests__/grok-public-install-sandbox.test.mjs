@@ -8,7 +8,6 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { isWorkspacePackage, parseWorkspaceEntries } from '../build-standalone-public-packages.mjs';
 import { GROK_PUBLIC_INSTALL_IMAGE, GROK_PUBLIC_INSTALL_LIFECYCLE, assertInstalledCodexPlatformProvenance, assertInstalledNativeConsumerContinuity, assertNoBundledCodexPayloads, grokConsumerDockerArgs, installedClaudeProbeSource, installedCodexProbeSource, installedDaemonProbeSource, macNodeHeadersDirectory, macPublicInstallLifecycleProfile, macInstalledStartupProbeSource, runMacInitialInstallWithDiagnostics } from '../grok-public-install-sandbox.mjs';
-import { verifyPiPackagedDaemon } from '../pi-public-install-probe.mjs';
 import { publicInstallClosure } from '../public-install-closure.mjs';
 import { runnerBinaryTarget } from '../../packages/paperclip-runner/src/live/runner-binary.ts';
 
@@ -230,37 +229,21 @@ test('the separately provisioned executable is exposed read-only to the offline 
 test('verification never elevates PR-controlled provisioning or cleanup on the host', () => {
   const source = readFileSync(new URL('../verify-grok-npm-install.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /\bsudo\b/);
-  assert.ok(source.includes("const prerequisite = join(root, 'native/grok')"));
+  assert.doesNotMatch(source, /provision-grok\.mjs|runtime setup pi/);
 });
 
-test('the image and Grok downloads start before staging and join without weakening the npm checks', () => {
+test('the pinned image starts before staging and joins before the first sandbox', () => {
   const source = readFileSync(new URL('../verify-grok-npm-install.mjs', import.meta.url), 'utf8');
-  const linuxSource = source.slice(source.indexOf("assert.equal(process.platform, 'linux'"));
-  const position = fragment => { const index = linuxSource.indexOf(fragment); assert.notEqual(index, -1, `verifier must contain ${fragment}`); return index; };
-  // Exactly the pinned consumer image is pulled, for the platform the probes run on.
-  const imagePull = position("prefetch('image', 'docker', ['pull', '--platform', 'linux/amd64', GROK_PUBLIC_INSTALL_IMAGE])");
-  // Grok is provisioned into the prefetch directory, never straight into `native/grok`.
-  const grokProvision = position("prefetch('grok', process.execPath, [join(repo, 'packages/paperclip-runner/scripts/provision-grok.mjs'), stagedGrok])");
-  assert.ok(source.includes("const stagedGrok = join(prefetched, 'grok')"));
-  assert.doesNotMatch(source, /provision-grok\.mjs'\), prerequisite\]/);
-  // Both downloads start before any package is staged and before the first sandbox runs.
-  const staging = position('publicInstallClosure(repo)');
-  const firstSandbox = position("isolated(['node', '/packages/public-install-registry.mjs', '/packages'], { download: true })");
-  assert.ok(imagePull < staging && grokProvision < staging);
-  assert.ok(position("await awaited('image', imageReady)") < firstSandbox);
-  // The binary moves to the canonical host path only after npm is proven not to
-  // have provisioned it, after the negative probe, and before the positive probe.
-  const npmCheck = position("'npm must not provision Grok'");
-  const negativeProbe = position("isolated(['node', '/packages/probe.mjs', 'missing'])");
-  const grokJoin = position("await awaited('grok', grokReady)");
-  const move = position('renameSync(stagedGrok, prerequisite)');
-  const positiveProbe = position("isolated(['node', '/packages/probe.mjs', 'present'], { prerequisite })");
-  assert.ok(npmCheck < negativeProbe && negativeProbe < grokJoin && grokJoin < move && move < positiveProbe);
-  // The children run through the helper covered by prefetch-child.test.mjs, and
-  // cleanup waits for them before removing the directory they write into.
-  assert.ok(source.includes("import { startPrefetch, stopPrefetches } from './prefetch-child.mjs'"));
+  const linux = source.slice(source.indexOf("assert.equal(process.platform, 'linux'"));
+  const position = fragment => {
+    const index = linux.indexOf(fragment);
+    assert.notEqual(index, -1, fragment);
+    return index;
+  };
+  assert.ok(position("prefetch('image', 'docker', ['pull', '--platform', 'linux/amd64', GROK_PUBLIC_INSTALL_IMAGE])") < position('publicInstallClosure(repo)'));
+  assert.ok(position("await awaited('image', imageReady)") < position("isolated(['node', '/packages/public-install-registry.mjs', '/packages'], { download: true })"));
   assert.ok(position('await stopPrefetches(prefetches)') < position('rmSync(root, { recursive: true, force: true })'));
-  assert.equal(linuxSource.match(/rmSync\(root/g).length, 1);
+  assert.doesNotMatch(linux, /provision-grok\.mjs|runtime setup pi/);
 });
 
 test('the bundled-dependency installs run together while the other packages are copied, and pack in order', () => {
@@ -330,7 +313,7 @@ test('the verifier stages only workspace packages, so it skips the standalone bu
   // staged, reusing the UI that `pnpm build` produced, and it is timed. The
   // gated standalone build keeps release.sh's order: after the closure is
   // known and before the UI copy and any staged source.
-  assert.deepEqual(JSON.parse(readFileSync(new URL('server/package.json', repo), 'utf8')).files, ['dist', 'ui-dist', 'skills', 'scripts/install-copilot-assets.mjs']);
+  assert.deepEqual(JSON.parse(readFileSync(new URL('server/package.json', repo), 'utf8')).files, ['dist', 'ui-dist', 'skills']);
   assert.ok(source.includes("PAPERCLIP_RELEASE_REUSE_UI_DIST: '1'"));
   const uiDist = position("run('bash', [join(repo, 'scripts/prepare-server-ui-dist.sh')], repo)");
   assert.ok(position('publicInstallClosure(repo)') < gate && gate < uiDist && uiDist < position('timing.stage_ui_dist_ms =') && uiDist < position('const stageSource = '));
@@ -594,55 +577,4 @@ test('Mac startup wiring normalizes only validated manifest digests and uses ser
   assert.match(verifier, /\['--import', 'tsx', startupFile\], join\(repo, 'server'\)/);
   const closedEnvironment = verifier.match(/const env = \{ PATH: `\$\{tools\}[\s\S]*?\};/)[0];
   assert.doesNotMatch(closedEnvironment, /NODE_PATH|NODE_OPTIONS|\.\.\.process.env/);
-});
-
-test('Pi admission verifies assembled host daemon identity and preserves the flat source-package control', async () => {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'pi-installed-daemon-'))), server = join(root, 'server');
-  const output = join(server, 'dist/vendor/paperclip-runner'), target = 'linux-x64', source = 'a'.repeat(40);
-  const binary = join(output, 'bin', target, 'paperclip-runnerd'), manifestPath = join(output, 'bin/release-manifest.json');
-  const bytes = Buffer.alloc(64); bytes.set([0x7f, 0x45, 0x4c, 0x46, 2, 1]); bytes.writeUInt16LE(62, 18);
-  const sha256 = value => `sha256:${createHash('sha256').update(value).digest('hex')}`;
-  const manifest = { schema: 'paperclip.runner.release-binaries.v1', sourceRevision: source,
-    platforms: { [target]: { path: `${target}/paperclip-runnerd`, sha256: sha256(bytes) } } };
-  const check = () => verifyPiPackagedDaemon(server, binary, target, runnerBinaryTarget);
-  try {
-    mkdirSync(join(output, 'bin', target), { recursive: true });
-    writeFileSync(binary, bytes); writeFileSync(join(server, 'dist/build-info.json'), JSON.stringify({ commit: source }));
-    writeFileSync(manifestPath, JSON.stringify(manifest));
-    await check();
-    for (const changed of [null, { ...manifest, schema: 'untrusted' }, { ...manifest, sourceRevision: 'b'.repeat(40) },
-      { ...manifest, platforms: { [target]: { ...manifest.platforms[target], path: '../outside' } } },
-      { ...manifest, platforms: { [target]: { ...manifest.platforms[target], sha256: 'sha256:' + '0'.repeat(64) } } }]) {
-      writeFileSync(manifestPath, JSON.stringify(changed)); await assert.rejects(check());
-    }
-    const wrongHeader = Buffer.from(bytes); wrongHeader.writeUInt16LE(183, 18);
-    writeFileSync(binary, wrongHeader);
-    writeFileSync(manifestPath, JSON.stringify({ ...manifest, platforms: { [target]: { ...manifest.platforms[target], sha256: sha256(wrongHeader) } } }));
-    await assert.rejects(check(), /linux-arm64/);
-    writeFileSync(binary, bytes); writeFileSync(manifestPath, JSON.stringify(manifest));
-    const outside = join(root, 'outside'); writeFileSync(outside, bytes);
-    rmSync(binary); symlinkSync(outside, binary); await assert.rejects(check());
-    rmSync(binary); writeFileSync(binary, bytes); rmSync(manifestPath);
-    const flat = join(output, 'bin/paperclip-runnerd'); writeFileSync(flat, bytes);
-    await verifyPiPackagedDaemon(server, flat, target, runnerBinaryTarget);
-    await assert.rejects(check(), /strictly equal/);
-    writeFileSync(manifestPath, 'null');
-    await assert.rejects(verifyPiPackagedDaemon(server, flat, target, runnerBinaryTarget), /manifest must be an object/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-
-test('Pi setup overlaps independent probes only after the offline lifecycle and joins before admission', () => {
-  const source = readFileSync(new URL('../verify-grok-npm-install.mjs', import.meta.url), 'utf8');
-  const position = fragment => { const index = source.indexOf(fragment); assert.notEqual(index, -1, fragment); return index; };
-  const lifecycle = position("phase('lifecycle_rebuild')");
-  const start = position("prefetch('pi_setup', 'docker', piSetupArgs)");
-  const codex = position("const codex = JSON.parse(isolated(['node', '/packages/codex-probe.mjs'])");
-  const grok = position("phase('grok_probes')");
-  const join = position("await awaited('pi_setup', piSetupReady)");
-  const receipt = position("assert.equal(receipt.status, 'installed_verified')");
-  const probe = position("console.log(isolated(['node', '/packages/pi-public-install-probe.mjs'");
-  assert.ok(lifecycle < start && start < codex && codex < grok && grok < join && join < receipt && receipt < probe);
-  assert.ok(source.includes("piSetupArgs.splice(1, 0, '--name', piSetupContainer)"));
-  assert.ok(position("await stopPrefetches(prefetches)") < position("['rm', '--force', piSetupContainer]"));
 });

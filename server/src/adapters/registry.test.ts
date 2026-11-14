@@ -3,7 +3,6 @@ import { assertValidAdapterLoginCapability } from "@paperclipai/adapter-utils";
 import { listServerAdapters, requireServerAdapter } from "./registry.js";
 import * as executionTarget from "@paperclipai/adapter-utils/execution-target";
 import { BUILTIN_ADAPTER_TYPES } from "./builtin-adapter-types.js";
-import { assertHarnessTestPassed } from "../services/agent-harness-verification.js";
 
 const { probeInstallation, verifyApiKey } = vi.hoisted(() => ({
   verifyApiKey: vi.fn(),
@@ -146,24 +145,6 @@ describe("native ACPX environment checks", () => {
     expect(result.status).toBe("pass");
     expect(verifyApiKey).toHaveBeenCalledExactlyOnceWith("anthropic", "test-key");
     expect(result.checks.map(check => check.code)).toEqual(["acpx_runtime_ready", "ai_connection_api_key_reverified"]);
-  });
-
-  it.each(["verified", "rejected", "unavailable", "missing", "managed"])("keeps remote Grok adoption tied to account verification: %s", async state => {
-    if (state === "rejected") verifyApiKey.mockRejectedValue({ details: { code: "ai_connection_api_key_rejected" } });
-    if (state === "unavailable") verifyApiKey.mockRejectedValue(new Error("Provider unavailable"));
-    const result = await requireServerAdapter("paperclip_runner").testEnvironment!({ ...context,
-      config: { provider: "acpx", acpxAgent: "grok", model: "grok-4.7",
-        env: state === "missing" ? {} : { XAI_API_KEY: "fixture-xai-key" },
-        ...(state === "managed" ? { managedAiConnection: { method: "api_key" } } : {}) },
-      executionTarget: { kind: "remote", transport: "sandbox", remoteCwd: "/workspace", providerKey: "test",
-        runner: { execute: vi.fn().mockResolvedValue({ exitCode: 0, timedOut: false, stdout: "Linux\nx86_64\n" }) } },
-    });
-    if (["missing", "managed"].includes(state)) expect(verifyApiKey).not.toHaveBeenCalled();
-    else expect(verifyApiKey).toHaveBeenCalledExactlyOnceWith("xai", "fixture-xai-key");
-    expect(result.checks[0]).toMatchObject({ code: "acpx_remote_runtime_unverified", level: "warn" });
-    if (state === "verified") expect(() => assertHarnessTestPassed(result)).not.toThrow();
-    else expect(() => assertHarnessTestPassed(result)).toThrow("The harness test failed");
-    expect(probeGrokInstallation).not.toHaveBeenCalled();
   });
 
   it.each(["ai_connection_api_key_rejected", "ai_connection_verification_failed"])("fails setup on %s", async code => {

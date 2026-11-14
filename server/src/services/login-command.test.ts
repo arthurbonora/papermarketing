@@ -15,7 +15,7 @@ describe("resolveLoginCommandKey", () => {
   it("resolves the trusted adapter type to the closed key", () => {
     expect(resolveLoginCommandKey("claude_local")).toBe("claude");
     expect(resolveLoginCommandKey("codex_local")).toBe("codex");
-    expect(resolveLoginCommandKey("grok_local")).toBe("grok");
+    expect(() => resolveLoginCommandKey("grok_local")).toThrow("LOGIN_PTY_UNSUPPORTED_ADAPTER");
   });
 
   it("fails closed for an unmapped adapter type", () => {
@@ -25,12 +25,12 @@ describe("resolveLoginCommandKey", () => {
     expect(() => resolveLoginCommandKey("")).toThrow("LOGIN_PTY_UNSUPPORTED_ADAPTER");
   });
 
-  it("stays grok when the registered adapter's own getCommand member changes", () => {
+  it("stays codex when the registered adapter's own getCommand member changes", () => {
     // Condition 4: the login path selects the command key from this closed map
     // only, never from the adapter's own login capability. Mutating the
-    // registered `grok_local` capability's `getCommand` member must not change
+    // registered `codex_local` capability's `getCommand` member must not change
     // the key this function returns for the same adapter type.
-    const capability = requireServerAdapter("grok_local").loginCapability;
+    const capability = requireServerAdapter("codex_local").loginCapability;
     expect(capability).toBeDefined();
     if (!capability) return;
     const original = capability.getCommand;
@@ -47,7 +47,7 @@ describe("isLoginCommandKey", () => {
   it("accepts only the closed key set", () => {
     expect(isLoginCommandKey("claude")).toBe(true);
     expect(isLoginCommandKey("codex")).toBe(true);
-    expect(isLoginCommandKey("grok")).toBe(true);
+    expect(isLoginCommandKey("grok")).toBe(false);
     expect(isLoginCommandKey("gemini")).toBe(false);
     expect(isLoginCommandKey("rm -rf /")).toBe(false);
     expect(isLoginCommandKey(undefined)).toBe(false);
@@ -60,7 +60,7 @@ describe("isLoginCommandSupportedAdapterType", () => {
     // the opener resolves. The mapped types pass; an unmapped type fails closed.
     expect(isLoginCommandSupportedAdapterType("claude_local")).toBe(true);
     expect(isLoginCommandSupportedAdapterType("codex_local")).toBe(true);
-    expect(isLoginCommandSupportedAdapterType("grok_local")).toBe(true);
+    expect(isLoginCommandSupportedAdapterType("grok_local")).toBe(false);
     expect(isLoginCommandSupportedAdapterType("gemini_local")).toBe(false);
     expect(isLoginCommandSupportedAdapterType("daytona")).toBe(false);
     expect(isLoginCommandSupportedAdapterType("")).toBe(false);

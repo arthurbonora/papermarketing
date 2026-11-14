@@ -95,13 +95,6 @@ async function waitForFreshConnection(input: ConnectionFlowInput, before: Set<st
         console.log(`[provider-connections] Sign in to ${harness.label} in the opened browser (${config.browser.accountAlias}); complete the code/consent step in Paperclip. This test resumes automatically.`);
       }
       // Grok currently exposes a terminal handoff; do not pretend it has the same browser flow.
-      if (!loginOpened && harness.id === "grok" && await page.getByRole("button", { name: "Copy sign-in command" }).isVisible()) {
-        loginOpened = true;
-        evidence.assisted = true;
-        evidence.waits.push({ kind: "provider_login", startedAt: new Date().toISOString() });
-        await input.checkpoint("awaiting_provider_login");
-        console.log("[provider-connections] Grok requires the sign-in command shown in Paperclip. Complete that production handoff; the test will resume automatically.");
-      }
       const connect = page.getByRole("button", { name: "Connect", exact: true }).last();
       if (!connected && await connect.isVisible() && await connect.isEnabled()) { await connect.click(); connected = true; }
       if (await page.getByRole("alert").filter({ hasText: /expired|could not|failed|invalid/i }).count()) throw new ConnectionFailure("provider_login_reported_error");
@@ -116,7 +109,7 @@ async function selectSavedConnection(page: Page, connection: Row, harness: Conne
   await page.getByRole("heading", { name: /^(Connect a model|Configure your agent)$/ }).waitFor();
   const advanced = !["subscription", "api-key"].includes(mode);
   const connectionType = page.getByRole("radiogroup", { name: "Connection type", exact: true });
-  if (["claude", "codex", "grok"].includes(harness.id)) {
+  if (["claude", "codex"].includes(harness.id)) {
     await connectionType.waitFor({ state: "visible" });
     if (advanced) {
       await connectionType.getByRole("radio", { name: /Advanced/ }).click();
@@ -157,19 +150,19 @@ async function createConnectionThroughUi(input: ConnectionFlowInput, agentURL: s
       // The credential step loads asynchronously. Wait for its provider tile
       // before inspecting the mode switch, otherwise a still-loading page can
       // skip the API-key switch and leave the subscription form selected.
-      await page.getByRole("radio", { name: new RegExp(harness.id === "grok" ? "Grok" : harness.label) }).click();
+      await page.getByRole("radio", { name: new RegExp(harness.label) }).click();
       const switcher = page.getByRole("button", { name: mode === "subscription" ? "Use subscription instead" : "Use API key instead", exact: true });
       if (await switcher.isVisible()) await switcher.click();
     }
   } else {
     await page.goto(agentURL, { waitUntil: "domcontentloaded" });
     const tiles = page.getByRole("radiogroup", { name: "Connection type", exact: true });
-    if (["claude", "codex", "grok"].includes(harness.id)) {
+    if (["claude", "codex"].includes(harness.id)) {
       const choice = tiles.getByRole("radio", { name: advanced ? /Advanced/ : mode === "subscription" ? /Subscription/ : /API key/ });
       await choice.click();
       await expect(choice).toHaveAttribute("aria-checked", "true");
     }
-    if (advanced || !["claude", "codex", "grok"].includes(harness.id)) {
+    if (advanced || !["claude", "codex"].includes(harness.id)) {
       await choose(page, "Connection", "Connect an account…");
       if (advanced) {
         const advancedProviders = page.locator("summary").filter({ hasText: "Advanced providers" });
@@ -241,7 +234,7 @@ export async function runConnectionFlow(input: ConnectionFlowInput) {
   if (selectedEnv !== environment.id) {
     if (!(await environmentSelect.isEnabled())) throw new ConnectionBlock("blocked_target", "requested_execution_environment_unavailable");
     await environmentSelect.selectOption(environment.id);
-    if (["claude", "codex", "grok"].includes(harness.id)) await selectSavedConnection(page, connection, harness, mode);
+    if (["claude", "codex"].includes(harness.id)) await selectSavedConnection(page, connection, harness, mode);
   }
   if (await environmentSelect.inputValue() !== environment.id) throw new ConnectionBlock("blocked_target", "requested_execution_environment_unavailable");
   await input.checkpoint("select_model");
@@ -252,7 +245,7 @@ export async function runConnectionFlow(input: ConnectionFlowInput) {
   const probe = await response;
   const result = await probe.json();
   evidence.setupChecks = connectionProbeChecks(result);
-  if (evidence.setupChecks.some(check => check.level === "error" && (check.code === "hermes_cli_not_found" || /^(claude|codex|grok|opencode|gemini)_command_unresolvable$/.test(check.code))))
+  if (evidence.setupChecks.some(check => check.level === "error" && (check.code === "hermes_cli_not_found" || /^(claude|codex|opencode)_command_unresolvable$/.test(check.code))))
     throw new ConnectionBlock("blocked_target", "runtime_cli_required");
   if (!probe.ok() || result.status !== "pass") throw new ConnectionFailure("setup_probe_failed");
   evidence.checkpoints.setup_probe = true;

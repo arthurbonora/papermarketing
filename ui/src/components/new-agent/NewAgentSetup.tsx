@@ -491,7 +491,6 @@ function Setup({
         throw new Error("Enter the Hermes API base URL.");
       }
     }
-      throw new Error("Enter the Kimi API model name.");
     return buildConfig(nextConnection, selectedBinding, setupRunner);
   }
   function pendingCredentials(nextConnection = connection) {
@@ -624,7 +623,7 @@ function Setup({
         aiConnection: runtimeAiBinding ?? nextConnection?.aiConnection,
         environmentId,
       });
-    if (run !== generation.current) return null;
+      if (run !== generation.current) return null;
       setResult(tested);
       setTestState(blocking(tested) ? "fail" : tested.status);
       return (
