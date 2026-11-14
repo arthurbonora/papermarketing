@@ -155,8 +155,13 @@ are not on this list. They hold attested provider pins, so change them by hand
 
 ## Trusted PR Workflow
 
-The PR caller uses `paperclipai/paperclip/.github/workflows/pr-trusted.yml@master`.
-The AWS runner group `paperclip-public-pr` must allow
+PaperMarketing pins the upstream `pr-trusted.yml` in `.github/workflows/pr.yml` to
+a reviewed commit that supports the fork's build targets. Check the full PR
+workflow before updating that pin. The reusable workflow still calls the
+upstream `ci-routing.yml@master`, which selects GitHub-hosted runners for the fork.
+
+In upstream Paperclip, the PR caller uses
+`paperclipai/paperclip/.github/workflows/pr-trusted.yml@master`. The AWS runner group `paperclip-public-pr` must allow
 `paperclipai/paperclip/.github/workflows/pr-trusted.yml@refs/heads/master`.
 New workflow versions merged into master then receive runner access without a
 separate SHA allowlist update. Dependabot leaves this first-party reference on

@@ -169,7 +169,7 @@ test("shard arguments are validated", () => {
   }
 });
 
-test("pr.yml calls the trusted PR workflow from master", () => {
+test("pr.yml pins the trusted upstream PR workflow", () => {
   assert.ok(readTrustedPrWorkflow().length > 0);
 });
 
