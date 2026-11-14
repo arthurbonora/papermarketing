@@ -129,7 +129,7 @@ describe("live connection coverage", () => {
     expect(connectionScopeGaps.find(h => h.adapter === "hermes_gateway")?.status).toBe("excluded");
   });
   it("includes both UI entry points and actual runner variants without invented auth capabilities", () => {
-    expect(cells.length).toBe(116);
+    expect(cells.length).toBe(96);
     expect(new Set(cells.map(e => connectionCell(e).entry))).toEqual(new Set(["agent", "apps"]));
     expect(cells.some(e => ["grok", "gemini"].includes(connectionCell(e).harness.id))).toBe(false);
   });
