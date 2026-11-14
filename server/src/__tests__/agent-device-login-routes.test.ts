@@ -35,17 +35,6 @@ const DEVICE_LOGIN_URL = "https://auth.openai.com/codex/device";
 const PROMPT_CODE = "ABCD-EFGHI";
 const PROMPT_OUTPUT = `Open ${DEVICE_LOGIN_URL} in your browser.\nEnter the one-time code below:\n${PROMPT_CODE}\n`;
 
-// The Grok device-login URL and the one-time code the fake sandbox streams for
-// a `grok_local` session. The Grok parser requires the `user_code` query to
-// equal the code that stands alone on its own line after the preamble.
-const GROK_CODE = "WXYZ-ABCD";
-const GROK_DEVICE_LOGIN_URL = `https://accounts.x.ai/oauth2/device?user_code=${GROK_CODE}`;
-const GROK_PROMPT_OUTPUT = [
-  "To sign in, open this URL in your browser:",
-  `  ${GROK_DEVICE_LOGIN_URL}`,
-  "Confirm this code in your browser:",
-  `  ${GROK_CODE}`,
-].join("\n");
 // A credential byte string the fake sandbox returns. The routes and the activity
 // must never log it.
 const CREDENTIAL_BYTES = '{"tokens":{"access":"SECRET-ACCESS-TOKEN"}}';

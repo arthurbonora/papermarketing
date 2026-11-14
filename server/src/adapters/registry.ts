@@ -935,6 +935,7 @@ function getDeclaredAdapterModels(): ReturnType<typeof parseAdapterModelsEnv> {
 }
 
 function declaredModelsForAdapter(type: string): { id: string; label: string }[] | null {
+  if (isRemovedAgentHarness(type)) return null;
   const declared = getDeclaredAdapterModels()?.[type];
   return declared?.length
     ? declared.map((model) => ({ id: model.id, label: model.label ?? model.id }))
