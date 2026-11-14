@@ -435,7 +435,7 @@ describeEmbeddedPostgres("connectionIntentService", () => {
     });
   });
 
-  it("separates GitHub runtime discovery from tool setup options", async () => {
+  it("preserves GitHub tool discovery after removing Copilot", async () => {
     const service = connectionIntentService(db);
     const search = await service.search(claims, "github");
     const github = search.results.find((result) => result.service === "github");
@@ -447,11 +447,6 @@ describeEmbeddedPostgres("connectionIntentService", () => {
             label: "Personal access token (advanced)",
             auth: "api_key",
             purpose: "tool",
-          }),
-          expect.objectContaining({
-            key: "copilot-token",
-            purpose: "ai",
-            setupPath: expect.stringContaining("/apps/connect?source=github"),
           }),
         ],
       }),

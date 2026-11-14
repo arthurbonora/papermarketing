@@ -20,11 +20,7 @@ When a heartbeat fires, Paperclip:
 |---------|----------|-------------|
 | [Claude Code](/adapters/claude-local) | `claude_local` | Runs Claude Code CLI locally, with a native ACP engine when available |
 | [Codex](/adapters/codex-local) | `codex_local` | Runs OpenAI Codex CLI locally, with a native ACP engine when available |
-| [Gemini CLI](/adapters/gemini-local) | `gemini_local` | Runs Gemini CLI locally (experimental — adapter package exists, not yet in stable type enum) |
-| [Kimi Code CLI](/adapters/kimi-local) | `kimi_local` | Runs Kimi Code CLI locally through ACP, with explicitly selectable headless `-p` mode |
 | OpenCode | `opencode_local` | Runs OpenCode CLI locally (multi-provider `provider/model`) |
-| Cursor | `cursor` | Runs Cursor in background mode |
-| Pi | `pi_local` | Runs an embedded Pi agent locally |
 | Hermes | `hermes_local` | Runs the local Hermes CLI through `@paperclipai/hermes-paperclip-adapter` |
 | Hermes Gateway | `hermes_gateway` | Calls an already-running Hermes API server through `@paperclipai/hermes-paperclip-adapter/gateway` |
 | OpenClaw Gateway | `openclaw_gateway` | Connects to an OpenClaw gateway endpoint |
@@ -129,7 +125,7 @@ my-adapter/
 ## Choosing an Adapter
 
 - **Need a coding agent?** Use `claude_local`, `codex_local`, `opencode_local`, `hermes_local`, or install `droid_local` as an external plugin
-- **Need the richest live run feedback?** Use `claude_local`, `codex_local`, or `gemini_local` with `adapterConfig.engine` set to `acp` when the execution environment satisfies the ACP prerequisites — see [Feedback granularity](#feedback-granularity)
+- **Need the richest live run feedback?** Use `claude_local` or `codex_local` with `adapterConfig.engine` set to `acp` when the execution environment satisfies the ACP prerequisites — see [Feedback granularity](#feedback-granularity)
 - **Need Hermes on another host or already running as a service?** Use `hermes_gateway`
 - **Need to run a script or command?** Use `process`
 - **Need to call a custom external service?** Use `http`
@@ -141,21 +137,16 @@ Adapter choice determines how much structured, live detail a run's transcript ca
 
 Rough tiers, richest first:
 
-1. **Native ACP engine (`claude_local`, `codex_local`, or `gemini_local` with `engine: "acp"`) — full structured event stream.** ACP emits a JSONL event per meaningful runtime moment: `acpx.session` (agent, mode, session identity), `acpx.status` (progress text plus context-window usage), `acpx.text_delta` (assistant/thinking token deltas), `acpx.tool_call` (tool title, call id, and status updates as the call progresses), `acpx.result` (stop reason summary), and `acpx.error` (code, message, retryability). The transcript renders these as live-updating message, thinking, tool, and status blocks, and repeated `acpx.tool_call` status updates fold into a single tool card instead of stacking duplicates.
-2. **CLI wrappers (`claude_local`, `codex_local`, `cursor`, `opencode_local`, …).** These parse each CLI's own streaming JSON output. You get assistant text, tool calls/results, and a final usage/cost summary, but granularity is limited to what the CLI prints — some emit tool progress, others only call/finish pairs.
+1. **Native ACP engine (`claude_local` or `codex_local` with `engine: "acp"`) — full structured event stream.** ACP emits a JSONL event per meaningful runtime moment: `acpx.session` (agent, mode, session identity), `acpx.status` (progress text plus context-window usage), `acpx.text_delta` (assistant/thinking token deltas), `acpx.tool_call` (tool title, call id, and status updates as the call progresses), `acpx.result` (stop reason summary), and `acpx.error` (code, message, retryability). The transcript renders these as live-updating message, thinking, tool, and status blocks, and repeated `acpx.tool_call` status updates fold into a single tool card instead of stacking duplicates.
+2. **CLI wrappers (`claude_local`, `codex_local`, `opencode_local`, …).** These parse each CLI's own streaming JSON output. You get assistant text, tool calls/results, and a final usage/cost summary, but granularity is limited to what the CLI prints — some emit tool progress, others only call/finish pairs.
 3. **Generic adapters (`process`, `http`).** Plain stdout/stderr lines with no structured transcript — you see raw output only.
 
-**Recommendation:** use the native ACP engine on `claude_local`, `codex_local`, or `gemini_local` when the selected execution environment supports it. Rich ACP status events (including context usage) and incremental tool-call updates give the closest thing to watching the agent work locally.
+**Recommendation:** use the native ACP engine on `claude_local` or `codex_local` when the selected execution environment supports it. Rich ACP status events (including context usage) and incremental tool-call updates give the closest thing to watching the agent work locally.
+
+## Removed harnesses
+
+Pi, GitHub Copilot, Kimi Code, Cursor CLI, Gemini CLI, Grok Build, and Google Antigravity are no longer selectable or executable. Existing agent records and run history remain available. To run an affected agent again, select a supported harness and configure its credentials. External agents, including Grok Bot, and Cursor Cloud remain available.
 
 ## UI Parser Contract
 
 External adapters can ship a self-contained UI parser that tells the Paperclip web UI how to render their stdout. Without it, the UI uses a generic shell parser. See the [UI Parser Contract](/adapters/adapter-ui-parser) for details.
-
-### Cursor failure details
-
-The Cursor CLI adapter uses structured error output first, then the first
-nonempty diagnostic line. It skips the informational `cursor-retrieval: tracing
-to ...` file-location notice. If the CLI exits unsuccessfully with only that
-notice, the run shows the exit code. The original stdout and stderr remain in
-the local run result and log for troubleshooting. Environment probes use the
-same diagnostic selection. This does not change retry or success decisions.

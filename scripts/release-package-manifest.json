@@ -20,21 +20,6 @@
     "publishFromCi": true
   },
   {
-    "dir": "packages/adapters/cursor-local",
-    "name": "@paperclipai/adapter-cursor-local",
-    "publishFromCi": true
-  },
-  {
-    "dir": "packages/adapters/gemini-local",
-    "name": "@paperclipai/adapter-gemini-local",
-    "publishFromCi": true
-  },
-  {
-    "dir": "packages/adapters/grok-local",
-    "name": "@paperclipai/adapter-grok-local",
-    "publishFromCi": true
-  },
-  {
     "dir": "packages/adapters/hermes",
     "name": "@paperclipai/hermes-paperclip-adapter",
     "publishFromCi": true
@@ -45,18 +30,8 @@
     "publishFromCi": false
   },
   {
-    "dir": "packages/adapters/kimi-local",
-    "name": "@paperclipai/adapter-kimi-local",
-    "publishFromCi": true
-  },
-  {
     "dir": "packages/adapters/opencode-local",
     "name": "@paperclipai/adapter-opencode-local",
-    "publishFromCi": true
-  },
-  {
-    "dir": "packages/adapters/pi-local",
-    "name": "@paperclipai/adapter-pi-local",
     "publishFromCi": true
   },
   {

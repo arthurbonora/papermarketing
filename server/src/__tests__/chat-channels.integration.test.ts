@@ -66190,7 +66190,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
           capture: { userPrompts: false, assistantResponses: false, toolDetails: false, toolContent: false } });
         const [agent] = await db.update(agents).set({ adapterConfig: mode === "observability_opencode"
           ? { provider: "opencode", model: "openrouter/synthetic", homeMode: "preconfigured" }
-          : { provider: "acpx", acpxAgent: "pi", model: "synthetic", homeMode: "preconfigured" } })
+          : { provider: "cursor_cloud", model: "cursor-model", repoUrl: "https://github.com/example/workspace" } })
           .where(eq(agents.id, agentId)).returning();
         const [run] = await readHeartbeatRunsById(f.runId);
         const prepared = await prepareHeartbeatExecutionConfiguration(db, { run, agent,

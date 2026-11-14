@@ -22,6 +22,17 @@ test('the manifest joins all244 source YAML scenarios without importing a domain
   assert.deepEqual(fullCatalogCases.map(value => value.key).sort(), scenarios.map(value => value.id).sort());
   for (const scenario of scenarios) {
     const actual = row(scenario.id);
+    // Preserve the historical TestOps snapshot. The fork now uses this identity
+    // to check guidance for a retired runtime.
+    if (scenario.id === 'instance-operations.provision-runtime') {
+      assert.equal(actual.originalQuery, 'Install the Pi runtime this Paperclip release needs.');
+      assert.equal(scenario.query, 'Install the Pi runtime this PaperMarketing release needs.');
+      assert.match(scenario.context, /retired provider/);
+      assert.match(scenario.expected_outcome, /identifies Pi as removed/);
+      assert.match(scenario.expected_outcome, /does not install a runtime/);
+      assert.ok(!Object.hasOwn(actual, 'status') && !Object.hasOwn(actual, 'passed'));
+      continue;
+    }
     const override = field => manifest.source.repairMetadata.changedFields.find(change => change.key === scenario.id && change.field === field);
     for (const [field, original] of [['originalQuery', scenario.query], ['originalContext', scenario.context], ['expectedOutcome', scenario.expected_outcome]]) {
       const change = override(field);

@@ -1,5 +1,3 @@
-import { isLegacyWorkspaceMigration } from "./legacy-workspace-migration.js";
-import { isRollingWebDeployment } from "./controller-rolling-deployment.js";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -12,7 +10,7 @@ import { installedDaytonaPluginKeys, verifyInstalledDaytonaPlugin, type Installe
 import { buildPaperclipServerEnvironment } from "./harness-env.js";
 import { setupLiveFixtures } from "./live-fixtures.js";
 import type { RunnerApi } from "./api.js";
-const cell = runnerMatrix.find(e => e.id === "extended-harnesses.runner-acpx-pi.daytona.hello-complete")!;
+const cell = runnerMatrix.find(e => e.id === "everyday-workflows.runner-codex.daytona.recover-controller")!;
 const sdkVersion: string = JSON.parse(readFileSync(new URL("../../packages/plugins/sdk/package.json", import.meta.url), "utf8")).version;
 const roots: string[] = [];
 const hash = (v: string) => createHash("sha256").update(v).digest("hex");
@@ -36,20 +34,11 @@ async function fixture() {
 it("admits pinned published plugin and resolved SDK graph without claiming a full graph audit", async () => {
   const f = await fixture(); expect(await verifyInstalledDaytonaPlugin(f.env, [cell])).toMatchObject({ packageRoot: f.authority.plugin.root, sourceFallback: false, fullGraphVerified: false, completeGraphAuthorityRequired: true });
 });
-it("admits all ten Copilot Daytona cells only with the pinned normal plugin graph", async () => {
-  const f = await fixture();
-  const selected = runnerMatrix.filter(e => !isRollingWebDeployment(e) && !isLegacyWorkspaceMigration(e) && e.profile.id === "runner-acpx-copilot" && e.environment.id === "daytona");
-  expect(selected).toHaveLength(10);
-  for (const selectedCell of selected) {
-    expect(await verifyInstalledDaytonaPlugin(f.env, [selectedCell])).toMatchObject({ packageRoot: f.authority.plugin.root, sourceFallback: false, fullGraphVerified: false, completeGraphAuthorityRequired: true });
-    await expect(verifyInstalledDaytonaPlugin({ ...f.env, PAPERCLIP_RUNNER_E2E_INSTALLED_DAYTONA_PLUGIN_AUTHORITY_SHA256: "0".repeat(64) }, [selectedCell])).rejects.toThrow("reviewed pins");
-  }
-});
 it("fails closed for absent/partial installed Daytona pins but preserves ordinary source and local lanes", async () => {
   const f = await fixture();
   for (const key of installedDaytonaPluginKeys) await expect(verifyInstalledDaytonaPlugin({ ...f.env, [key]: undefined }, [cell])).rejects.toThrow("complete pins");
   await expect(verifyInstalledDaytonaPlugin({}, [cell])).resolves.toBeUndefined();
-  const local = runnerMatrix.find(e => e.id === "extended-harnesses.runner-acpx-pi.local.hello-complete")!;
+  const local = runnerMatrix.find(e => e.id === "first-task.runner-codex.local.task-card-accept")!;
   await expect(verifyInstalledDaytonaPlugin(f.env, [local])).rejects.toThrow("Daytona selection");
   const noPlugin = { ...f.env }; for (const key of installedDaytonaPluginKeys) delete noPlugin[key];
   await expect(verifyInstalledDaytonaPlugin(noPlugin, [local])).resolves.toBeUndefined();

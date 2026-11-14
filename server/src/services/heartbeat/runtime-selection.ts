@@ -762,10 +762,8 @@ export async function selectHeartbeatRuntime(db: Db, input: HeartbeatRuntimeSele
       getNativeFreshSessionHandoff = nativeReviewRequest ? undefined : getFreshSessionHandoff;
       const nativeProviderConfig = nativeRuntimeResolution.profile.backend === "cursor_cloud_api"
         || nativeRuntimeResolution.profile.backend === "codex_app_server"
-        || (nativeRuntimeResolution.profile.backend === "acpx_runtime" && ["claude_local", "grok_local"].includes(agentHarnessType(agent.adapterType, parseObject(agent.adapterConfig))))
+        || (nativeRuntimeResolution.profile.backend === "acpx_runtime" && agentHarnessType(agent.adapterType, parseObject(agent.adapterConfig)) === "claude_local")
         || nativeRuntimeResolution.profile.backend === "opencode_server"
-        || (nativeRuntimeResolution.profile.backend === "acpx_runtime"
-          && parseObject(agent.adapterConfig).acpxAgent === "copilot")
         ? projectPaperclipRunnerTaskConfig(
             nativeRuntimeResolution.profile.backend,
             agent.adapterConfig,
@@ -913,10 +911,6 @@ export async function selectHeartbeatRuntime(db: Db, input: HeartbeatRuntimeSele
         nativeRunnerInstanceId = randomUUID();
       }
       nativeSessionId = nativeExecutionWithCheckpoint.normalizedSessionId;
-    }
-    if (nativeResumeCheckpoint && nativeExecution.provider.kind === "acpx"
-      && nativeExecution.provider.agent === "antigravity") {
-      nativeResumeCheckpoint = { ...nativeResumeCheckpoint, providerRecoveryPolicy: "same_session_only" };
     }
     const nativeSandboxLifecycle = resolveNativeSandboxLifecycle({
       adapterType: agent.adapterType,

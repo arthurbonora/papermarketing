@@ -1,3 +1,4 @@
+import { assertAcpxProfileReleased } from "../drivers/acpx/qualified-profiles.js";
 import { RunnerdMuseDriver, type RunnerdMuseDriverOptions } from "../drivers/muse/runnerd-muse-driver.js";
 import { RunnerdDotDriver, type RunnerdDotDriverOptions } from "../drivers/dot/runnerd-dot-driver.js";
 import { HarnessDriverBackend } from "./harness-driver-backend.js";
@@ -66,6 +67,7 @@ export function createNativeSessionBackend(
       dynamicTools: options.dynamicTools, dynamicToolHandler: options.dynamicToolHandler,
       completionFeedback: options.completionFeedback, onSpawn: options.onSpawn }));
   }
+  if (input.provider.kind === "acpx") assertAcpxProfileReleased(input.provider.agent);
   if (options.codexTransportFactory) {
     return createRunnerdNativeSessionBackend(input, {
       retainedSystemInstructions: options.retainedSystemInstructions,

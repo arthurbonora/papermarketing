@@ -58,13 +58,7 @@ const adapterTypes: Record<Harness, string> = {
   codex: "codex_local",
   claude: "claude_local",
   opencode: "opencode_local",
-  grok: "grok_local",
-  pi: "pi_local",
-  gemini: "gemini_local",
-  kimi: "kimi_local",
   hermes: "hermes_local",
-  cursor: "cursor",
-  copilot: "copilot_local",
 };
 const excludedAdapters = new Set([
   "process",

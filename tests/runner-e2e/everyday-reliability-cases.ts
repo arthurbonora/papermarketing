@@ -113,7 +113,7 @@ export const everydayReliabilityTasks: readonly RunnerTaskFixture[] = definition
 
 /** The explicit-only native Codex extra for every reliability case, plus ACPX facades for the silent command. */
 export const RELIABILITY_NATIVE_PROFILE_ID = "runner-codex";
-export const RELIABILITY_FACADE_PROFILE_IDS = ["runner-acpx-grok", "runner-acpx-kimi", "runner-acpx-pi"] as const;
+export const RELIABILITY_FACADE_PROFILE_IDS: readonly string[] = [];
 
 /**
  * The TestOps Reliability plan profile: native OpenCode with DeepSeek 1017

@@ -415,7 +415,7 @@ describe("InstanceExperimentalSettings — Conference Room Chat card (PAP-11233)
     await renderPage();
 
     expect(container.textContent).toContain("PaperMarketing Runner");
-    expect(container.textContent).toContain("First-run setup offers qualified GitHub Copilot");
+    expect(container.textContent).not.toContain("First-run setup offers qualified GitHub Copilot");
     const toggle = container.querySelector<HTMLButtonElement>(
       PAPERCLIP_RUNNER_TOGGLE_SELECTOR,
     );

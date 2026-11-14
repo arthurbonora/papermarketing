@@ -35,17 +35,6 @@ const DEVICE_LOGIN_URL = "https://auth.openai.com/codex/device";
 const PROMPT_CODE = "ABCD-EFGHI";
 const PROMPT_OUTPUT = `Open ${DEVICE_LOGIN_URL} in your browser.\nEnter the one-time code below:\n${PROMPT_CODE}\n`;
 
-// The Grok device-login URL and the one-time code the fake sandbox streams for
-// a `grok_local` session. The Grok parser requires the `user_code` query to
-// equal the code that stands alone on its own line after the preamble.
-const GROK_CODE = "WXYZ-ABCD";
-const GROK_DEVICE_LOGIN_URL = `https://accounts.x.ai/oauth2/device?user_code=${GROK_CODE}`;
-const GROK_PROMPT_OUTPUT = [
-  "To sign in, open this URL in your browser:",
-  `  ${GROK_DEVICE_LOGIN_URL}`,
-  "Confirm this code in your browser:",
-  `  ${GROK_CODE}`,
-].join("\n");
 // A credential byte string the fake sandbox returns. The routes and the activity
 // must never log it.
 const CREDENTIAL_BYTES = '{"tokens":{"access":"SECRET-ACCESS-TOKEN"}}';
@@ -521,7 +510,7 @@ describe("adapter device-login routes", () => {
     const app = await createApp();
     const { registerServerAdapter, unregisterServerAdapter } = await import("../adapters/index.js");
     registerServerAdapter({
-      type: "gemini_local",
+      type: "http",
       execute: async () => {
         throw new Error("not used");
       },
@@ -537,13 +526,13 @@ describe("adapter device-login routes", () => {
     });
     try {
       const res = await request(app)
-        .post(loginPath(COMPANY_1, "gemini_local"))
+        .post(loginPath(COMPANY_1, "http"))
         .send({ environmentId: SANDBOX_ENV_1 });
 
       expect(res.status, JSON.stringify(res.body)).toBe(400);
       expect(harness.acquisitions).toHaveLength(0);
     } finally {
-      unregisterServerAdapter("gemini_local");
+      unregisterServerAdapter("http");
     }
   });
 
@@ -709,38 +698,12 @@ describe("adapter device-login routes", () => {
     });
   });
 
-  it("starts a Grok session, delivers the Grok prompt once, and a codex_local read finds no row", async () => {
-    // The Grok parser reaches this session because the profile map resolves it
-    // by adapter type. The fake sandbox streams a Grok-shaped prompt, not a
-    // Codex-shaped one, so a surfaced prompt proves the Grok parser ran.
-    harness.runtime = createFakeRuntime(GROK_PROMPT_OUTPUT);
+  it("rejects a retired Grok Build login before allocating a sandbox", async () => {
     const app = await createApp();
-
-    const start = await request(app)
-      .post(loginPath(COMPANY_1, "grok_local"))
+    const response = await request(app).post(loginPath(COMPANY_1, "grok_local"))
       .send({ environmentId: SANDBOX_ENV_1 });
-    expect(start.status, JSON.stringify(start.body)).toBe(201);
-    const sessionId = start.body.sessionId as string;
-
-    const first = await request(app).get(`${loginPath(COMPANY_1, "grok_local")}/${sessionId}`);
-    expect(first.status, JSON.stringify(first.body)).toBe(200);
-    expect(first.body.prompt).toEqual({ url: GROK_DEVICE_LOGIN_URL, code: GROK_CODE });
-
-    // The row belongs to `grok_local`, not `codex_local`. Reading it through the
-    // `codex_local` path finds no row for the owner.
-    const wrongAdapterRead = await request(app).get(`${loginPath(COMPANY_1, "codex_local")}/${sessionId}`);
-    expect(wrongAdapterRead.status, JSON.stringify(wrongAdapterRead.body)).toBe(404);
-
-    const cancel = await request(app).post(`${loginPath(COMPANY_1, "grok_local")}/${sessionId}/cancel`);
-    expect(cancel.status, JSON.stringify(cancel.body)).toBe(200);
-    // The cancel resolves the public terminal status at once. Internally the row
-    // holds `cleanup_pending`, which encodes the cancelled terminal until the
-    // reaper finalizes it — the same durable-cancel contract every adapter uses.
-    expect(cancel.body.status).toBe("cancelled");
-
-    const store = harness.store as ReturnType<typeof createMemoryStore>;
-    const row = await store.getByPublicId(sessionId, COMPANY_1);
-    expect(row?.status).toBe("cleanup_pending");
+    expect(response.status).toBe(400);
+    expect(harness.acquisitions).toHaveLength(0);
   });
 
   it("returns 404 for a wrong-user status, prompt, and cancel", async () => {
@@ -794,7 +757,7 @@ describe("adapter device-login routes", () => {
     expect(active.headers["cache-control"]).toBe("no-store, private");
   });
 
-  it("returns the identical 404 on the active route for no active session, another owner, another company, and another adapter", async () => {
+  it("returns the identical 404 on the active route for no active session, another owner and another company", async () => {
     const app = await createApp();
 
     // No active session exists yet.
@@ -819,10 +782,6 @@ describe("adapter device-login routes", () => {
     expect(otherCompany.status, JSON.stringify(otherCompany.body)).toBe(404);
     expect(otherCompany.body).toEqual(none.body);
 
-    // The owner's active session belongs to `codex_local`, not `grok_local`.
-    const otherAdapter = await request(app).get(`${loginPath(COMPANY_1, "grok_local")}/active`);
-    expect(otherAdapter.status, JSON.stringify(otherAdapter.body)).toBe(404);
-    expect(otherAdapter.body).toEqual(none.body);
   });
 
   it("durably cancels a login for the owner and releases the company slot", async () => {

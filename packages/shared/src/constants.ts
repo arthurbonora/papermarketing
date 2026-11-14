@@ -38,14 +38,9 @@ export const AGENT_ADAPTER_TYPES = [
   "codex_local",
   "paperclip_runner",
   "cursor_cloud",
-  "gemini_local",
-  "grok_local",
   "hermes_gateway",
   "hermes_local",
-  "kimi_local",
   "opencode_local",
-  "pi_local",
-  "cursor",
   "openclaw_gateway",
 ] as const;
 export type AgentAdapterType = (typeof AGENT_ADAPTER_TYPES)[number] | (string & {});

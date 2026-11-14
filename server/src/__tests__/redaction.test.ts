@@ -23,8 +23,6 @@ import {
   sanitizeRecord,
 } from "../redaction.js";
 
-import { createCopilotToolEvidence } from "../../../packages/paperclip-runner/src/drivers/acpx/copilot-tool-evidence.js";
-import { appendSemanticToolReceipt } from "../../../packages/paperclip-runner/src/drivers/semantic-tool-receipt.js";
 
 function receiptNotice(version: 1 | 2 = 1): Record<string, any> {
   return {
@@ -57,22 +55,6 @@ describe("redaction", () => {
       .toEqual({ prpEvent: { ...event, payload: { ...event.payload, refresh_token: REDACTED_EVENT_VALUE } } });
   });
 
-  it("preserves the actual Copilot receipt producer discriminator through nested durable redaction", () => {
-    const events: Array<Record<string, any>> = [];
-    const projector = createCopilotToolEvidence({ sessionId: "session", turnId: "turn", workingDirectory: "/workspace",
-      active: () => true, emit: event => events.push(event) });
-    const receipt = appendSemanticToolReceipt({ tool: "finish_task", callId: "call", arguments: {} },
-      { content: [{ type: "text", text: "accepted" }] }).receipt;
-    expect(receipt.schema).toBe("paperclip.semantic_tool_receipt.v2");
-    projector.captureSemanticReceipt()!(receipt);
-    expect(events).toHaveLength(1);
-    expect(events[0]!.payload.category).toBe("paperclip_semantic_tool_receipt_v2");
-    expect(events[0]!.payload.details).toHaveLength(8);
-    const input = { prpEvent: { schema: "paperclip.prp.event.v1", schemaVersion: 1,
-      eventType: "provider.notice.recorded", payload: events[0]!.payload } };
-    expect(redactEventPayload(input)).toEqual(input);
-    expect(redactEventPayload(redactEventPayload(input))).toEqual(input);
-  });
 
   it.each([1, 2] as const)("preserves public v%s receipt identifiers as text", version => {
     const notice = receiptNotice(version);

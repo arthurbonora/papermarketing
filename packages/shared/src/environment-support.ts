@@ -1,3 +1,4 @@
+import { isRemovedAgentHarness } from "./agent-runner.js";
 import type { AgentAdapterType, EnvironmentDriver } from "./constants.js";
 import type { SandboxEnvironmentProvider } from "./types/environment.js";
 import type {
@@ -70,12 +71,7 @@ const REMOTE_MANAGED_ADAPTERS = new Set<AgentAdapterType>([
   "claude_local",
   "codex_local",
   "paperclip_runner",
-  "cursor",
-  "gemini_local",
-  "grok_local",
-  "kimi_local",
   "opencode_local",
-  "pi_local",
 ]);
 
 export function adapterSupportsRemoteManagedEnvironments(adapterType: string): boolean {
@@ -83,6 +79,7 @@ export function adapterSupportsRemoteManagedEnvironments(adapterType: string): b
 }
 
 export function supportedEnvironmentDriversForAdapter(adapterType: string): EnvironmentDriver[] {
+  if (isRemovedAgentHarness(adapterType)) return [];
   if (adapterType === "paperclip_runner") return ["local", "ssh", "sandbox", "plugin"];
   return adapterSupportsRemoteManagedEnvironments(adapterType)
     ? ["local", "ssh", "sandbox"]

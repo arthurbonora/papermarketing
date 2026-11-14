@@ -112,7 +112,7 @@ Search tasks, comments, documents, agents, projects, and artifacts within compan
 
 ### ✅ Multi-Model & Multi-Harness Teams
 
-Choose models and supported harnesses per agent while keeping tasks, skills, and history in one organization. Built-in adapters cover Claude Code, Codex, Cursor, Gemini CLI, OpenCode, Pi, Hermes, Grok, Kimi Code, OpenClaw, and process or HTTP integrations.
+Choose models and supported harnesses per agent while keeping tasks, skills, and history in one organization. Built-in adapters cover Claude Code, Codex, OpenCode, Hermes, Cursor Cloud, OpenClaw, and process or HTTP integrations.
 
 ### 🟡 Memory / Knowledge
 

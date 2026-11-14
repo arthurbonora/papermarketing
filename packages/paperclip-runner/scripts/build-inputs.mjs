@@ -36,8 +36,7 @@
 // caches); every file under packages/paperclip-eval-kernel except dist and
 // node_modules, because build:typescript builds that package first; every
 // file under the root patches directory, because check:acpx-profiles hashes
-// the acpx patch and build-verified-provider-entrypoints.mjs copies the pi-acp
-// and brace-expansion patches into dist; and the root files the Runner's
+// the ACPX patch; and the root files the Runner's
 // tsconfig and dependency graph read. The toolchain pins live inside the
 // package (rust-toolchain.toml, runner/Cargo.lock), and the TypeScript version
 // comes from pnpm-lock.yaml, so both are covered.
@@ -76,10 +75,7 @@ const ROOT_INPUT_FILES = [
 ];
 const OUTPUT_DIRECTORY_RELATIVE = "dist";
 const SKIPPED_DIRECTORY_NAMES = new Set(["node_modules", "dist", "dist-browser"]);
-// provider-assets is written by the build itself (install-copilot-assets.mjs,
-// the last step of build:typescript) from a lockfile-pinned package. Counting
-// it as an input made the first build in every fresh checkout see its inputs
-// change while it ran, so that build never recorded a stamp.
+// Ignore local provider assets left by older installations.
 const RUNNER_SKIPPED_DIRECTORIES = new Set([
   `${RUNNER_PACKAGE_RELATIVE}/runner/target`,
   `${RUNNER_PACKAGE_RELATIVE}/provider-assets`,

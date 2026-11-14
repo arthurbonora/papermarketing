@@ -76,19 +76,6 @@ it("does not report a connection when runtime readiness passes but provider auth
     "claude_hello_probe_failed",
   ]);
 });
-it("probes native Grok credentials with the pinned prerequisite in the selected sandbox", async () => {
-  testEnvironment.mockResolvedValueOnce(ready).mockResolvedValueOnce({ ...ready,
-    checks: [{ code: "grok_hello_probe_passed", level: "info", message: "Hello" }],
-  });
-  const result = await testAgentSetup({ ...input, providerAdapter: "grok_local",
-    adapterConfig: { provider: "acpx", acpxAgent: "grok", model: "grok-4.7" },
-  });
-  expect(testEnvironment).toHaveBeenLastCalledWith("company-1", "grok_local", {
-    agentId: "agent-1", environmentId: "sandbox-1", runner: "legacy",
-    adapterConfig: { provider: "acpx", acpxAgent: "grok", model: "grok-4.7", engine: "cli", command: "/opt/paperclip/providers/grok/1.0.13/grok" },
-  });
-  expect(result.checks.some((check) => check.code === "grok_hello_probe_passed")).toBe(true);
-});
 it("accepts verified native API authentication without requiring a Legacy CLI", async () => {
   testEnvironment.mockResolvedValue({ ...ready, checks: [
     { code: "acpx_runtime_ready", level: "info", message: "Runtime verified" },

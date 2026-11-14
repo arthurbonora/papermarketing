@@ -12,35 +12,12 @@ import { CREDENTIAL_NAMES, type MatrixExecution } from "./types.js";
 
 export const installedCliKeys = ["PAPERCLIP_RUNNER_E2E_INSTALLED_CLI", "PAPERCLIP_RUNNER_E2E_INSTALLED_CLI_SHA256", "PAPERCLIP_RUNNER_E2E_INSTALLED_SERVER_ROOT", "PAPERCLIP_RUNNER_E2E_INSTALLED_SERVER_SHA256"] as const;
 const overrideKeys = ["PAPERCLIP_RUNNER_BINARY", "PAPERCLIP_RUNNER_REMOTE_BINARY_PATH", "PAPERCLIP_RUNNER_REMOTE_PROVIDER_PACK_PATH", "PAPERCLIP_RUNNER_ACPX_QUALIFICATION", "PAPERCLIP_ACPX_BUILTIN_ROOT", "PAPERCLIP_ACPX_PROVIDER_PACKAGE_ROOT", "PAPERCLIP_ACPX_PROVIDER_PACKAGE_MANIFEST"] as const;
-const suites = new Set(["extended-harnesses", "pi-native", "pi-controls", "rich-acp-warm-continuity"]);
 const installedCodexCells = new Set([
   "first-task.runner-codex.local.task-card-accept",
   "everyday-workflows.runner-codex.local.build-revise",
   "agent-chat.runner-codex.local.continuity-restart",
   "everyday-workflows.runner-codex.daytona.recover-controller",
   "daytona-restart-continuity.runner-codex.daytona.recover-controller",
-]);
-const installedCopilotCells = new Set([
-  "copilot-protection.runner-acpx-copilot.daytona.attached-async-settlement",
-  "copilot-protection.runner-acpx-copilot.daytona.native-permission-deny-write",
-  "copilot-protection.runner-acpx-copilot.local.attached-async-settlement",
-  "copilot-protection.runner-acpx-copilot.local.native-permission-deny-write",
-  "copilot-provider-death.runner-acpx-copilot.daytona.pending-permission-provider-death",
-  "copilot-provider-death.runner-acpx-copilot.local.pending-permission-provider-death",
-  "extended-harnesses.runner-acpx-copilot.daytona.file-edit-validate",
-  "extended-harnesses.runner-acpx-copilot.daytona.hello-complete",
-  "extended-harnesses.runner-acpx-copilot.daytona.plan-approve-complete",
-  "extended-harnesses.runner-acpx-copilot.daytona.question-resume-complete",
-  "extended-harnesses.runner-acpx-copilot.daytona.structured-question-restart-resume",
-  "extended-harnesses.runner-acpx-copilot.local.file-edit-validate",
-  "extended-harnesses.runner-acpx-copilot.local.hello-complete",
-  "extended-harnesses.runner-acpx-copilot.local.plan-approve-complete",
-  "extended-harnesses.runner-acpx-copilot.local.question-resume-complete",
-  "extended-harnesses.runner-acpx-copilot.local.structured-question-restart-resume",
-  "native-active-stop.runner-acpx-copilot.daytona.pending-permission-stop",
-  "native-active-stop.runner-acpx-copilot.local.pending-permission-stop",
-  "rich-acp-warm-continuity.runner-acpx-copilot.daytona.warm-three-turn",
-  "rich-acp-warm-continuity.runner-acpx-copilot.local.warm-three-turn",
 ]);
 export function usesInstalledCli(env: NodeJS.ProcessEnv): boolean {
   return installedCliKeys.some(key => env[key] !== undefined);
@@ -49,10 +26,8 @@ export function assertInstalledCliSelection(env: NodeJS.ProcessEnv, executions: 
   if (!usesInstalledCli(env)) return;
   if (!installedCliKeys.every(key => Boolean(env[key])) || executions.length === 0 || executions.some(e => !(
     admitsInstalledChat(e) ||
-    (e.profile.id === "runner-acpx-pi" && e.profile.qualificationCandidate === "pi" && e.suite.manualOnly && suites.has(e.suite.id)) ||
-    (e.profile.id === "runner-codex" && e.profile.provider === "codex" && installedCodexCells.has(e.id)) ||
-    (e.profile.id === "runner-acpx-copilot" && e.profile.qualificationCandidate === "copilot" && e.suite.manualOnly && installedCopilotCells.has(e.id))
-  ))) throw new Error("Installed CLI proof requires complete pins and explicit supported Pi, Codex, or Copilot cases");
+    (e.profile.id === "runner-codex" && e.profile.provider === "codex" && installedCodexCells.has(e.id))
+  ))) throw new Error("Installed CLI proof requires complete pins and explicit supported Codex or chat cases");
   for (const key of overrideKeys) if (env[key] !== undefined) throw new Error(`Installed CLI proof forbids ${key}`);
   if (env.NODE_OPTIONS !== undefined || env.NODE_PATH !== undefined) throw new Error("Installed CLI proof forbids ambient Node injection");
 }
@@ -194,6 +169,6 @@ export async function probeInstalledCodexStartup(input: {
 /** This prep lane cannot create agents or read the normal local credential file. */
 export function assertInstalledStartupOnly(env: NodeJS.ProcessEnv, executions: readonly MatrixExecution[], options: { ids: string[]; maxParallel: number; maxAutomaticRetries: number; headed: boolean; ui: boolean; debug: boolean; list: boolean; matrixJson: boolean }) {
   assertInstalledCliSelection(env, executions);
-  if (!usesInstalledCli(env) || executions.length !== 1 || executions[0]?.id !== "extended-harnesses.runner-acpx-pi.local.hello-complete" || options.ids.length !== 1 || options.ids[0] !== executions[0]?.id || options.maxParallel !== 1 || options.maxAutomaticRetries !== 0 || options.headed || options.ui || options.debug || options.list || options.matrixJson) throw new Error("Installed startup-only requires one explicit local Pi hello, no retries or interactive mode");
+  if (!usesInstalledCli(env) || executions.length !== 1 || executions[0]?.id !== "first-task.runner-codex.local.task-card-accept" || options.ids.length !== 1 || options.ids[0] !== executions[0]?.id || options.maxParallel !== 1 || options.maxAutomaticRetries !== 0 || options.headed || options.ui || options.debug || options.list || options.matrixJson) throw new Error("Installed startup-only requires one explicit local Codex task-card case, no retries or interactive mode");
   if (CREDENTIAL_NAMES.some(key => env[key] !== undefined) || Object.keys(env).some(key => /^(?:OPENAI|ANTHROPIC|OPENROUTER|DAYTONA|XAI|GROK|CURSOR|COPILOT|GITHUB|GH)(?:_|$)/.test(key) && env[key] !== undefined)) throw new Error("Installed startup-only forbids provider credential inputs");
 }

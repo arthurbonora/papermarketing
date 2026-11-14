@@ -1,9 +1,7 @@
 import { codexLocalReasoningEffortsForModel, isCodexLocalFastModeSupported, isCodexLocalKnownModel } from "@paperclipai/adapter-codex-local";
 import { claudeLocalReasoningEffortsForModel } from "@paperclipai/adapter-claude-local";
 import { resolvePaperclipRunnerModel } from "@paperclipai/adapter-utils";
-import { DEFAULT_GROK_LOCAL_MODEL, grokLocalReasoningEffortsForModel } from "@paperclipai/adapter-grok-local";
-import { DEFAULT_KIMI_LOCAL_MODEL, modelSupportsEffort, KIMI_SUPPORTED_EFFORTS } from "@paperclipai/adapter-kimi-local";
-import { aiConnectionBindingSchema, aiRuntimeConnectionBindingSchema, agentHarnessType, type Agent, type IssueAssigneeAdapterOverrides } from "@paperclipai/shared";
+import { aiConnectionBindingSchema, aiRuntimeConnectionBindingSchema, agentHarnessType, isRemovedAgentHarness, type Agent, type IssueAssigneeAdapterOverrides } from "@paperclipai/shared";
 
 export interface ComposerRunSettings {
   model: string | null;
@@ -18,12 +16,12 @@ export const EFFORT_LABELS: Record<string, string> = {
 };
 
 const MODEL_ADAPTERS = new Set([
-  "claude_local", "codex_local", "opencode_local", "pi_local", "kimi_local",
-  "gemini_local", "cursor", "cursor_cloud", "grok_local", "hermes_local", "paperclip_runner",
+  "claude_local", "codex_local", "opencode_local", "cursor_cloud", "hermes_local", "paperclip_runner",
 ]);
 
 export function supportsComposerModel(agent: Agent | undefined): boolean {
   return Boolean(agent && MODEL_ADAPTERS.has(agent.adapterType)
+    && !isRemovedAgentHarness(agent.adapterType, agent.adapterConfig)
     && !(agent.adapterType === "paperclip_runner" && agent.adapterConfig.provider === "muse"));
 }
 
@@ -33,6 +31,7 @@ export function composerDefaultModel(agent: Agent | undefined): string {
   const config = agent.adapterConfig;
   const configured = typeof config.model === "string" ? config.model.trim() : "";
   if (configured) return configured;
+  if (isRemovedAgentHarness(agent.adapterType, config)) return "";
   if (agent.adapterType === "claude_local") {
     const env = config.env && typeof config.env === "object" && !Array.isArray(config.env)
       ? config.env as Record<string, unknown> : {};
@@ -40,14 +39,10 @@ export function composerDefaultModel(agent: Agent | undefined): string {
     // Bedrock/Vertex. Without an explicit agent setting, the default is unknown.
     return typeof env.ANTHROPIC_MODEL === "string" ? env.ANTHROPIC_MODEL.trim() : "";
   }
-  if (agent.adapterType === "grok_local") return DEFAULT_GROK_LOCAL_MODEL;
-  if (agent.adapterType === "kimi_local") return DEFAULT_KIMI_LOCAL_MODEL;
   if (agent.adapterType === "paperclip_runner") {
     const provider = composerCatalogProvider(agent);
     if (provider === "codex" || provider === "opencode") return resolvePaperclipRunnerModel(provider, config.model);
-    if (provider === "acpx" && config.acpxAgent === "grok") return "grok-4.7";
-    if (provider === "acpx" && config.acpxAgent === "kimi") return "";
-    if (provider === "acpx" && config.acpxAgent !== "grok") return resolvePaperclipRunnerModel(provider, config.model);
+    if (provider === "acpx") return resolvePaperclipRunnerModel(provider, config.model);
   }
   return "";
 }
@@ -63,9 +58,8 @@ export function composerCatalogProvider(agent: Agent | undefined): string | unde
 }
 
 export function composerEfforts(agent: Agent | undefined, model: string, catalogIds: readonly string[]): readonly string[] {
-  if (!agent) return [];
-  const effectiveModel = model.trim() || (agent.adapterType === "grok_local" ? DEFAULT_GROK_LOCAL_MODEL
-    : agent.adapterType === "kimi_local" ? DEFAULT_KIMI_LOCAL_MODEL : "");
+  if (!agent || isRemovedAgentHarness(agent.adapterType, agent.adapterConfig)) return [];
+  const effectiveModel = model.trim();
   if (!effectiveModel) return [];
   const pool = aiRuntimeConnectionBindingSchema.safeParse(agent.runtimeConfig?.aiConnection).data?.mode === "router";
   if (pool && agent.adapterType === "paperclip_runner") return isCodexLocalKnownModel(effectiveModel) ? codexLocalReasoningEffortsForModel(effectiveModel) : /^claude-/.test(effectiveModel) ? claudeLocalReasoningEffortsForModel(effectiveModel) : [];
@@ -74,10 +68,6 @@ export function composerEfforts(agent: Agent | undefined, model: string, catalog
   }
   if (!catalogIds.includes(effectiveModel)) return [];
   if (agentHarnessType(agent.adapterType, agent.adapterConfig) === "claude_local") return claudeLocalReasoningEffortsForModel(effectiveModel);
-  if (agentHarnessType(agent.adapterType, agent.adapterConfig) === "grok_local") return grokLocalReasoningEffortsForModel(effectiveModel);
-  if (agent.adapterType === "pi_local") return ["off", "minimal", "low", "medium", "high", "xhigh"];
-  if (agent.adapterType === "kimi_local" && typeof agent.adapterConfig.engine === "string"
-    && agent.adapterConfig.engine.trim().toLowerCase() === "cli" && modelSupportsEffort(effectiveModel)) return KIMI_SUPPORTED_EFFORTS;
   return [];
 }
 

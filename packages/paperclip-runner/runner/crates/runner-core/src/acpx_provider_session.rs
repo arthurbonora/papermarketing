@@ -121,6 +121,11 @@ pub struct AcpxProviderSessionConfig {
 
 impl AcpxProviderSessionConfig {
     pub fn validate(&self) -> Result<(), LocalRunnerError> {
+        if !matches!(self.agent.as_str(), "claude" | "codex") {
+            return Err(LocalRunnerError::invalid(
+                "ACPX agent is no longer supported",
+            ));
+        }
         self.transport.validate()?;
         let profile = acpx_release_profile(&self.agent).ok_or_else(|| {
             LocalRunnerError::invalid("ACPX agent must name a known immutable profile")
@@ -2167,7 +2172,7 @@ mod mode_tests {
                 request_timeout: Duration::from_secs(1),
                 shutdown_grace: Duration::from_millis(100),
             },
-            agent: "cursor".to_owned(),
+            agent: "codex".to_owned(),
             model: "explicit-model".to_owned(),
             run_id: "run-1".to_owned(),
             catalog_revision: 1,
@@ -2394,7 +2399,7 @@ mod mode_tests {
         }
     }
     #[test]
-    fn pending_profile_cannot_launch_even_with_explicit_policy() {
+    fn retired_profile_cannot_launch_even_with_explicit_policy() {
         let mut config = config();
         config.agent = "antigravity".to_owned();
         config.pi_thinking_level = None;
@@ -2402,63 +2407,14 @@ mod mode_tests {
             .validate()
             .unwrap_err()
             .to_string()
-            .contains("qualification is pending"));
-    }
-
-    #[test]
-    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-    fn candidate_admission_is_bound_and_carried_through_both_bootstrap_requests() {
-        let mut cfg = config();
-        assert!(initialize_params(&cfg).get("candidateAdmission").is_none());
-        assert!(session_open_params(&cfg, &[])
-            .get("candidateAdmission")
-            .is_none());
-        cfg.agent = "antigravity".to_owned();
-        cfg.mode = None;
-        let admission = crate::acpx_candidate_admission::test_admission(
-            &cfg.run_id,
-            &cfg.normalized_session_id,
-        );
-        cfg.candidate_admission = Some(admission.clone());
-        cfg.validate().unwrap();
-        assert_eq!(
-            initialize_params(&cfg)["candidateAdmission"],
-            json!(admission)
-        );
-        assert_eq!(
-            session_open_params(&cfg, &[])["candidateAdmission"],
-            json!(admission)
-        );
-        for (field, value) in [
-            ("run", "different-run"),
-            ("session", "different-session"),
-            ("model", "different-model"),
-            ("agent", "codex"),
-        ] {
-            let mut invalid = cfg.clone();
-            match field {
-                "run" => invalid.run_id = value.to_owned(),
-                "session" => invalid.normalized_session_id = value.to_owned(),
-                "model" => invalid.model = value.to_owned(),
-                "agent" => invalid.agent = value.to_owned(),
-                _ => unreachable!(),
-            }
-            assert!(invalid.validate().is_err(), "{field}");
-        }
-        cfg.candidate_admission.as_mut().unwrap().expires_at = 0;
-        assert!(cfg.validate().is_err());
+            .contains("ACPX agent is no longer supported"));
     }
 
     #[test]
     fn model_is_explicit_and_provider_verified_for_every_agent() {
         let mut config = config();
-        for agent in ["claude", "codex", "pi", "grok", "cursor", "copilot"] {
+        for agent in ["claude", "codex"] {
             config.agent = agent.to_owned();
-            config.pi_thinking_level = if agent == "pi" {
-                Some(PiThinkingLevel::Low)
-            } else {
-                None
-            };
             config.model = "custom/model[context=272k,reasoning=medium]".to_owned();
             config.validate().unwrap();
             assert_eq!(
@@ -2481,7 +2437,7 @@ mod mode_tests {
         let mut config = config();
         // Generic transport accepts ids beyond Cursor's vocabulary and leaves
         // capability checks and native translation to the provider adapter.
-        for agent in ["cursor", "copilot"] {
+        for agent in ["claude", "codex"] {
             config.agent = agent.to_owned();
             for mode in [
                 None,
@@ -2541,7 +2497,6 @@ mod mode_tests {
                 assert!(verify_open_response(&changed, 100, &config).is_err());
             }
         }
-        config.agent = "copilot".to_owned();
         config.mode = None;
         assert!(session_open_params(&config, &[]).get("mode").is_none());
         let mut other = identity();
@@ -2606,41 +2561,7 @@ mod mode_tests {
         cfg.validate().unwrap();
     }
     #[test]
-    fn grok_search_policy_is_grok_only_and_preserves_false_in_the_sidecar() {
-        let mut cfg = config();
-        cfg.agent = "grok".to_owned();
-        for disabled in [true, false] {
-            cfg.grok_disable_web_search = Some(disabled);
-            cfg.validate().unwrap();
-            assert_eq!(
-                session_open_params(&cfg, &[])["grokDisableWebSearch"],
-                json!(disabled)
-            );
-        }
-        cfg.agent = "codex".to_owned();
-        assert!(cfg.validate().is_err());
-    }
-
-    #[test]
-    fn grok_effort_is_explicit_grok_only_and_forwarded_without_clamping() {
-        let mut cfg = config();
-        cfg.agent = "grok".to_owned();
-        for effort in ["minimal", "low", "medium", "high", "xhigh"] {
-            cfg.grok_effort = Some(effort.to_owned());
-            cfg.validate().unwrap();
-            assert_eq!(session_open_params(&cfg, &[])["grokEffort"], json!(effort));
-        }
-        cfg.grok_effort = Some("ultra".to_owned());
-        assert!(cfg.validate().is_err());
-        cfg.grok_effort = Some("high".to_owned());
-        cfg.agent = "codex".to_owned();
-        assert!(cfg.validate().is_err());
-        cfg.grok_effort = None;
-        cfg.validate().unwrap();
-    }
-
-    #[test]
-    fn pi_thinking_level_is_closed_explicit_and_pi_only() {
+    fn historical_pi_thinking_level_decodes_but_cannot_launch() {
         for (name, level) in [
             ("off", PiThinkingLevel::Off),
             ("low", PiThinkingLevel::Low),
@@ -2665,7 +2586,7 @@ mod mode_tests {
             assert!(serde_json::from_value::<PiThinkingLevel>(value).is_err());
         }
         let mut config = pi_config();
-        config.validate().unwrap();
+        assert!(config.validate().is_err());
         config.pi_thinking_level = None;
         assert!(config.validate().is_err());
         config = self::config();
@@ -2731,26 +2652,5 @@ mod mode_tests {
             &non_pi
         )
         .is_err());
-    }
-
-    #[test]
-    fn pi_thinking_reopen_and_suspend_reject_missing_or_changed_mode() {
-        let mut config = pi_config();
-        let identity = pi_identity(&config);
-        config.expected_identity = Some(identity.clone());
-        config.validate().unwrap();
-        for level in [None, Some(PiThinkingLevel::High)] {
-            let mut old = identity.clone();
-            old.pi_thinking_level = level;
-            config.expected_identity = Some(old.clone());
-            assert!(config.validate().is_err());
-            assert!(
-                verify_suspend_response(&json!({"suspended":true,"identity":old}), &identity)
-                    .is_err()
-            );
-        }
-        config.expected_identity = Some(identity.clone());
-        config.pi_thinking_level = Some(PiThinkingLevel::High);
-        assert!(config.validate().is_err());
     }
 }

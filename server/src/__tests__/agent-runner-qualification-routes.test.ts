@@ -58,8 +58,8 @@ describe.skipIf(!support.supported)("agent-scoped runner qualification", () => {
   });
   const qualify = () => request(app).post(`/api/agents/${agentId}/qualify-runner`).send({ expectedEnvironmentId: environmentId });
 
-  it.each(["claude_local", "grok_local"])("allows the company owner to qualify %s without instance admin and keeps the generic probe restricted", async adapterType => {
-    await db.update(agents).set({ adapterType }).where(eq(agents.id, agentId));
+  it("allows the company owner to qualify Claude without instance admin and keeps the generic probe restricted", async () => {
+    await db.update(agents).set({ adapterType: "claude_local" }).where(eq(agents.id, agentId));
     const before = await db.select().from(agents).where(eq(agents.id, agentId));
     const res = await qualify();
     expect(res.status).toBe(200);

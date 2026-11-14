@@ -162,7 +162,7 @@ async function shadowLauncher(dotenv: string, host?: { platform: NodeJS.Platform
   return { root, repository, output, launch };
 }
 
-it("rejects unsupported local Kimi provider loss before the actual launcher reads dotenv or creates resources", async () => {
+it("rejects a removed Kimi case before the actual launcher reads dotenv or creates resources", async () => {
   const f = await shadowLauncher("KIMI_API_KEY=synthetic-never-read\n", { platform: "linux", arch: "x64" });
   const probe = path.join(f.root, "deny-dotenv-read.mjs"), marker = path.join(f.root, "dotenv-read-attempted");
   await writeFile(probe, `import fs from "node:fs";
@@ -181,8 +181,7 @@ syncBuiltinESMExports();
     NODE_OPTIONS: `--import=${probe}`, TEST_DOTENV_PATH: path.join(f.repository, ".env.runner-e2e.local"), TEST_DOTENV_MARKER: marker,
   });
   expect(result.code).toBe(1);
-  expect(result.stderr).toContain("Local native Kimi provider-loss");
-  expect(result.stderr).toContain("No provider credentials were loaded or sent");
+  expect(result.stderr).toContain("Unknown execution id");
   expect(result.stderr).not.toContain("forbidden dotenv credential read");
   await expect(stat(marker)).rejects.toMatchObject({ code: "ENOENT" });
   await expect(stat(f.output)).rejects.toMatchObject({ code: "ENOENT" });
@@ -191,27 +190,25 @@ syncBuiltinESMExports();
 
 it("uses the actual dotenv output root before a normal native campaign fails credential admission", async () => {
   const f = await shadowLauncher("export PAPERCLIP_RUNNER_E2E_RESULTS_ROOT='OUTPUT_ROOT'\n");
-  const result = await f.launch(["--id", "kimi-qualification.runner-acpx-kimi.local.message-marker"]);
+  const result = await f.launch(["--id", "first-task.runner-codex.local.task-card-accept"]);
   expect(result.code).toBe(1);
-  expect(result.stderr).toContain("Missing runner E2E credentials: KIMI_API_KEY");
+  expect(result.stderr).toContain("Missing runner E2E credentials: OPENAI_API_KEY");
   expect((await stat(path.join(f.output, "dotenv-probe"))).isDirectory()).toBe(true);
   await expect(stat(path.join(f.repository, "tests/runner-e2e/results"))).rejects.toMatchObject({ code: "ENOENT" });
 });
 
-it.each(["list", "pending", "installed-startup"])("does not load dotenv in the %s admission path", async mode => {
+it.each(["list", "installed-startup"])("does not load dotenv in the %s admission path", async mode => {
   const f = await shadowLauncher("invalid dotenv assignment\n");
-  const pending = runnerMatrix.find(row => row.profile.id === "legacy-kimi-cli")!;
-  const args = mode === "list" ? ["--list", "--id", "kimi-qualification.runner-acpx-kimi.local.message-marker"]
-    : mode === "pending" ? ["--id", pending.id]
-    : ["--installed-startup-only", "--id", "extended-harnesses.runner-acpx-pi.local.hello-complete", "--max-automatic-retries", "0"];
+  const args = mode === "list" ? ["--list", "--id", "first-task.runner-codex.local.task-card-accept"]
+    : ["--installed-startup-only", "--id", "first-task.runner-codex.local.task-card-accept", "--max-automatic-retries", "0"];
   const result = await f.launch(args);
   expect(result.stderr).not.toContain("Invalid .env.runner-e2e.local");
   if (mode === "list") {
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain("kimi-qualification.runner-acpx-kimi.local.message-marker");
+    expect(result.stdout).toContain("first-task.runner-codex.local.task-card-accept");
   } else {
     expect(result.code).toBe(1);
-    expect(result.stderr).toContain(mode === "pending" ? "prerequisite(s) are pending" : "Installed startup-only requires");
+    expect(result.stderr).toContain("Installed startup-only requires");
   }
   await expect(stat(f.output)).rejects.toMatchObject({ code: "ENOENT" });
 });
@@ -232,13 +229,13 @@ it.each([
 ] as const)("actual launcher keeps verified private custody over %s %s output settings", async (origin, kind) => {
   const setting = kind === "invalid" ? "relative-invalid-root" : "OUTPUT_ROOT";
   const f = await shadowLauncher(origin === "dotenv" ? `${RUNNER_E2E_RESULTS_ROOT}='${setting}'\n` : "");
-  const executionId = "kimi-qualification.runner-acpx-kimi.local.message-marker";
+  const executionId = "first-task.runner-codex.local.task-card-accept";
   const custody = await verifiedPrivateLaunch(f, executionId);
   const environment = { ...custody.environment,
     ...(origin === "process" ? { [RUNNER_E2E_RESULTS_ROOT]: kind === "invalid" ? setting : f.output } : {}) };
   const result = await f.launch(["--id", executionId], environment);
   expect(result.code).toBe(1);
-  expect(result.stderr).toContain("Missing runner E2E credentials: KIMI_API_KEY");
+  expect(result.stderr).toContain("Missing runner E2E credentials: OPENAI_API_KEY");
   expect(result.stderr).not.toContain("requires a normalized absolute directory");
   expect((await stat(path.join(custody.privateRoot, "results/dotenv-probe"))).isDirectory()).toBe(true);
   expect(result.stderr).toContain("Private evidence finalization failed; no public fallback");
@@ -248,7 +245,7 @@ it.each([
 
 it("actual launcher rejects foreign private custody before reading dotenv or creating fallback output", async () => {
   const f = await shadowLauncher("invalid dotenv assignment\n");
-  const executionId = "kimi-qualification.runner-acpx-kimi.local.message-marker";
+  const executionId = "first-task.runner-codex.local.task-card-accept";
   const custody = await verifiedPrivateLaunch(f, executionId);
   const result = await f.launch(["--id", executionId], { ...custody.environment, GITHUB_RUN_ID: "124" });
   expect(result.code).toBe(1);

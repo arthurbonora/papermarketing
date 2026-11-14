@@ -37,11 +37,15 @@ export const QUALIFIED_ACPX_PROFILES: Readonly<
   Record<QualifiedAcpxAgent, AcpxReleaseProfile>
 > = deepFreeze(QUALIFIED_ACPX_PROFILE_DATA);
 
+export function isSupportedAcpxAgent(agent: unknown): agent is "claude" | "codex" {
+  return agent === "claude" || agent === "codex";
+}
+
 /** Release admission uses canonical build metadata, never a caller's snapshot. */
 export function assertAcpxProfileReleased(agent: QualifiedAcpxAgent): void {
-  if (QUALIFIED_ACPX_PROFILES[agent].qualificationStatus === "pending") {
-    throw Object.assign(new Error(`ACPX ${agent} qualification is pending; this build cannot launch the provider.`),
-      { code: "ACPX_PROFILE_QUALIFICATION_PENDING", retryable: false });
+  if (!isSupportedAcpxAgent(agent)) {
+    throw Object.assign(new Error(`ACPX agent ${agent} is no longer supported.`),
+      { code: "agent_harness_removed", retryable: false });
   }
 }
 

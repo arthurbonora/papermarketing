@@ -686,10 +686,10 @@ describe("native ACPX execution closure", () => {
     }
   }, 15_000);
 
-  it("expires a real ACPX permission on native child death without replaying its mutation", async () => {
+  it("aborts a pending Codex ACPX permission when the native child exits", async () => {
     // This is a deterministic ACP peer in a verified native distribution. No
     // provider credential, remote service or model is involved.
-    const declaration = await fixture({ node: true, script: blockingCopilotPeer });
+    const declaration = await fixture({ node: true, script: blockingCodexPeer });
     const fences = await Promise.all([listen(), listen()]);
     const fds = fences.map(server => (server as Server & { _handle?: { fd?: number } })._handle!.fd!);
     const installation = await verifyNativeAcpxInstallation(declaration);
@@ -700,7 +700,7 @@ describe("native ACPX execution closure", () => {
     try {
       port = await openCodexAcpxRuntime({
         command: owner.command, refreshConsumedCommand: owner.refreshConsumedCommand,
-        profile: resolveQualifiedAcpxProfile("copilot", "gpt-5.6-luna"),
+        profile: resolveQualifiedAcpxProfile("codex", "gpt-5.6-luna"),
         cwd: declaration.distributionRoot, stateDirectory: join(declaration.distributionRoot, "state"),
         providerSessionKey: "native-death-fixture", permissionMode: "approve-reads",
         permissionPolicy: { autoApprove: ["read"], escalate: ["write"], defaultAction: "escalate" },
@@ -717,9 +717,11 @@ describe("native ACPX execution closure", () => {
         return new Promise<{ outcome: "allow_once" }>(resolve => { lateAnswer = resolve; });
       });
       const turn = port.startTurn({ text: "Attempt one edit", requestId: "native-death-turn", onPermissionRequest: handler });
-      const settled = expect(turn.result).rejects.toMatchObject({ code: "ACPX_PROVIDER_PROCESS_LOST" });
-      const draining = expect((async () => { for await (const _event of turn.events) { /* drain */ } })())
-        .rejects.toMatchObject({ code: "ACPX_PROVIDER_PROCESS_LOST" });
+      const settled = expect(turn.result).resolves.toMatchObject({
+        status: "failed",
+        error: { code: "RUNTIME", detailCode: "AGENT_DISCONNECTED" },
+      });
+      const draining = (async () => { for await (const _event of turn.events) { /* drain */ } })();
       const bounded = new Promise<never>((_, reject) => {
         deadline = setTimeout(() => reject(new Error("Real native ACPX death remained unsettled")), 5_000);
       });
@@ -730,7 +732,8 @@ describe("native ACPX execution closure", () => {
       await Promise.race([Promise.all([settled, draining]), bounded]);
       expect(callbackSignal.aborted).toBe(true);
       lateAnswer({ outcome: "allow_once" });
-      expect(() => port!.startTurn({ text: "Replay", requestId: "replay" })).toThrow("provider exited");
+      await port.close({ reason: "offline native-death fixture complete" });
+      port = undefined;
       expect(handler).toHaveBeenCalledOnce();
       expect(() => process.kill(nativePid, 0)).toThrow();
     } finally {
@@ -742,14 +745,14 @@ describe("native ACPX execution closure", () => {
   }, 15_000);
 });
 
-const blockingCopilotPeer = String.raw`
+const blockingCodexPeer = String.raw`
 const send=m=>process.stdout.write(JSON.stringify({jsonrpc:'2.0',...m})+'\n');
 require('node:fs').writeFileSync(process.env.NATIVE_TEST_PID_FILE,String(process.pid));
 const mode='https://agentclientprotocol.com/protocol/session-modes#agent';
 const config=[{id:'mode',name:'Mode',type:'select',currentValue:mode,options:[{value:mode,name:'Agent'}]},
  {id:'allow_all',name:'Allow all',type:'select',currentValue:'off',options:[{value:'off',name:'Off'}]},
  {id:'model',name:'Model',type:'select',currentValue:'gpt-5.6-luna',options:[{value:'gpt-5.6-luna',name:'Luna'}]}];
-const snapshot={sessionId:'copilot-death-session',modes:{currentModeId:mode,availableModes:[{id:mode,name:'Agent'}]},configOptions:config,
+const snapshot={sessionId:'codex-death-session',modes:{currentModeId:mode,availableModes:[{id:mode,name:'Agent'}]},configOptions:config,
  models:{currentModelId:'gpt-5.6-luna',availableModels:[{modelId:'gpt-5.6-luna',name:'Luna'}]}};
 require('node:readline').createInterface({input:process.stdin}).on('line',line=>{
  const m=JSON.parse(line);
@@ -757,7 +760,7 @@ require('node:readline').createInterface({input:process.stdin}).on('line',line=>
  else if(['session/new','session/load'].includes(m.method))send({id:m.id,result:snapshot});
  else if(m.method==='session/set_model'||m.method==='session/close')send({id:m.id,result:{}});
  else if(m.method==='session/set_config_option')send({id:m.id,result:{configOptions:config}});
- else if(m.method==='session/prompt')send({id:'pending-edit',method:'session/request_permission',params:{sessionId:'copilot-death-session',
+ else if(m.method==='session/prompt')send({id:'pending-edit',method:'session/request_permission',params:{sessionId:'codex-death-session',
   toolCall:{toolCallId:'native-edit',title:'Write file',kind:'edit',status:'pending',rawInput:{path:'target.txt',content:'FORBIDDEN'}},
   options:[{optionId:'allow',name:'Allow',kind:'allow_once'},{optionId:'deny',name:'Deny',kind:'reject_once'}]}});
 });`;

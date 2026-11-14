@@ -5,8 +5,7 @@ import {
   CodexAcpxDriver,
   type CodexAcpxDriverOptions,
 } from "../drivers/acpx/codex-acpx-driver.js";
-import { resolveQualifiedAcpxProfile } from "../drivers/acpx/qualified-profiles.js";
-import { ACPX_CAPABILITY_PROFILES } from "../drivers/acpx/capability-profiles.js";
+import { assertAcpxProfileReleased, resolveQualifiedAcpxProfile } from "../drivers/acpx/qualified-profiles.js";
 import { HarnessDriverBackend } from "./harness-driver-backend.js";
 import {
   nativeSystemInstructions,
@@ -32,6 +31,7 @@ export function createAcpxNativeSessionBackend(
   if (input.provider.kind !== "acpx") {
     throw new Error("ACPX backend requires provider kind acpx");
   }
+  assertAcpxProfileReleased(input.provider.agent);
   const qualifiedProfile = resolveQualifiedAcpxProfile(
     input.provider.agent,
     input.provider.model,
@@ -55,9 +55,6 @@ export function createAcpxNativeSessionBackend(
     }
   }
 
-  if (ACPX_CAPABILITY_PROFILES[input.provider.agent].qualification !== "qualified") {
-    throw new Error("ACPX candidate direct execution requires completed qualification; use the host-controlled runnerd evaluation path");
-  }
 
   resolvePiThinkingLevel(input.provider.agent, input.provider.piThinkingLevel);
   const constraints = nativeTaskConstraints(input);

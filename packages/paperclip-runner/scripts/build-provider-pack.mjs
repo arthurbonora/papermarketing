@@ -20,16 +20,16 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { parseProviderPackArguments, materializeCandidateProviderPack, providerPackProviders, providerPackManifestFields } from "./candidate-provider-pack.mjs";
-import { smokeKimiProviderPack } from "./kimi-provider-pack-smoke.mjs";
 import { buildNodeStartupTimeout } from "./build-node-startup-timeout.mjs";
-import { writePortableExecutableShim, writePortableCopilotShims } from "./provider-pack-executable-shims.mjs";
+import { writePortableExecutableShim } from "./provider-pack-executable-shims.mjs";
 import { providerPackLibc, removeControllerArtifactsFromProviderPack, removeForeignLibcPackagesFromProviderPack } from "./provider-pack-runtime-tree.mjs";
 import { packContractDigest } from "./contracts/contract-fingerprints.mjs";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workspaceRoot = resolve(packageRoot, "../..");
-const { output: outputArgument, candidates } = parseProviderPackArguments(process.argv.slice(2));
+const args = process.argv.slice(2).filter(value => value !== "--");
+if (args.length > 1 || args[0]?.startsWith("--")) throw new Error("Invalid provider-pack arguments");
+const [outputArgument] = args;
 const outputRoot = resolve(
   process.cwd(),
   outputArgument ?? join(packageRoot, "provider-pack"),
@@ -176,18 +176,6 @@ try {
     throw new Error("Provider pack Node is not portable after relocation; build with a standalone Node distribution");
   }
 
-  const candidateProviders = {};
-  for (const provider of providerPackProviders(process.platform, process.arch, candidates)) {
-    const assetPath = `provider-assets/${provider}/${process.platform}-${process.arch}`;
-    const metadata = await materializeCandidateProviderPack({ provider, outputRoot: join(temporaryRoot, assetPath) });
-    if (typeof metadata?.version !== "string" || !metadata.version || metadata.version.length > 120
-      || !/^sha256:[a-f0-9]{64}$/.test(metadata.profileDigest)
-      || !/^sha256:[a-f0-9]{64}$/.test(metadata.closureDigest)) throw new Error("Candidate builder omitted its pinned identity");
-    candidateProviders[provider] = { version: metadata.version, profileDigest: metadata.profileDigest,
-      closureDigest: metadata.closureDigest, qualification: ["pi", "cursor", "copilot"].includes(provider) || provider === "kimi" && profiles.profiles.kimi.qualificationStatus !== "pending" ? "qualified" : "pending", path: assetPath,
-      sha256: sha256Tree(join(temporaryRoot, assetPath)) };
-  }
-
   // pnpm's generated .bin shims embed the temporary deployment directory in
   // NODE_PATH. That makes an otherwise identical provider pack hash differ on
   // every build and leaks a nonexistent host path after relocation. Replace
@@ -213,9 +201,7 @@ try {
   );
   writePortableExecutableShim(temporaryRoot, "node", "node/bin/node");
   writePortableExecutableShim(temporaryRoot, "opencode", "opencode-ai/bin/opencode.exe");
-  writePortableCopilotShims(temporaryRoot);
   writePortableNodeShim("acpx", "acpx/dist/cli.js");
-  writePortableNodeShim("paperclip-runner-copilot-metadata-probe", "../dist/cli/copilot-metadata-probe.js");
   writePortableNodeShim(
     "claude-agent-acp",
     "@agentclientprotocol/claude-agent-acp/dist/index.js",
@@ -324,7 +310,6 @@ try {
       codex: profiles.profiles.codex.agentRuntimeVersion,
       opencode: "1.18.34",
       acpx: profiles.acpxVersion,
-      grok: profiles.profiles.grok.agentRuntimeVersion,
       claudeAcp: profiles.profiles.claude.agentServerVersion,
       codexAcp: profiles.profiles.codex.agentServerVersion,
     },
@@ -339,18 +324,12 @@ try {
       .update(distDigest)
       .digest("hex")}`,
     acpxProfileDigests: {
-      grok: profiles.profiles.grok.commandDigest,
       claude:
         profiles.profiles.claude.commandDigest,
       codex:
         profiles.profiles.codex.commandDigest,
     },
-    ...providerPackManifestFields(candidateProviders, candidates),
     artifacts: {
-      grokLauncher: {
-        path: "dist/providers/grok/launcher.cjs",
-        sha256: sha256File(join(temporaryRoot, "dist/providers/grok/launcher.cjs")),
-      },
       nodeCommand: {
         path: nodeCommand,
         sha256: sha256File(join(temporaryRoot, nodeCommand)),
@@ -386,11 +365,6 @@ try {
     `${JSON.stringify(manifest, null, 2)}\n`,
     { mode: 0o600 },
   );
-
-  if (payload.providers?.kimi && profiles.profiles.kimi.qualificationStatus !== "pending") {
-    const smoke = await smokeKimiProviderPack(temporaryRoot);
-    process.stdout.write(`${JSON.stringify(smoke)}\n`);
-  }
 
   rmSync(outputRoot, { recursive: true, force: true });
   renameSync(temporaryRoot, outputRoot);

@@ -11,8 +11,6 @@ export type ConnectionEntry = "agent" | "apps";
 export const connectionHarnesses = [
   { id: "claude", adapter: "claude_local", provider: "anthropic", label: "Claude", key: "ANTHROPIC_API_KEY", native: true },
   { id: "codex", adapter: "codex_local", provider: "openai", label: "OpenAI", key: "OPENAI_API_KEY", native: true },
-  { id: "grok", adapter: "grok_local", provider: "xai", label: "Grok", key: "XAI_API_KEY", native: true },
-  { id: "gemini", adapter: "gemini_local", provider: "google", label: "Google", key: "GEMINI_API_KEY", native: false },
   { id: "opencode", adapter: "opencode_local", provider: "openrouter", label: "OpenRouter", key: "OPENROUTER_API_KEY", native: true },
   { id: "hermes", adapter: "hermes_local", provider: "openrouter", label: "OpenRouter", key: "OPENROUTER_API_KEY", native: false },
 ] as const;
@@ -20,15 +18,12 @@ export type ConnectionHarness = typeof connectionHarnesses[number];
 
 /** Inventory entries remain visible even when no live journey can be selected. */
 export const connectionScopeGaps = [
-  { adapter: "cursor", status: "unsupported", reason: "No managed connection flow; qualify the harness-specific login separately." },
-  { adapter: "kimi_local", status: "unsupported", reason: "No managed connection flow; harness-specific credentials remain outside this suite." },
-  { adapter: "pi_local", status: "unsupported", reason: "No managed connection flow or qualified model source." },
   { adapter: "openclaw_gateway", status: "excluded", reason: "Remote gateway owns provider configuration." },
   { adapter: "hermes_gateway", status: "excluded", reason: "Remote gateway owns provider configuration." },
   { adapter: "cursor_cloud", status: "excluded", reason: "Remote integration owns provider configuration." },
   { adapter: "process", status: "excluded", reason: "External process owns provider configuration." },
   { adapter: "http", status: "excluded", reason: "Remote integration owns provider configuration." },
-  { adapter: "acpx_local", status: "excluded", reason: "Generic legacy integration; native Claude/Grok ACPX profiles remain covered." },
+  { adapter: "acpx_local", status: "excluded", reason: "Generic legacy integration; native Claude ACPX profiles remain covered." },
   { adapter: "claude_managed", status: "excluded", reason: "Managed remote integration owns credentials." },
   { adapter: "aws_agentcore", status: "excluded", reason: "Remote integration owns credentials." },
 ] as const;
@@ -56,7 +51,7 @@ export function connectionCell(execution: MatrixExecution) {
 
 export function buildConnectionSuite(profiles: readonly RunnerProfileFixture[], environments: readonly EnvironmentFixture[]): RunnerSuiteFixture {
   const selectedProfiles = connectionHarnesses.flatMap(h => (["legacy", ...(h.native ? ["native"] : [])] as Array<"legacy" | "native">).map(generation => {
-    const existing = profiles.find(p => p.generation === generation && (p.adapterType === h.adapter || (generation === "native" && p.id === (h.id === "claude" || h.id === "grok" ? `runner-acpx-${h.id}` : `runner-${h.id}`))));
+    const existing = profiles.find(p => p.generation === generation && (p.adapterType === h.adapter || (generation === "native" && p.id === (h.id === "claude" ? `runner-acpx-${h.id}` : `runner-${h.id}`))));
     const id = `connection-${h.id}-${generation}`;
     return {
       id, label: `${h.label} ${generation}`, generation, groups: [generation], adapterType: generation === "native" ? "paperclip_runner" : h.adapter,
@@ -64,7 +59,7 @@ export function buildConnectionSuite(profiles: readonly RunnerProfileFixture[], 
       modelQualification: existing?.modelQualification ?? { source: "candidate_runner_profile", qualificationId: "operator-configured-model" },
       credential: h.key,
       supportedEnvironments: ["local", "daytona"], expectedRuntimeMode: generation,
-      expectedRuntimeMetadata: { adapterType: generation === "native" ? "paperclip_runner" : h.adapter, provider: generation === "native" && ["claude", "grok"].includes(h.id) ? "acpx" : h.id },
+      expectedRuntimeMetadata: { adapterType: generation === "native" ? "paperclip_runner" : h.adapter, provider: generation === "native" && h.id === "claude" ? "acpx" : h.id },
       buildAgent: () => ({ name: id, role: "qa", adapterType: generation === "native" ? "paperclip_runner" : h.adapter, adapterConfig: {}, runtimeConfig: {} }),
     } satisfies RunnerProfileFixture;
   }));

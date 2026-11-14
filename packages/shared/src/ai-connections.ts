@@ -82,11 +82,11 @@ export const AI_CONNECTION_CAPABILITIES: Record<
 > = {
   github: {
     name: "GitHub Copilot",
-    methods: { api_key: { adapters: ["copilot_runtime"], envKey: "COPILOT_GITHUB_TOKEN" } },
+    methods: { api_key: { adapters: [], envKey: "COPILOT_GITHUB_TOKEN" } },
   },
   google: { name: "Google", methods: {
-    api_key: { adapters: ["gemini_local", "pi_local", "antigravity_runtime"], envKey: "GEMINI_API_KEY" },
-    subscription: { adapters: ["antigravity_runtime"], envKey: "GEMINI_HOME" },
+    api_key: { adapters: [], envKey: "GEMINI_API_KEY" },
+    subscription: { adapters: [], envKey: "GEMINI_HOME" },
   } },
   anthropic: {
     name: "Claude",
@@ -95,27 +95,27 @@ export const AI_CONNECTION_CAPABILITIES: Record<
         adapters: ["claude_local"],
         envKey: "CLAUDE_CODE_OAUTH_TOKEN",
       },
-      api_key: { adapters: ["claude_local", "pi_local"], envKey: "ANTHROPIC_API_KEY" },
+      api_key: { adapters: ["claude_local"], envKey: "ANTHROPIC_API_KEY" },
     },
   },
   openai: {
     name: "OpenAI",
     methods: {
       subscription: { adapters: ["codex_local"], envKey: "CODEX_HOME" },
-      api_key: { adapters: ["codex_local", "pi_local"], envKey: "OPENAI_API_KEY" },
+      api_key: { adapters: ["codex_local"], envKey: "OPENAI_API_KEY" },
     },
   },
   openrouter: {
     name: "OpenRouter",
     methods: {
-      api_key: { adapters: ["opencode_local", "pi_local"], envKey: "OPENROUTER_API_KEY" },
+      api_key: { adapters: ["opencode_local"], envKey: "OPENROUTER_API_KEY" },
     },
   },
   xai: {
     name: "Grok",
     methods: {
-      subscription: { adapters: ["grok_local"], envKey: "GROK_HOME" },
-      api_key: { adapters: ["grok_local"], envKey: "XAI_API_KEY" },
+      subscription: { adapters: [], envKey: "GROK_HOME" },
+      api_key: { adapters: [], envKey: "XAI_API_KEY" },
     },
   },
 };
@@ -127,19 +127,11 @@ export function isAiConnectionCompatible(
   acpxAgent?: unknown,
 ): boolean {
   adapterType = aiRoutingHarness(adapterType, runnerProvider, acpxAgent);
-  // Antigravity uses its own Google runtime sign-in or a Gemini API key.
-  // Tool OAuth and API-compatible endpoints cannot authenticate this harness.
-  if (adapterType === "antigravity_runtime") return requirement.provider === "google"
-    && (requirement.method === "api_key" || requirement.method === "subscription")
-    && !("routing" in requirement && requirement.routing);
   if ("routing" in requirement && requirement.routing) return requirement.method === "api_key" && isAiRoutingCompatible(requirement.routing, adapterType);
   // A fixed binding contains identity only. The service checks authoritative
   // connection metadata before resolving credentials or running the harness.
-  if (adapterType === "pi_local") return (requirement.method === "api_key" || ("mode" in requirement && requirement.mode === "responsible_user"))
-    && ["openrouter", "openai", "anthropic", "google"].includes(requirement.provider)
-    && typeof model === "string" && model.startsWith(`${requirement.provider}/`);
   if ("mode" in requirement && requirement.mode !== "responsible_user" && requirement.method === "api_key")
-    return ["claude_local", "codex_local", "opencode_local", "hermes_local", "gemini_local", "grok_local", "copilot_runtime"].includes(adapterType);
+    return ["claude_local", "codex_local", "opencode_local", "hermes_local"].includes(adapterType);
   const methods = AI_CONNECTION_CAPABILITIES[requirement.provider].methods;
   const candidates = "mode" in requirement && requirement.mode === "responsible_user"
     ? Object.values(methods)

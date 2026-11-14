@@ -99,7 +99,7 @@ interface CreatedAgentKey {
 }
 
 interface SkillsInstallSummary {
-  tool: "codex" | "claude" | "kimi";
+  tool: "codex" | "claude";
   target: string;
   linked: string[];
   removed: string[];
@@ -121,16 +121,10 @@ function claudeSkillsHome(): string {
   return path.join(base, "skills");
 }
 
-function kimiSkillsHome(): string {
-  const fromEnv = process.env.KIMI_CODE_HOME?.trim();
-  const base = fromEnv && fromEnv.length > 0 ? fromEnv : path.join(os.homedir(), ".kimi-code");
-  return path.join(base, "skills");
-}
-
 async function installSkillsForTarget(
   sourceSkillsDir: string,
   targetSkillsDir: string,
-  tool: "codex" | "claude" | "kimi",
+  tool: "codex" | "claude",
 ): Promise<SkillsInstallSummary> {
   const summary: SkillsInstallSummary = {
     tool,
@@ -839,7 +833,7 @@ export function registerAgentCommands(program: Command): void {
       .option("--key-name <name>", "API key label", "local-cli")
       .option(
         "--no-install-skills",
-        "Skip installing PaperMarketing skills into ~/.codex/skills, ~/.claude/skills, and ~/.kimi-code/skills",
+        "Skip installing PaperMarketing skills into ~/.codex/skills and ~/.claude/skills",
       )
       .action(async (agentRef: string, opts: AgentLocalCliOptions) => {
         try {
@@ -871,7 +865,6 @@ export function registerAgentCommands(program: Command): void {
             installSummaries.push(
               await installSkillsForTarget(skillsDir, codexSkillsHome(), "codex"),
               await installSkillsForTarget(skillsDir, claudeSkillsHome(), "claude"),
-              await installSkillsForTarget(skillsDir, kimiSkillsHome(), "kimi"),
             );
           }
 

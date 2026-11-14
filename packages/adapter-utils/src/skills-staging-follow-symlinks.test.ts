@@ -84,12 +84,7 @@ async function findSkillsStagingSites(): Promise<Map<string, boolean[]>> {
 const EXPECTED_SKILLS_STAGING_SITES: Record<string, boolean> = {
   "claude-local/src/server/acp.ts": false,
   "claude-local/src/server/execute.ts": true,
-  "cursor-local/src/server/execute.ts": true,
-  "gemini-local/src/server/acp.ts": true,
-  "gemini-local/src/server/execute.ts": true,
-  "kimi-local/src/server/execute.ts": true,
   "opencode-local/src/server/execute.ts": true,
-  "pi-local/src/server/execute.ts": true,
 };
 
 describe("remote skills staging sites (real source scan)", () => {

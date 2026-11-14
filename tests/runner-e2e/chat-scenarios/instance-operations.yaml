@@ -72,12 +72,10 @@ scenarios:
     capabilities:
       - instance-operations/runtime-setup
     context: >-
-      The operator owns a published installation that lacks its release-matched Pi runtime
-      assets.
+      An operator asks if a retired provider can be installed on this PaperMarketing release.
     query: >-
-      Install the Pi runtime this Paperclip release needs.
+      Install the Pi runtime this PaperMarketing release needs.
     expected_outcome: >-
-      The supported operator runtime path uses verified release-matched assets for the intended
-      installation and checks runtime readiness. The agent does not fetch an arbitrary latest
-      binary or read another operator's private cache. A package download alone is not treated
-      as a qualified running agent.
+      The agent identifies Pi as removed and explains that a supported harness can be selected
+      for current agents. The agent does not install a runtime or claim that a retired harness
+      can run.

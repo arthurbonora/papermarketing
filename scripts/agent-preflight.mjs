@@ -185,12 +185,6 @@ function runnerDistKey(digest, toolchain) {
   return makeKey("runner-dist", { digest, toolchain });
 }
 
-// Copilot assets live outside dist, and the build installs them after compiling.
-// The installer is idempotent, so a skipped or restored build runs it too.
-function installCopilotAssets(packageRoot) {
-  exec(process.execPath, ["scripts/install-copilot-assets.mjs"], packageRoot);
-}
-
 function stampRestoredBuild(root, packageRoot, inputs, entryKey) {
   const outputs = collectBuildOutputFiles(packageRoot);
   const recordedAt = new Date().toISOString();
@@ -211,7 +205,6 @@ function runnerBuildStep(root, cache, toolchain) {
   const keyFile = path.join(stateDirectory(root), "runner-build.json");
   const record = readJson(keyFile);
   if (assessment.current && record?.key === key && record.recordedAt === assessment.stamp.recordedAt) {
-    installCopilotAssets(packageRoot);
     return { step: "runner-build", action: "skipped", reason: assessment.detail };
   }
   rmSync(keyFile, { force: true });
@@ -231,7 +224,6 @@ function runnerBuildStep(root, cache, toolchain) {
     const changed = cloned && findChangedBuildOutput(packageRoot, entry.meta.outputs ?? []);
     const missing = expectedBuildOutputs(packageRoot).filter(file => !existsSync(file));
     if (cloned && !changed && missing.length === 0 && computeBuildInputsDigest(root).digest === inputs.digest) {
-      installCopilotAssets(packageRoot);
       writeJson(keyFile, { key, recordedAt: stampRestoredBuild(root, packageRoot, inputs, key) });
       return { step: "runner-build", action: "restored", seconds: (Date.now() - started) / 1000 };
     }

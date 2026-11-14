@@ -11,17 +11,17 @@ import {
 } from "./bootstrap-npm-package.mjs";
 
 test("parseArgs recognizes the publish flag", () => {
-  assert.deepEqual(parseArgs(["@paperclipai/adapter-kimi-local", "--publish"]), {
+  assert.deepEqual(parseArgs(["@paperclipai/adapter-example-local", "--publish"]), {
     help: false,
-    packageName: "@paperclipai/adapter-kimi-local",
+    packageName: "@paperclipai/adapter-example-local",
     publish: true,
   });
 });
 
 test("parseArgs defaults to a dry run", () => {
-  assert.deepEqual(parseArgs(["@paperclipai/adapter-kimi-local"]), {
+  assert.deepEqual(parseArgs(["@paperclipai/adapter-example-local"]), {
     help: false,
-    packageName: "@paperclipai/adapter-kimi-local",
+    packageName: "@paperclipai/adapter-example-local",
     publish: false,
   });
 });
@@ -36,21 +36,21 @@ test("parseArgs rejects unknown options", () => {
 });
 
 test("validatePackageName accepts @paperclipai scoped names", () => {
-  validatePackageName("@paperclipai/adapter-kimi-local");
+  validatePackageName("@paperclipai/adapter-example-local");
   validatePackageName("@paperclipai/plugin-workspace-diff");
 });
 
 test("validatePackageName rejects names outside the @paperclipai scope", () => {
   assert.throws(() => validatePackageName("left-pad"), /@paperclipai scope/);
-  assert.throws(() => validatePackageName("@evil/adapter-kimi-local"), /@paperclipai scope/);
+  assert.throws(() => validatePackageName("@evil/adapter-example-local"), /@paperclipai scope/);
   assert.throws(() => validatePackageName("@paperclipai/UPPER"), /@paperclipai scope/);
 });
 
 test("buildPlaceholderFiles produces a publishable manifest at the placeholder version", () => {
-  const files = buildPlaceholderFiles("@paperclipai/adapter-kimi-local");
+  const files = buildPlaceholderFiles("@paperclipai/adapter-example-local");
   const manifest = JSON.parse(files["package.json"]);
 
-  assert.equal(manifest.name, "@paperclipai/adapter-kimi-local");
+  assert.equal(manifest.name, "@paperclipai/adapter-example-local");
   assert.equal(manifest.version, PLACEHOLDER_VERSION);
   assert.equal(manifest.publishConfig.access, "public");
   assert.deepEqual(manifest.files, ["index.js"]);
@@ -58,7 +58,7 @@ test("buildPlaceholderFiles produces a publishable manifest at the placeholder v
 });
 
 test("buildPlaceholderFiles entry point throws with a pointer to the repo", () => {
-  const files = buildPlaceholderFiles("@paperclipai/adapter-kimi-local");
+  const files = buildPlaceholderFiles("@paperclipai/adapter-example-local");
 
   assert.match(files["index.js"], /^throw new Error\(/);
   assert.match(files["index.js"], /placeholder/);
@@ -69,7 +69,7 @@ test("buildPlaceholderFiles entry point throws with a pointer to the repo", () =
 });
 
 test("buildPlaceholderFiles README explains the placeholder", () => {
-  const files = buildPlaceholderFiles("@paperclipai/adapter-kimi-local");
+  const files = buildPlaceholderFiles("@paperclipai/adapter-example-local");
   assert.match(files["README.md"], /placeholder publish/);
   assert.match(files["README.md"], /release-bootstrap CI gate/);
 });

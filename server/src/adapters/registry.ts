@@ -1,9 +1,8 @@
 import { pluginRunnerAiConnectionRequiredTestResult } from "../services/plugin-runner-ai-connection.js";
-import { HttpError } from "../errors.js";
 import type { AdapterRuntimeCommandSpec, ServerAdapterModule } from "./types.js";
 import { parseAdapterModelsEnv } from "../services/adapter-models-env.js";
 import { validateAiApiKey } from "../services/ai-api-key-test.js";
-import type { AdapterEnvironmentTestResult } from "@paperclipai/shared";
+import { isRemovedAgentHarness, type AdapterEnvironmentTestResult } from "@paperclipai/shared";
 import { stampClaudeAgentIdHeader } from "./claude-agent-id-header.js";
 import {
   buildSandboxNpmInstallCommand,
@@ -47,59 +46,12 @@ import {
   models as codexModels,
 } from "@paperclipai/adapter-codex-local";
 import {
-  execute as cursorExecute,
-  listCursorSkills,
-  syncCursorSkills,
-  testEnvironment as cursorTestEnvironment,
-  sessionCodec as cursorSessionCodec,
-} from "@paperclipai/adapter-cursor-local/server";
-import {
-  agentConfigurationDoc as cursorAgentConfigurationDoc,
-  models as cursorModels,
-} from "@paperclipai/adapter-cursor-local";
-import {
   execute as cursorCloudExecute,
   getConfigSchema as getCursorCloudConfigSchema,
   sessionCodec as cursorCloudSessionCodec,
   testEnvironment as cursorCloudTestEnvironment,
 } from "@paperclipai/adapter-cursor-cloud/server";
 import { agentConfigurationDoc as cursorCloudAgentConfigurationDoc } from "@paperclipai/adapter-cursor-cloud";
-import {
-  execute as geminiExecute,
-  listGeminiSkills,
-  syncGeminiSkills,
-  testEnvironment as geminiTestEnvironment,
-  sessionCodec as geminiSessionCodec,
-  getConfigSchema as getGeminiConfigSchema,
-} from "@paperclipai/adapter-gemini-local/server";
-import {
-  agentConfigurationDoc as geminiAgentConfigurationDoc,
-  models as geminiModels,
-} from "@paperclipai/adapter-gemini-local";
-import {
-  execute as grokExecute,
-  listGrokSkills,
-  syncGrokSkills,
-  testEnvironment as grokTestEnvironment,
-  sessionCodec as grokSessionCodec,
-  GROK_DEVICE_LOGIN_COMMAND,
-  parseGrokDeviceLoginPrompt,
-} from "@paperclipai/adapter-grok-local/server";
-import {
-  agentConfigurationDoc as grokAgentConfigurationDoc,
-  models as grokModels,
-} from "@paperclipai/adapter-grok-local";
-import {
-  execute as kimiExecute,
-  listKimiSkills,
-  syncKimiSkills,
-  testEnvironment as kimiTestEnvironment,
-  sessionCodec as kimiSessionCodec,
-} from "@paperclipai/adapter-kimi-local/server";
-import {
-  agentConfigurationDoc as kimiAgentConfigurationDoc,
-  models as kimiModels,
-} from "@paperclipai/adapter-kimi-local";
 import {
   createHermesGatewayServerAdapter,
   createHermesLocalServerAdapter,
@@ -125,16 +77,6 @@ import {
   models as openclawGatewayModels,
 } from "@paperclipai/adapter-openclaw-gateway";
 import { listCodexModels, refreshCodexModels } from "./codex-models.js";
-import { listCursorModels } from "./cursor-models.js";
-import {
-  execute as piExecute,
-  listPiSkills,
-  syncPiSkills,
-  testEnvironment as piTestEnvironment,
-  sessionCodec as piSessionCodec,
-  listPiModels,
-} from "@paperclipai/adapter-pi-local/server";
-import { agentConfigurationDoc as piAgentConfigurationDoc } from "@paperclipai/adapter-pi-local";
 import { BUILTIN_ADAPTER_TYPES } from "./builtin-adapter-types.js";
 import { buildExternalAdapters } from "./plugin-loader.js";
 import { isCloudManagedInstance } from "../services/cloud-instance.js";
@@ -155,10 +97,9 @@ async function verifyNativeAcpxApiKey(
   result: AdapterEnvironmentTestResult,
 ): Promise<AdapterEnvironmentTestResult> {
   const env = config.env as Record<string, unknown> | undefined;
-  const account = config.acpxAgent === "claude" ? { provider: "anthropic" as const, name: "Anthropic", key: "ANTHROPIC_API_KEY",
-    routing: ["ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"] }
-    : config.acpxAgent === "grok" ? { provider: "xai" as const, name: "xAI", key: "XAI_API_KEY", routing: ["XAI_BASE_URL", "GROK_BASE_URL"] } : null;
-  if (!account || !env || typeof env[account.key] !== "string" || !env[account.key]
+  const account = { provider: "anthropic" as const, name: "Anthropic", key: "ANTHROPIC_API_KEY",
+    routing: ["ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"] };
+  if (!env || typeof env[account.key] !== "string" || !env[account.key]
     || config.managedAiRouting || config.managedAiConnection || account.routing.some(key => env[key])) return result;
   try {
     await validateAiApiKey(account.provider, env[account.key] as string);
@@ -203,15 +144,6 @@ function buildNpmRuntimeCommandSpec(
     installCommand: canSelfInstall
       ? `if ! command -v ${shellQuote(command)} >/dev/null 2>&1; then ${installLine}; fi`
       : null,
-  };
-}
-
-function buildCursorRuntimeCommandSpec(config: Record<string, unknown>): AdapterRuntimeCommandSpec {
-  const command = readConfiguredCommand(config, "agent");
-  return {
-    command,
-    detectCommand: command,
-    installCommand: null,
   };
 }
 
@@ -262,24 +194,6 @@ const codexLoginCapability: AdapterLoginCapability = {
   getCommand: () => CODEX_DEVICE_LOGIN_COMMAND,
   parsePrompt: (output) => {
     const prompt = parseDeviceLoginPrompt(output);
-    return prompt ? { url: prompt.url, code: prompt.code } : null;
-  },
-};
-
-// The Grok interactive login capability. Grok runs `grok login --device-auth`
-// on a real pseudo-terminal, the same way Codex does. The flow shows a
-// one-time code that the user enters in the browser. The caller sets the
-// host-side timeout. The device-login flow writes its credential inside the
-// sandbox, so the capability declares no terminal credential capture and no
-// completion claim. `getCommand` is descriptive only: the login path selects
-// the real command from the closed key map in `login-command.ts`, never from
-// this member.
-const grokLoginCapability: AdapterLoginCapability = {
-  panelMode: "displayed_code",
-  timeoutPolicy: "caller_bounded",
-  getCommand: () => GROK_DEVICE_LOGIN_COMMAND,
-  parsePrompt: (output) => {
-    const prompt = parseGrokDeviceLoginPrompt(output);
     return prompt ? { url: prompt.url, code: prompt.code } : null;
   },
 };
@@ -482,42 +396,9 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
       return { adapterType: "paperclip_runner", status: "warn" as const, testedAt: new Date().toISOString(),
         checks: [{ code: "dot_event_test_required", level: "warn" as const, message: "Dot manages its model and billing. Validate the dedicated agent binding and event round trip in PaperMarketing; this read-only check does not wake the Dot." }] };
     }
-    if (profile.provider === "acpx") {
+    if (profile.provider === "acpx" && profile.acpxAgent === "claude") {
       try {
-        if (profile.acpxAgent === "antigravity") {
-          const { testAntigravityConnection } = await import("../services/antigravity-connection-probe.js");
-          return await testAntigravityConnection(context, profile.model);
-        }
-        if (profile.acpxAgent === "copilot") {
-          const configured = context.config.env;
-          const token = configured && typeof configured === "object" && !Array.isArray(configured)
-            ? (configured as Record<string, unknown>).COPILOT_GITHUB_TOKEN : undefined;
-          if (typeof token !== "string" || !token) {
-            return { adapterType: "paperclip_runner", status: "fail" as const, testedAt: new Date().toISOString(),
-              checks: [{ code: "COPILOT_AUTH_REQUIRED", level: "error" as const, message: "Select a saved Copilot token connection." }] };
-          }
-          const { probeCopilotExecutionTarget } = await import("../services/copilot-connection-probe.js");
-          await probeCopilotExecutionTarget(token, context.executionTarget, profile.model);
-          return { adapterType: "paperclip_runner", status: "pass" as const, testedAt: new Date().toISOString(),
-            checks: [{ code: "copilot_metadata_verified", level: "info" as const,
-              message: "The verified Copilot runtime authenticated this account and accepted the selected model. No model prompt was sent." }] };
-        }
-        if (profile.acpxAgent !== "claude" && profile.acpxAgent !== "grok" && profile.acpxAgent !== "cursor" && profile.acpxAgent !== "pi" && profile.acpxAgent !== "kimi") throw new Error("Select Codex to use the native Codex runner.");
-        if (profile.acpxAgent === "kimi") {
-          const environment = context.config.env as Record<string, unknown> | undefined;
-          if (typeof environment?.KIMI_API_KEY !== "string" || !environment.KIMI_API_KEY.trim()) {
-            return { adapterType: "paperclip_runner", status: "fail" as const, testedAt: new Date().toISOString(),
-              checks: [{ code: "KIMI_AUTH_REQUIRED", level: "error" as const, message: "Bind a company secret to KIMI_API_KEY in the agent environment." }] };
-          }
-        }
         const target = context.executionTarget;
-        if (profile.acpxAgent === "kimi") {
-          const { probeKimiExecutionTarget } = await import("../services/kimi-connection-probe.js");
-          await probeKimiExecutionTarget((context.config.env as Record<string, string>).KIMI_API_KEY, target, profile.model, { companyId: context.companyId });
-          return { adapterType: "paperclip_runner", status: "pass" as const, testedAt: new Date().toISOString(),
-            checks: [{ code: "kimi_metadata_verified", level: "info" as const,
-              message: "The selected environment verified the pinned Kimi Code runtime. Its Code model catalog accepted the credential and lists the exact selected model. No model prompt was sent." }] };
-        }
         if (target?.kind === "remote") {
           const probe = await runAdapterExecutionTargetShellCommand(
             `acpx-platform-${crypto.randomUUID()}`, target, "uname -s && uname -m",
@@ -525,8 +406,8 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
           );
           if (probe.timedOut || probe.exitCode !== 0) throw new Error("Could not verify the remote ACPX runner platform.");
           const [os, arch] = probe.stdout.trim().split(/\s+/);
-          if (!((os === "Linux" && (arch === "x86_64" || (profile.acpxAgent === "claude" && ["aarch64", "arm64"].includes(arch)))) || (os === "Darwin" && (arch === "arm64" || (!["grok"].includes(profile.acpxAgent) && arch === "x86_64"))))) {
-            throw new Error(`ACPX ${profile.acpxAgent} requires a qualified Linux ${profile.acpxAgent === "claude" ? "x64/ARM64" : "x64"} or macOS architecture.`);
+          if (!((os === "Linux" && (arch === "x86_64" || ["aarch64", "arm64"].includes(arch))) || (os === "Darwin" && (arch === "arm64" || arch === "x86_64")))) {
+            throw new Error(`ACPX ${profile.acpxAgent} requires a qualified Linux x64/ARM64 or macOS architecture.`);
           }
           return verifyNativeAcpxApiKey(context.config, {
             adapterType: "paperclip_runner", status: "warn" as const, testedAt: new Date().toISOString(),
@@ -534,8 +415,8 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
               message: "The remote platform is supported. Runtime package integrity and readiness must still be verified by the remote runner before launch." }],
           });
         }
-        const { probeAcpxClaudeInstallation, probeAcpxGrokInstallation, probeAcpxCursorInstallation, probeAcpxPiInstallation } = await import("../vendor/paperclip-runner/live/index.js");
-        await (profile.acpxAgent === "pi" ? probeAcpxPiInstallation : profile.acpxAgent === "grok" ? probeAcpxGrokInstallation : profile.acpxAgent === "cursor" ? probeAcpxCursorInstallation : probeAcpxClaudeInstallation)(profile.model);
+        const { probeAcpxClaudeInstallation } = await import("../vendor/paperclip-runner/live/index.js");
+        await probeAcpxClaudeInstallation(profile.model);
         return verifyNativeAcpxApiKey(context.config, {
           adapterType: "paperclip_runner", status: "pass" as const, testedAt: new Date().toISOString(),
           checks: [{ code: "acpx_runtime_ready", level: "info" as const, message: `ACPX ${profile.acpxAgent} runtime is installed and verified. Model access is checked when it runs.` }],
@@ -544,18 +425,6 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         // The selected managed credential home must outlive an uncertain
         // native retirement. Its caller retains writeback until proof arrives.
         if (error instanceof NativeEnvironmentProbeCleanupError) throw error;
-        if (profile.acpxAgent === "antigravity") {
-          const { antigravityConnectionProbeFailure } = await import("../services/antigravity-connection-probe.js");
-          return antigravityConnectionProbeFailure(context.companyId, error);
-        }
-        if (profile.acpxAgent === "copilot") {
-          const details = error instanceof HttpError && error.details && typeof error.details === "object" && !Array.isArray(error.details)
-            ? error.details as Record<string, unknown> : {};
-          const codes = ["COPILOT_AUTH_REQUIRED", "COPILOT_ENTITLEMENT_DENIED", "COPILOT_MODEL_UNAVAILABLE", "COPILOT_INSTALLATION_INVALID", "COPILOT_REQUEST_FAILED"];
-          const code = typeof details.code === "string" && codes.includes(details.code) ? details.code : "COPILOT_REQUEST_FAILED";
-          return { adapterType: "paperclip_runner", status: "fail" as const, testedAt: new Date().toISOString(),
-            checks: [{ code, level: "error" as const, message: error instanceof HttpError ? error.message : "Copilot metadata verification failed." }] };
-        }
         return {
           adapterType: "paperclip_runner", status: "fail" as const, testedAt: new Date().toISOString(),
           checks: [{
@@ -644,7 +513,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         )
       : buildNpmRuntimeCommandSpec(config, "codex", "@openai/codex@0.160.0"),
   agentConfigurationDoc:
-    "# PaperMarketing Runner\n\nAdapter: paperclip_runner\n\nRuns Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX Claude/Grok Build/Cursor/Pi through the Rust PaperMarketing runner and authenticated PRP transport. Pi accepts an explicit provider/model ID and uses the company credentials bound to the agent environment. GitHub Copilot requires a saved GitHub token and an explicitly selected available model. Managed providers use company-scoped qualified profiles, explicit retention acknowledgement, and spend limits. A board operator creates each Claude Managed (Anthropic managed agent) profile through POST /api/companies/{companyId}/managed-agent-profiles; agent credentials cannot create, qualify or list one.\n",
+    "# PaperMarketing Runner\n\nAdapter: paperclip_runner\n\nRuns Codex, OpenCode, Claude Managed, AWS AgentCore, or ACPX Claude/Codex through the Rust PaperMarketing runner and authenticated PRP transport. Managed providers use company-scoped qualified profiles, explicit retention acknowledgement, and spend limits. A board operator creates each Claude Managed (Anthropic managed agent) profile through POST /api/companies/{companyId}/managed-agent-profiles; agent credentials cannot create, qualify or list one.\n",
   getConfigSchema: () => ({
     fields: [
       {
@@ -664,7 +533,7 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
       },
       {
         key: "acpxAgent", label: "ACP agent", type: "select" as const, default: "claude",
-        options: PAPERCLIP_RUNNER_ACPX_PROFILES.filter(profile => profile.qualified).map(profile => ({ value: profile.value, label: profile.label })),
+        options: PAPERCLIP_RUNNER_ACPX_PROFILES.filter(profile => profile.qualified && !isRemovedAgentHarness("paperclip_runner", { provider: "acpx", acpxAgent: profile.value })).map(profile => ({ value: profile.value, label: profile.label })),
         meta: { visibleWhen: { key: "provider", value: "acpx" } },
       },
       ...[
@@ -699,19 +568,6 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
         ),
         hint: PAPERCLIP_RUNNER_PERMISSION_CAPABILITIES.opencode.description,
         meta: { visibleWhen: { key: "provider", value: "opencode" } },
-      },
-      {
-        key: "acpxSessionMode",
-        label: "Cursor mode",
-        type: "select" as const,
-        default: "agent",
-        options: [
-          { value: "agent", label: "Agent" },
-          { value: "plan", label: "Plan" },
-          { value: "ask", label: "Ask" },
-        ],
-        hint: "Select Cursor's session mode. Permissions and company approval rules still apply.",
-        meta: { visibleWhen: { key: "acpxAgent", value: "cursor" } },
       },
       {
         key: "acpxPermissionMode",
@@ -829,26 +685,6 @@ const paperclipRunnerAdapter: ServerAdapterModule = {
   loginCapability: codexLoginCapability,
 };
 
-const cursorLocalAdapter: ServerAdapterModule = {
-  type: "cursor",
-  runtimeToolDelivery: "environment",
-  execute: cursorExecute,
-  testEnvironment: cursorTestEnvironment,
-  listSkills: listCursorSkills,
-  syncSkills: syncCursorSkills,
-  sessionCodec: cursorSessionCodec,
-  sessionManagement: getAdapterSessionManagement("cursor") ?? undefined,
-  supportsToolRefreshOnResume: true,
-  models: cursorModels,
-  listModels: listCursorModels,
-  supportsLocalAgentJwt: true,
-  supportsInstructionsBundle: true,
-  instructionsPathKey: "instructionsFilePath",
-  requiresMaterializedRuntimeSkills: true,
-  getRuntimeCommandSpec: buildCursorRuntimeCommandSpec,
-  agentConfigurationDoc: cursorAgentConfigurationDoc,
-};
-
 const cursorCloudAdapter: ServerAdapterModule = {
   type: "cursor_cloud",
   runtimeToolDelivery: "invocation_context",
@@ -863,87 +699,6 @@ const cursorCloudAdapter: ServerAdapterModule = {
   requiresMaterializedRuntimeSkills: false,
   agentConfigurationDoc: cursorCloudAgentConfigurationDoc,
   getConfigSchema: getCursorCloudConfigSchema,
-};
-
-const geminiLocalAdapter: ServerAdapterModule = {
-  type: "gemini_local",
-  runtimeToolDelivery: "environment",
-  execute: geminiExecute,
-  testEnvironment: geminiTestEnvironment,
-  acp: {
-    agentId: "gemini",
-    skillsMode: "ephemeral",
-    prerequisites: {
-      nodeRange: ">=24.11.0",
-      packages: ["@google/gemini-cli"],
-    },
-  },
-  listSkills: listGeminiSkills,
-  syncSkills: syncGeminiSkills,
-  sessionCodec: geminiSessionCodec,
-  sessionManagement: getAdapterSessionManagement("gemini_local") ?? undefined,
-  supportsToolRefreshOnResume: true,
-  models: geminiModels,
-  supportsLocalAgentJwt: true,
-  supportsInstructionsBundle: true,
-  instructionsPathKey: "instructionsFilePath",
-  requiresMaterializedRuntimeSkills: true,
-  getRuntimeCommandSpec: (config) =>
-    buildNpmRuntimeCommandSpec(config, "gemini", "@google/gemini-cli"),
-  agentConfigurationDoc: geminiAgentConfigurationDoc,
-  getConfigSchema: getGeminiConfigSchema,
-};
-
-const grokLocalAdapter: ServerAdapterModule = {
-  type: "grok_local",
-  runtimeToolDelivery: "environment",
-  execute: grokExecute,
-  testEnvironment: grokTestEnvironment,
-  listSkills: listGrokSkills,
-  syncSkills: syncGrokSkills,
-  sessionCodec: grokSessionCodec,
-  sessionManagement: getAdapterSessionManagement("grok_local") ?? undefined,
-  supportsToolRefreshOnResume: true,
-  models: grokModels,
-  supportsLocalAgentJwt: true,
-  supportsInstructionsBundle: true,
-  instructionsPathKey: "instructionsFilePath",
-  requiresMaterializedRuntimeSkills: true,
-  getRuntimeCommandSpec: (config) => ({
-    command: readConfiguredCommand(config, "grok"),
-    detectCommand: readConfiguredCommand(config, "grok"),
-    installCommand: null,
-  }),
-  agentConfigurationDoc: grokAgentConfigurationDoc,
-  loginCapability: grokLoginCapability,
-};
-
-const kimiLocalAdapter: ServerAdapterModule = {
-  type: "kimi_local",
-  runtimeToolDelivery: "environment",
-  execute: kimiExecute,
-  testEnvironment: kimiTestEnvironment,
-  acp: {
-    agentId: "kimi",
-    skillsMode: "ephemeral",
-    prerequisites: {
-      nodeRange: ">=20.0.0",
-      packages: ["@moonshot-ai/kimi-code"],
-    },
-  },
-  listSkills: listKimiSkills,
-  syncSkills: syncKimiSkills,
-  sessionCodec: kimiSessionCodec,
-  sessionManagement: getAdapterSessionManagement("kimi_local") ?? undefined,
-  supportsToolRefreshOnResume: true,
-  models: kimiModels,
-  supportsLocalAgentJwt: true,
-  supportsInstructionsBundle: true,
-  instructionsPathKey: "instructionsFilePath",
-  requiresMaterializedRuntimeSkills: true,
-  getRuntimeCommandSpec: (config) =>
-    buildNpmRuntimeCommandSpec(config, "kimi", "@moonshot-ai/kimi-code"),
-  agentConfigurationDoc: kimiAgentConfigurationDoc,
 };
 
 const hermesGatewayAdapter: ServerAdapterModule = {
@@ -988,27 +743,6 @@ const openCodeLocalAdapter: ServerAdapterModule = {
   agentConfigurationDoc: openCodeAgentConfigurationDoc,
 };
 
-const piLocalAdapter: ServerAdapterModule = {
-  type: "pi_local",
-  runtimeToolDelivery: "environment",
-  execute: piExecute,
-  testEnvironment: piTestEnvironment,
-  listSkills: listPiSkills,
-  syncSkills: syncPiSkills,
-  sessionCodec: piSessionCodec,
-  sessionManagement: getAdapterSessionManagement("pi_local") ?? undefined,
-  supportsToolRefreshOnResume: true,
-  models: [],
-  listModels: listPiModels,
-  supportsLocalAgentJwt: true,
-  supportsInstructionsBundle: true,
-  instructionsPathKey: "instructionsFilePath",
-  requiresMaterializedRuntimeSkills: true,
-  getRuntimeCommandSpec: (config) =>
-    buildNpmRuntimeCommandSpec(config, "pi", "@mariozechner/pi-coding-agent"),
-  agentConfigurationDoc: piAgentConfigurationDoc,
-};
-
 const adaptersByType = new Map<string, ServerAdapterModule>();
 
 // For builtin types that are overridden by an external adapter, we keep the
@@ -1027,12 +761,7 @@ function registerBuiltInAdapters() {
     codexLocalAdapter,
     paperclipRunnerAdapter,
     openCodeLocalAdapter,
-    piLocalAdapter,
     cursorCloudAdapter,
-    cursorLocalAdapter,
-    geminiLocalAdapter,
-    grokLocalAdapter,
-    kimiLocalAdapter,
     hermesGatewayAdapter,
     hermesLocalAdapter,
     openclawGatewayAdapter,
@@ -1094,6 +823,7 @@ const externalAdaptersReady: Promise<void> = (async () => {
   try {
     const externalAdapters = await buildExternalAdapters();
     for (const externalAdapter of externalAdapters) {
+      if (isRemovedAgentHarness(externalAdapter.type)) continue;
       const overriding = BUILTIN_ADAPTER_TYPES.has(externalAdapter.type);
       if (overriding) {
         console.log(
@@ -1127,6 +857,9 @@ export function waitForExternalAdapters(): Promise<void> {
 
 export function registerServerAdapter(adapter: ServerAdapterModule): void {
   assertExternalAdapterCodeAllowed();
+  if (isRemovedAgentHarness(adapter.type)) {
+    throw new Error("Agent harness has been removed: " + adapter.type);
+  }
   if (BUILTIN_ADAPTER_TYPES.has(adapter.type) && !builtinFallbacks.has(adapter.type)) {
     const existing = adaptersByType.get(adapter.type);
     if (existing) {
@@ -1162,6 +895,11 @@ export function requireServerAdapter(type: string): ServerAdapterModule {
 }
 
 export function getServerAdapter(type: string): ServerAdapterModule {
+  if (isRemovedAgentHarness(type)) {
+    const message = "This agent harness has been removed. Select a supported harness before retrying.";
+    return { type, async execute() { return { exitCode: 1, signal: null, timedOut: false, errorCode: "agent_harness_removed", errorMessage: message }; },
+      async testEnvironment() { return { adapterType: type, status: "fail", testedAt: new Date().toISOString(), checks: [{ code: "agent_harness_removed", level: "error", message }] }; } };
+  }
   return findActiveServerAdapter(type) ?? processAdapter;
 }
 
@@ -1197,6 +935,7 @@ function getDeclaredAdapterModels(): ReturnType<typeof parseAdapterModelsEnv> {
 }
 
 function declaredModelsForAdapter(type: string): { id: string; label: string }[] | null {
+  if (isRemovedAgentHarness(type)) return null;
   const declared = getDeclaredAdapterModels()?.[type];
   return declared?.length
     ? declared.map((model) => ({ id: model.id, label: model.label ?? model.id }))

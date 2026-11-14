@@ -1,11 +1,5 @@
 # Paperclip Daytona runner image
 
-Ordinary provider packs now include pinned Cursor assets for Linux x64; no
-`--candidate-providers=cursor` flag is needed. Cursor admission is enabled after
-the [production readiness gates](../../doc/plans/2026-10-03-cursor-production-readiness.md)
-passed. The public CLI installation command is `paperclipai runtime setup cursor`;
-it runs explicitly on the execution host and is never an npm installation hook.
-
 This image is the Paperclip Cloud fleet sandbox image plus a source-built
 `paperclip-runnerd` and immutable provider pack. The pack contains Node 24.11,
 OpenCode 1.18.34, the compiled OpenCode proxy, ACPX 0.22.0 sidecar, qualified ACP
@@ -27,13 +21,7 @@ pack. Claude Code 2.1.280 is the minimum for
 minimum for Sonnet 5.5; the pinned runtime also supports Fable 5.1. Codex
 0.160.0 ships bundled metadata for the current
 [GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna model IDs](https://learn.chatgpt.com/docs/models).
-The sandbox layer pins Grok CLI 1.0.70, Gemini CLI 0.65.0, Kimi Code 2.3.3,
-Cursor CLI 2026.10.22-27dcf5f, and GitHub CLI 2.103.3 (October 2026
-refresh). The native Cursor provider uses its separately verified distribution,
-pinned to 2026.09.26-dd393fe; it does not use the sandbox layer’s global Cursor
-executable. Grok CLI 1.0.70 supports the current
-[Grok 4.7](https://docs.x.ai/developers/grok-4-7) model family. Hermes stays
-at 0.19.0, the newest release on PyPI.
+The sandbox also includes GitHub CLI and Hermes.
 
 Keep the patched ACP bridge versions separate from their CLI runtime pins.
 Their executable digests do not change when only the runtime dependency
@@ -52,7 +40,7 @@ Set `PAPERCLIP_TEST_OPENCODE_BINARY` to the materialized Linux executable when
 qualifying an assembled provider pack.
 
 
-The fleet image is currently amd64-only because the pinned Cursor and GitHub CLI
+The fleet image is currently amd64-only because the pinned GitHub CLI
 checksums cover amd64.
 
 ```bash
@@ -138,8 +126,7 @@ preview tokens into this image. They remain per-run secret material.
 The provider-pack build pins the official Linux x64 Node 24.21.0 image by
 manifest digest. Its bundled Undici is 7.29.1, which fixes
 [GHSA-3wwx-pv8p-q78v](https://github.com/advisories/GHSA-3wwx-pv8p-q78v).
-Pi separately verifies its private Node executable and nested npm dependency;
-changing the outer interpreter does not replace either provider-owned pin.
+
 
 Provider CLI updates are manifest-only changes: repository CI owns the root
 lockfile. Resolve the complete workspace manifest graph in the build context
@@ -161,36 +148,3 @@ and verify a second resolution preserves the digest. A lockfile left by a
 filtered or incremental install can retain stale importer patch identities.
 Refresh exact runtime versions and qualification digests together; do not
 download dependencies when a task starts.
-
-## Candidate ACP qualification assets
-
-Provider branches can build their pinned assets with
-`node packages/paperclip-runner/scripts/build-provider-pack.mjs /absolute/pack --candidate-providers=cursor`
-(or `copilot` or `pi`). The source revision must include the named provider's
-builder. Assets are installed at build time under `provider-assets/<provider>/<platform>-<architecture>`.
-The pack manifest binds each complete asset tree. Runtime admission separately
-checks the provider's source-owned closure pins and copies a verified launch snapshot.
-A pack with candidate assets does not qualify or enable that provider.
-
-For an isolated Linux x64 Daytona qualification image, pass
-`--build-arg PAPERCLIP_RUNNER_CANDIDATE_PROVIDERS=cursor` with the normal build arguments.
-Compute its content ID with the same selection:
-`pnpm --silent test:e2e:runner:image-id --candidate-providers=cursor`.
-Candidate assets and the default pack have distinct image identities. Never reuse
-the default image's content ID for a candidate build.
-Use each provider branch's recorded version and explicit model. Keep credentials
-out of images. Paid qualification requires bound provider and Daytona credentials,
-inspectable spend, and the shared $100 ceiling recorded in the capability report.
-
-The pack builder tests its copied Node interpreter after relocation. Use a
-standalone Node distribution if the host interpreter depends on a package manager's
-private shared libraries. Pi additionally pins its complete portable interpreter
-and npm dependency graph.
-Refresh exact runtime versions and qualification digests together; never download
-dependencies when a task starts. Grok's additive native ACP profile keeps its
-qualified 1.0.13 executable at the verified sandbox prerequisite path. It does not replace the
-legacy adapter's `grok` command on PATH.
-
-Native Grok is an image prerequisite at `/opt/paperclip/providers/grok/1.0.13/grok`.
-Its checksum-verified provisioning is separate from the provider pack, which ships
-only the built-in launcher. Public npm installation never downloads this binary.

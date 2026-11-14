@@ -882,12 +882,12 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
         && (fixture.covers.migrationRows ?? []).includes("MIG-08")
       ) {
         const experimentalAdapterConfig = {
-          provider: "acpx",
-          acpxAgent: "grok",
-          model: "anthropic/claude-sonnet-4-6",
+          provider: "cursor_cloud",
+          model: "claude-sonnet-4-6",
+          repoUrl: "https://github.com/example/workspace",
         };
         const runtimeConfig = {
-          nativeRunner: { mode: "native", backend: "acpx_runtime", protocolVersion: 1 },
+          nativeRunner: { mode: "native", backend: "cursor_cloud_api", protocolVersion: 1 },
         };
         const enabled = options.disableLiveEntrypoint === "rollout";
         const activeResolution = resolveHeartbeatNativeRuntimeMode({
@@ -895,6 +895,7 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
             runtimeMode: "native",
             runtimeModeReason: "eligible_opt_in",
             runtimeModeResolvedAt: new Date(),
+            driverKind: "cursor_cloud_api",
           },
           enabled,
           runtimeConfig,

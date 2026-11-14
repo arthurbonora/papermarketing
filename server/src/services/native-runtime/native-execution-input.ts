@@ -1,5 +1,5 @@
 import type { PaperclipTurnContext } from "@paperclipai/adapter-utils/server-utils";
-import { resolvePaperclipRunnerCursorMode, resolvePaperclipRunnerPiThinkingLevel } from "@paperclipai/adapter-utils";
+import { isRemovedAgentHarness } from "@paperclipai/shared";
 import { createHash } from "node:crypto";
 import { buildNativeContinuationPrompt } from "./native-continuation.js";
 import {
@@ -148,8 +148,9 @@ export function buildNativeExecutionInput(input: BuildNativeExecutionInput): Nat
   if (input.issue.workMode !== "standard" && input.issue.workMode !== "planning" && input.issue.workMode !== "ask" && input.issue.workMode !== "skill_test") {
     throw new Error("native_execution_input_invalid: issue work mode must be standard, planning, ask, or skill_test");
   }
-  const mode = resolvePaperclipRunnerCursorMode(input.provider, input.acpxAgent, input.acpxSessionMode);
-  const piThinkingLevel = resolvePaperclipRunnerPiThinkingLevel(input.provider, input.acpxAgent, input.piThinkingLevel);
+  if (isRemovedAgentHarness("paperclip_runner", { provider: input.provider, acpxAgent: input.acpxAgent })) {
+    throw Object.assign(new Error("This agent harness has been removed."), { code: "agent_harness_removed" });
+  }
   const executionMode = input.executionMode
     ?? (input.issue.workMode === "planning" ? "plan" : "default");
   const acpxProfile = input.provider === "acpx"
@@ -343,8 +344,6 @@ export function buildNativeExecutionInput(input: BuildNativeExecutionInput): Nat
           agent: acpxProfile!.agent,
           model: input.model,
           permissionMode: input.acpxPermissionMode ?? "approve-all",
-          ...(mode === undefined ? {} : { mode }),
-          ...(piThinkingLevel === undefined ? {} : { piThinkingLevel }),
           ...(input.claudeEffort === undefined ? {} : { claudeEffort: input.claudeEffort }),
           ...(input.grokEffort === undefined ? {} : { grokEffort: input.grokEffort }),
           ...(input.grokDisableWebSearch === undefined ? {} : { grokDisableWebSearch: input.grokDisableWebSearch }),

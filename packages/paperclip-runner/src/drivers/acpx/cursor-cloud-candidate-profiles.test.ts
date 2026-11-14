@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { QUALIFIED_ACPX_PROFILES } from "./qualified-profiles.js";
-import { verifyCopilotInstallation } from "./copilot-installation.js";
 import { isSupportedAcpxProfileVersion } from "./profile-compatibility.js";
 
 const bytes = (name: string) => readFileSync(new URL(`../../../test/fixtures/${name}`, import.meta.url));
@@ -66,8 +65,6 @@ describe("branch-only Cursor Cloud identities from 157d4119db48eff9de040d3951755
     if (agent === "copilot") {
       const sorted = Object.fromEntries(Object.entries(identity.declaration).sort(([a], [b]) => a.localeCompare(b)));
       expect(`sha256:${createHash("sha256").update(JSON.stringify(sorted)).digest("hex")}`).toBe(identity.commandDigest);
-      await expect(verifyCopilotInstallation({ ...QUALIFIED_ACPX_PROFILES.copilot,
-        agentProfileVersion: identity.declaration.agentProfileVersion, commandDigest: identity.commandDigest })).rejects.toThrow("exact pinned");
     }
   });
 });
@@ -80,7 +77,6 @@ describe("retained Cursor Cloud core profile before semantic planning", () => {
     const identity = JSON.parse(retained.toString("utf8"));
     expect(isSupportedAcpxProfileVersion("copilot", 82)).toBe(true);
     expect(identity.commandDigest).not.toBe(QUALIFIED_ACPX_PROFILES.copilot.commandDigest);
-    await expect(verifyCopilotInstallation({ ...QUALIFIED_ACPX_PROFILES.copilot, agentProfileVersion: 82, commandDigest: identity.commandDigest })).rejects.toThrow("exact pinned");
   });
 });
 
@@ -130,8 +126,6 @@ describe("qualified branch-only identities from 0d968b005be9063b8c3806ecef5f7523
     expect(isSupportedAcpxProfileVersion(agent, identity.declaration.agentProfileVersion)).toBe(true);
     expect(identity.commandDigest).not.toBe(QUALIFIED_ACPX_PROFILES[agent].commandDigest);
     if (agent === "copilot") {
-      await expect(verifyCopilotInstallation({ ...QUALIFIED_ACPX_PROFILES.copilot,
-        agentProfileVersion: identity.declaration.agentProfileVersion, commandDigest: identity.commandDigest })).rejects.toThrow("exact pinned");
     }
   });
 });
@@ -143,6 +137,5 @@ describe("published Core041 profile history", () => {
     expect(createHash("sha256").update(retained).digest("hex")).toBe("977d68b327f3964e8337ef8ba00230eb1b1697017db21f8010f664fee3d3c70a");
     const identity = JSON.parse(retained.toString("utf8"));
     expect(isSupportedAcpxProfileVersion("copilot", 85)).toBe(true);
-    await expect(verifyCopilotInstallation({ ...QUALIFIED_ACPX_PROFILES.copilot, agentProfileVersion: 85, commandDigest: identity.commandDigest })).rejects.toThrow("exact pinned");
   });
 });

@@ -80,6 +80,7 @@ export type {
 import {
   openDaytonaLoginPtySession as openLoginPtySession,
   createDaytonaLoginHomeFs,
+  isLoginCommandKey,
 } from "./login-pty.js";
 import type {
   LoginPtySession as LoginPtyWorkerSession,
@@ -3996,6 +3997,10 @@ const plugin = definePlugin(trackDaytonaHooks({
   // raw output and the exit through `ctx.loginPty`, bound to the returned worker
   // session id. Fail closed when no cached sandbox matches the lease.
   async onLoginPtyOpen(params) {
+    const { loginCommandKey } = params;
+    if (!isLoginCommandKey(loginCommandKey)) {
+      throw new Error("Daytona login pseudo-terminal: unsupported login command key.");
+    }
     const sandbox = await sandboxHandleCache.findByProviderLeaseId(params.providerLeaseId);
     if (!sandbox) {
       throw new Error(
@@ -4006,7 +4011,7 @@ const plugin = definePlugin(trackDaytonaHooks({
     const session = await openLoginPtySession(
       sandbox.process as unknown as DaytonaPtyProcess,
       homeFs,
-      { loginCommandKey: params.loginCommandKey, sessionHome: params.sessionHome },
+      { loginCommandKey, sessionHome: params.sessionHome },
     );
     const workerSessionId = `pty-${randomUUID()}`;
     const entry: DaytonaLoginPtyEntry = {

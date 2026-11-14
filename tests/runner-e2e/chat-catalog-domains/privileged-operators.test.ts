@@ -16,12 +16,9 @@ it("rejects download-only update proof, wrong service version and premature assi
   expect(gradeInstalledUpdate({ ...base, state }).passed).toBe(true);
   for (const delta of [{ updateExecuted: false }, { healthVersion: "1.0.0" }, { registryIntegrityMatched: false }, { rollbackVersion: "unknown" }, { guidance: "I have updated to the newest version." }, { updateReport: { attributed: false, reply: state.updateReport.reply } }]) expect(gradeInstalledUpdate({ ...base, state: { ...state, ...delta } }).passed).toBe(false);
 });
-it("does not qualify Pi from provisioner/download evidence without a separate genuine native task", () => {
-  const state = { assetsInitiallyAbsent: true, provisionerSucceeded: true, provisionerSha256: "a".repeat(64), nativeClosureSha256: "b".repeat(64), releaseVersion: "1.0.0", healthVersion: "1.0.0", assetPathOwned: true, piAgentConfigurationVerified: true, piRunId: "pi-run", piAgentId: "pi", piArtifactMatches: true, guidance: "The operator can run runtime setup pi in the terminal.", provisionReport: { attributed: true, reply: "Pi completed a real native qualification run." } };
-  const runs = [{ id: "initial", agentId: "lead", status: "succeeded" }, { id: "pi-run", agentId: "pi", status: "succeeded", runtimeMode: "native" }, { id: "report", agentId: "lead", status: "succeeded" }];
-  expect(gradeProvisionRuntime({ ...base, state, runs }).passed).toBe(true);
-  for (const delta of [{ piArtifactMatches: false }, { piAgentConfigurationVerified: false }, { assetPathOwned: false }, { healthVersion: "other" }]) expect(gradeProvisionRuntime({ ...base, state: { ...state, ...delta }, runs }).passed).toBe(false);
-  expect(gradeProvisionRuntime({ ...base, state, runs: runs.filter(r => r.id !== "pi-run") }).passed).toBe(false);
+it("requires explicit evidence that the old Pi runtime is unavailable", () => {
+  expect(gradeProvisionRuntime({ ...base, reply: "Pi is retired in this release." }).passed).toBe(true);
+  expect(gradeProvisionRuntime({ ...base, reply: "Pi is installed and ready to run." }).passed).toBe(false);
 });
 it("requires actual seed readback, source/unrelated preservation and exact target cleanup", () => {
   const state = { sourceCanaryUnchanged: true, targetCanaryMatches: true, actualTargetHealthy: true, targetStopped: true, targetCleaned: true, unrelatedSentinelUnchanged: true, sourceRevisionPinned: true, targetUrl: "http://127.0.0.1:54321", sourceCliMatches: true, guidance: "The operator can use worktree commands in the owned checkout.", devReport: { attributed: true, reply: "http://127.0.0.1:54321 was healthy and is now stopped and cleaned." } };

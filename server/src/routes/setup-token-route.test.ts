@@ -775,10 +775,10 @@ describe("company-and-environment setup-token route — object-level authorizati
     // rejects with the same fixed 400 as the capability-mismatch case, before
     // any sandbox assertion, lease, durable row, or pseudo-terminal.
     mockFindActiveServerAdapter.mockImplementation((type: string) =>
-      type === "gemini_local"
+      type === "codex_local"
         ? {
             type,
-            loginCapability: { ...CLAUDE_LOGIN_CAPABILITY, panelMode: "displayed_code" },
+            loginCapability: CLAUDE_LOGIN_CAPABILITY,
           }
         : undefined,
     );
@@ -787,7 +787,7 @@ describe("company-and-environment setup-token route — object-level authorizati
 
     const res = await startCompanySession(app, {
       environmentId: ENVIRONMENT_ID,
-      adapterType: "gemini_local",
+      adapterType: "codex_local",
     });
     expect(res.status, JSON.stringify(res.body)).toBe(400);
     expect(res.body.error).toBe("This adapter does not support a setup-token login.");

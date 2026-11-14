@@ -198,7 +198,6 @@ if (process.argv[2] === '--linux-arm64-consumer') {
 } else {
 assert.equal(process.platform, 'linux', 'Run this verification on disposable EC2 Linux, not a developer host');
 const root = mkdtempSync(join(tmpdir(), 'paperclip-grok-public-install-'));
-const prerequisite = join(root, 'native/grok');
 const cache = process.env.PAPERCLIP_PUBLIC_INSTALL_NPM_CACHE ? resolve(process.env.PAPERCLIP_PUBLIC_INSTALL_NPM_CACHE) : join(root, 'cache');
 mkdirSync(cache, { recursive: true });
 const env = { ...process.env, NODE_PATH: '', ...(process.env.PAPERCLIP_PUBLIC_INSTALL_NPM_CACHE ? { npm_config_cache: cache } : {}), PAPERCLIP_RELEASE_REUSE_UI_DIST: '1', npm_config_ignore_scripts: 'false', npm_config_audit: 'false', npm_config_fund: 'false' };
@@ -207,20 +206,17 @@ const sourceRevision = run('git', ['rev-parse', 'HEAD'], repo).toString().trim()
 const releaseVersion = grokPublicInstallVersion(sourceRevision);
 // The two network downloads the probes need do not depend on anything packed
 // below, so they overlap the CPU-bound staging instead of running after it.
-// The consumer image is pinned by digest and the Grok binary is checked against
+// The consumer image is pinned by digest.
 // its pinned sha256 by the provisioning script, so an early start changes no
 // verified property. Neither touches the consumer, the assets, nor the
 // `native/grok` path that the post-install assertion inspects.
 const prefetched = join(root, 'prefetch'); mkdirSync(prefetched);
-const stagedGrok = join(prefetched, 'grok');
 // Every background child, downloads and bundled-dependency installs alike, is
 // stopped in `finally`; `downloads` is the subset the timing line reports as
 // prefetches.
 const prefetches = [];
 const downloads = [];
 const timing = {};
-const piSetupContainer = `paperclip-pi-setup-${basename(root)}`;
-let piSetupStarted = false;
 // A prefetch failure surfaces where its result is awaited, never as an
 // unhandled rejection that would mask an earlier staging error.
 const prefetch = (name, cmd, args) => {
@@ -236,7 +232,6 @@ try {
   const imageReady = prefetch('image', 'docker', ['pull', '--platform', 'linux/amd64', GROK_PUBLIC_INSTALL_IMAGE]);
   // Provision as the unprivileged verification user, never into the host's /opt.
   // Only the positive probe sees this file at the canonical sandbox path.
-  const grokReady = prefetch('grok', process.execPath, [join(repo, 'packages/paperclip-runner/scripts/provision-grok.mjs'), stagedGrok]);
   // The server, the CLI and every public workspace package they reach through
   // `workspace:` specs. The npm cache warm-up reads the same closure, so both
   // take it from one module.
@@ -378,18 +373,10 @@ try {
   assert.equal(readFileSync(sentinel, 'utf8'), 'ok', 'Offline lifecycle scripts must actually execute');
   assert.equal(readFileSync(join(consumer, 'package-lock.json'), 'utf8'), consumerLock, 'Lifecycle execution must preserve the resolved consumer lock');
   phase('lifecycle_rebuild');
-  const piSetupReceipt = join(consumer, '.paperclip-pi-setup.json');
-  const piSetupArgs = grokConsumerDockerArgs({ assets, consumer, cache, uid: consumerUid, gid: process.getgid(),
-    command: ['sh', '-c', 'exec node /consumer/node_modules/paperclipai/dist/index.js runtime setup pi > /consumer/.paperclip-pi-setup.json'],
-    download: true, temporarySizeMiB: 2048 });
-  piSetupArgs.splice(1, 0, '--name', piSetupContainer);
-  const piSetupReady = prefetch('pi_setup', 'docker', piSetupArgs);
-  piSetupStarted = true;
   for (const name of needed) {
     const installedManifest = JSON.parse(readFileSync(join(consumer, 'node_modules', name, 'package.json'), 'utf8'));
     assert.equal(installedManifest.version, releaseVersion, `Installed release version for ${name}`);
   }
-  assert.equal(existsSync(prerequisite), false, 'npm must not provision Grok');
   const server = join(consumer, 'node_modules/@paperclipai/server');
   const installed = join(server, 'dist/vendor/paperclip-runner');
   const codexVersion = JSON.parse(readFileSync(join(repo, 'packages/paperclip-runner/acpx-profiles.json'), 'utf8')).profiles.codex.agentRuntimeVersion;
@@ -400,51 +387,10 @@ try {
   phase('codex_probe');
   assert.equal(codex.codexConsumerHostOnly, true);
   assert.equal(codex.codexPlatformPackageSource, 'official npm');
-  assert.ok(existsSync(join(installed, 'providers/grok/launcher.cjs')));
-  assert.equal(existsSync(join(consumer, 'node_modules/@paperclipai/grok-acp')), false);
-  assert.equal(existsSync(join(installed, 'providers/grok/bin')), false);
-  // Use real installed compiled code and its actual npm dependency graph. A
-  // separate process prevents module resolution from borrowing this checkout.
-  const probe = `
-    import assert from 'node:assert/strict';
-    import { verifyQualifiedAcpxInstallation } from '/consumer/node_modules/@paperclipai/server/dist/vendor/paperclip-runner/drivers/acpx/installation-integrity.js';
-    import { resolveQualifiedAcpxProfile } from '/consumer/node_modules/@paperclipai/server/dist/vendor/paperclip-runner/drivers/acpx/qualified-profiles.js';
-    const profile = resolveQualifiedAcpxProfile('grok', 'grok-4.7');
-    const inspect = () => verifyQualifiedAcpxInstallation(profile, () => { throw new Error('Grok must not resolve an npm package'); });
-    if (process.argv[2] === 'missing') await assert.rejects(inspect, /prerequisite missing/);
-    else { const installation = await inspect(); assert.equal(installation.agentServerPackageJsonPath, null); assert.equal(installation.agentRuntimePackageJsonPath, null); await (await installation.openCommand()).close(); }
-  `;
-  writeFileSync(join(assets, 'probe.mjs'), probe, { mode: 0o644 });
-  isolated(['node', '/packages/probe.mjs', 'missing']);
-  // The binary was provisioned outside `native/grok` while the packages were
-  // staged, so the assertion above still proves npm put nothing there. It moves
-  // into place only now, so only the positive probe sees it.
-  await awaited('grok', grokReady);
-  mkdirSync(dirname(prerequisite), { recursive: true });
-  renameSync(stagedGrok, prerequisite);
-  isolated(['node', '/packages/probe.mjs', 'present'], { prerequisite });
-  phase('grok_probes');
-  console.log(JSON.stringify({ schema: 'paperclip.grok.public-npm-install.v1', artifactTransport: 'loopback-registry', sourceRevision, releaseVersion, lifecycleScriptsEnabled: true, lifecycleSentinelVerified: true, lifecycleNetwork: 'none', consumerImage: GROK_PUBLIC_INSTALL_IMAGE, consumerUid, consumerLockPreserved: true, cleanNpmInstall: true, packageCount: needed.size, codexPackedPayloadsOmitted: true, codexPackedPackagesChecked: tarballs.length, ...codex, builtinLauncherPresent: true, separateGrokPackage: false, npmProvisionedBinary: false, missingPrerequisiteRejected: true, provisionedBinaryVerified: true, commandLeaseVerified: true, providerCalls: 0 }));
-  // Exercise Pi's public CLI and installed server, never a private workspace
-  // package or binary override. Public dependency downloads are explicit and
-  // isolated; the actual admission probe runs without a network or credentials.
-  const piProbe = join(assets, 'pi-public-install-probe.mjs');
-  cpSync(join(repo, 'scripts/pi-public-install-probe.mjs'), piProbe); chmodSync(piProbe, 0o644);
-  // Pi assembles a bundled runtime in scratch space before atomic publication.
-  // Keep the existing sandbox and memory bound; only this download needs more
-  // temporary capacity than the smaller offline lifecycle probes.
-  await awaited('pi_setup', piSetupReady);
-  const receipt = JSON.parse(readFileSync(piSetupReceipt, 'utf8'));
-  rmSync(piSetupReceipt);
-  phase('pi_setup');
-  assert.equal(receipt.status, 'installed_verified');
-  assert.equal(receipt.target, 'linux-x64');
-  assert.equal(readFileSync(join(consumer, 'package-lock.json'), 'utf8'), consumerLock, 'Pi setup must preserve the consumer dependency graph');
-  // Verified launch leases also materialize the runtime in private scratch.
-  // Docker defaults tmpfs to noexec. The offline admission probe must execute
-  // its verified private snapshot while keeping lifecycle/download scratch noexec.
-  console.log(isolated(['node', '/packages/pi-public-install-probe.mjs', '/consumer/node_modules/@paperclipai/server'], { temporarySizeMiB: 2048, temporaryExecutable: true }).toString().trim());
-  phase('pi_probe');
+  for (const relativePath of ['providers/grok/launcher.cjs', 'cli/provision-pi.cjs', 'cli/provision-cursor.cjs']) {
+    assert.equal(existsSync(join(installed, relativePath)), false);
+  }
+  console.log(JSON.stringify({ schema: 'paperclip.public-npm-install.v1', artifactTransport: 'loopback-registry', sourceRevision, releaseVersion, lifecycleScriptsEnabled: true, lifecycleSentinelVerified: true, lifecycleNetwork: 'none', consumerImage: GROK_PUBLIC_INSTALL_IMAGE, consumerUid, consumerLockPreserved: true, cleanNpmInstall: true, packageCount: needed.size, codexPackedPayloadsOmitted: true, codexPackedPackagesChecked: tarballs.length, ...codex, retiredHarnessAssetsAbsent: true, providerCalls: 0 }));
   // Wall time per phase, so the slow part of this step is visible in the CI log
   // without re-running it. `*_prefetch_ms` runs from a download's start to its
   // last output, and `*_wait_ms` is how long the main flow waited for a
@@ -465,9 +411,6 @@ try {
   // An earlier failure must not leave a prefetch running, and scratch is
   // removed only once both children have stopped writing into it.
   await stopPrefetches(prefetches);
-  if (piSetupStarted) {
-    try { execFileSync('docker', ['rm', '--force', piSetupContainer], { timeout: 10_000, stdio: 'ignore' }); } catch {}
-  }
   rmSync(root, { recursive: true, force: true });
 }
 }

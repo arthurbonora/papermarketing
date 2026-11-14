@@ -1786,7 +1786,7 @@ export function createHeartbeatRunCompletion(db: Db, dependencies: HeartbeatRunC
               logger.error({ err: escalationError, runId: livenessRun.id }, "failed to record a recovery action for a remote workspace restore failure");
             });
           }
-        } else if (livenessRun.errorCode !== PROJECT_ACCESS_DENIED) {
+        } else if (livenessRun.errorCode !== PROJECT_ACCESS_DENIED && livenessRun.errorCode !== "agent_harness_removed") {
           // An accepted interaction keeps its own continuation retry, which
           // carries the interaction and escalates on exhaustion.
           const interactionOwnsRetry = (livenessRun.errorCode === PLUGIN_WORKER_UNAVAILABLE_CODE
@@ -1818,7 +1818,7 @@ export function createHeartbeatRunCompletion(db: Db, dependencies: HeartbeatRunC
       }
       await settleStorageWaitMessage(livenessRun, storageWait, outerErr);
       await releaseIssueExecutionAndPromote(livenessRun, {
-        suppressImmediateRecovery: storageWaitScheduled || nativePreDispatchRetryScheduled ||
+        suppressImmediateRecovery: livenessRun.errorCode === "agent_harness_removed" || storageWaitScheduled || nativePreDispatchRetryScheduled ||
           readNonEmptyString(
             parseObject(livenessRun.contextSnapshot).goalControlRequestId,
           ) !== null ||

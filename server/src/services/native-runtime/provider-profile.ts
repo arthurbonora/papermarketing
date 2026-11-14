@@ -1,13 +1,9 @@
-import { resolveGrokDisableWebSearch } from "../../vendor/paperclip-runner/index.js";
-import { agentHarnessType, normalizeClaudeRunnerOptions } from "@paperclipai/shared";
-import { resolveClaudeEffort, resolveGrokEffort, resolveQualifiedAcpxProfile } from "../../vendor/paperclip-runner/index.js";
+import { agentHarnessType, isRemovedAgentHarness, normalizeClaudeRunnerOptions } from "@paperclipai/shared";
+import { resolveClaudeEffort, resolveQualifiedAcpxProfile } from "../../vendor/paperclip-runner/index.js";
 import {
   isPaperclipRunnerProvider,
   PAPERCLIP_RUNNER_PERMISSION_CAPABILITIES,
-  PAPERCLIP_RUNNER_ACPX_PROFILES,
   resolvePaperclipRunnerPermissionMode,
-  resolvePaperclipRunnerCursorMode,
-  resolvePaperclipRunnerPiThinkingLevel,
   type PaperclipRunnerProvider,
 } from "@paperclipai/adapter-utils";
 import {
@@ -18,7 +14,6 @@ import {
   AGENTCORE_QUALIFIED_MODEL,
   CLAUDE_MANAGED_QUALIFIED_MODEL,
 } from "../provider-profile-qualification.js";
-import { resolveAcpxQualification, resolveAntigravityCandidateAdmission, resolveKimiCandidateAdmission, type AcpxQualificationCandidate } from "./acpx-qualification.js";
 import { compatibleCodexModel } from "./codex-model-fallback.js";
 import { parseNativeCursorCloudConfig, type NativeCursorCloudConfig } from "../../vendor/paperclip-runner/index.js";
 
@@ -28,19 +23,14 @@ export const DEFAULT_OPENCODE_RUNNER_MODEL =
 export const CLAUDE_MANAGED_BETA_VERSION = "managed-agents-2026-04-01" as const;
 
 export const DEFAULT_ACPX_RUNNER_MODELS = {
-  grok: "grok-4.7",
   claude: "claude-opus-5-5",
   // These profiles require explicit configuration. Admission belongs to the runner.
   codex: null,
-  cursor: null,
-  copilot: null,
-  pi: null,
-  kimi: null,
 } as const;
 
 export type QualifiedPaperclipRunnerAcpxAgent =
   keyof typeof DEFAULT_ACPX_RUNNER_MODELS;
-type AdmittedPaperclipRunnerAcpxAgent = QualifiedPaperclipRunnerAcpxAgent | AcpxQualificationCandidate | "antigravity";
+type AdmittedPaperclipRunnerAcpxAgent = QualifiedPaperclipRunnerAcpxAgent;
 
 export type PaperclipRunnerProviderProfile =
   | { provider: "cursor_cloud"; backend: "cursor_cloud_api"; model: string }
@@ -448,9 +438,12 @@ export function claudeRunnerUnsupportedSettings(config: Record<string, unknown>)
  */
 export function resolvePaperclipRunnerProviderProfile(
   adapterConfig: unknown,
-  context: { companyId?: string } = {},
+  _context: { companyId?: string } = {},
 ): PaperclipRunnerProviderProfile {
   const config = asRecord(adapterConfig);
+  if (isRemovedAgentHarness("paperclip_runner", config)) {
+    throw new PaperclipRunnerProviderProfileError("agent_harness_removed", "This agent harness has been removed. Select a supported harness before retrying.");
+  }
   const candidate = config.provider ?? "codex";
   if (!isPaperclipRunnerProvider(candidate)) {
     throw new PaperclipRunnerProviderProfileError(
@@ -483,26 +476,10 @@ export function resolvePaperclipRunnerProviderProfile(
       `PaperMarketing Runner cannot honor these settings: ${unsupported.join(", ")}. Remove them before retrying.`);
   }
   assertPermissionMode(candidate, config);
-  try {
-    resolvePaperclipRunnerCursorMode(candidate, config.acpxAgent, config.acpxSessionMode);
-  } catch (error) {
-    throw new PaperclipRunnerProviderProfileError(
-      "paperclip_runner_mode_invalid",
-      error instanceof Error ? error.message : "Invalid Cursor session mode",
-    );
-  }
   try { if (candidate === "acpx" && agentHarnessType("paperclip_runner", config) === "claude_local") resolveClaudeEffort("claude", config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort); } catch (error) {
     throw new PaperclipRunnerProviderProfileError("paperclip_runner_claude_effort_invalid", error instanceof Error ? error.message : "Invalid Claude effort");
   }
-  try { if (candidate === "acpx" && config.acpxAgent === "grok") resolveGrokEffort("grok", config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort); } catch (error) {
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_grok_effort_invalid", error instanceof Error ? error.message : "Invalid Grok effort");
-  }
-  try { if (candidate === "acpx" && config.acpxAgent === "grok") resolveGrokDisableWebSearch("grok", config.disableWebSearch); } catch (error) {
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_grok_search_invalid", error instanceof Error ? error.message : "Invalid Grok search policy");
-  }
-  try { resolvePaperclipRunnerPiThinkingLevel(candidate, config.acpxAgent, config.piThinkingLevel); } catch (error) {
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_pi_thinking_invalid", error instanceof Error ? error.message : "Invalid Pi thinking level");
-  }
+
   const model = optionalString(config.model);
   if (candidate === "codex") {
     return {
@@ -593,55 +570,13 @@ export function resolvePaperclipRunnerProviderProfile(
   }
 
   const acpxAgent = config.acpxAgent ?? "claude";
-  if (acpxAgent === "copilot" && (!model || ["auto", "default"].includes(model.toLowerCase()))) {
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_model_required", "GitHub Copilot requires an explicit model ID; there is no default model.");
-  }
-  const pendingAcpxProfile = PAPERCLIP_RUNNER_ACPX_PROFILES.find(profile => profile.value === acpxAgent && !profile.qualified);
-  if (pendingAcpxProfile) {
-    if (!model) throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_model_required", `${pendingAcpxProfile.label} requires an explicit model ID; there is no default model.`);
-    if (pendingAcpxProfile.value === "antigravity") {
-      try {
-        if (resolveAntigravityCandidateAdmission({ companyId: context.companyId, model }, process.env)) {
-          return { provider: "acpx", backend: "acpx_runtime", model, acpxAgent: "antigravity" };
-        }
-      } catch {
-        throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_qualification_invalid", "Antigravity candidate admission requires the authorized company, exact model and runtime identity.");
-      }
-    }
-    if (pendingAcpxProfile.value === "kimi") {
-      try {
-        if (resolveKimiCandidateAdmission({ companyId: context.companyId, model }, process.env)) {
-          return { provider: "acpx", backend: "acpx_runtime", model, acpxAgent: "kimi" };
-        }
-      } catch {
-        throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_qualification_invalid", "Kimi candidate admission requires the authorized company, exact model, target and runtime identity.");
-      }
-    }
-    // Qualification authority belongs to the isolated server operator. Never
-    // read this allowlist from adapter config, credential refs, or run env.
-    let qualification: AcpxQualificationCandidate | undefined;
-    try {
-      qualification = resolveAcpxQualification({ kind: "acpx", agent: pendingAcpxProfile.value, model }, process.env);
-    } catch {
-      throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_qualification_invalid", "ACPX qualification requires an exact host-authorized candidate and model.");
-    }
-    if (qualification) {
-      return { provider: "acpx", backend: "acpx_runtime", model, acpxAgent: qualification };
-    }
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_agent_unavailable", `${pendingAcpxProfile.label} is awaiting native Runner acceptance. Its profile is not enabled for production runs.`);
-  }
-  if ((acpxAgent === "cursor" || acpxAgent === "pi" || acpxAgent === "kimi") && !model) {
-    throw new PaperclipRunnerProviderProfileError("paperclip_runner_acpx_model_required", "This ACPX agent requires an explicit model ID; there is no default model.");
-  }
-  if (acpxAgent !== "claude" && acpxAgent !== "codex" && acpxAgent !== "grok" && acpxAgent !== "cursor" && acpxAgent !== "copilot" && acpxAgent !== "pi" && acpxAgent !== "kimi") {
+  if (acpxAgent !== "claude" && acpxAgent !== "codex") {
     throw new PaperclipRunnerProviderProfileError(
       "paperclip_runner_acpx_agent_unavailable",
       "PaperMarketing Runner ACPX requires a qualified agent profile.",
     );
   }
-  const selectedModel = acpxAgent === "grok" && model === "grok-build"
-    ? DEFAULT_ACPX_RUNNER_MODELS.grok
-    : model || DEFAULT_ACPX_RUNNER_MODELS[acpxAgent] || "";
+  const selectedModel = model || DEFAULT_ACPX_RUNNER_MODELS[acpxAgent] || "";
   try {
     resolveQualifiedAcpxProfile(acpxAgent, selectedModel);
   } catch (error) {
@@ -740,11 +675,6 @@ export function resolvePaperclipRunnerNativeProviderInput(input: {
       model: profile.model,
       acpxAgent: profile.acpxAgent,
       ...(profile.acpxAgent === "claude" ? { claudeEffort: resolveClaudeEffort("claude", config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort) } : {}),
-      ...(profile.acpxAgent === "grok" ? { grokEffort: resolveGrokEffort("grok", config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort), grokDisableWebSearch: resolveGrokDisableWebSearch("grok", config.disableWebSearch) } : {}),
-      ...(profile.acpxAgent === "pi" ? { piThinkingLevel: resolvePaperclipRunnerPiThinkingLevel("acpx", "pi", config.piThinkingLevel) } : {}),
-      ...(profile.acpxAgent === "cursor" ? {
-        acpxSessionMode: resolvePaperclipRunnerCursorMode("acpx", "cursor", config.acpxSessionMode),
-      } : {}),
       ...(preconfigured ? { homeMode: "preconfigured" as const } : {}),
       acpxPermissionMode: resolvePaperclipRunnerPermissionMode(
         "acpx",

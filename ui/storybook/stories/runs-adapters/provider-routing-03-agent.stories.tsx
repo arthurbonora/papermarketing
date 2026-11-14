@@ -212,22 +212,9 @@ export const ClaudeBedrock: Story = {
   args: { harness: "claude", initialConnectionId: "bedrock" },
 };
 export const OpenCodeNewRunner: Story = { args: { harness: "opencode" } };
-export const GrokNewRunner: Story = { args: { harness: "grok" } };
-export const PiLegacy: Story = { args: { harness: "pi", runner: "legacy" } };
-export const GeminiLegacy: Story = {
-  args: { harness: "gemini", runner: "legacy", initialConnectionId: "gemini" },
-};
-export const KimiLegacy: Story = {
-  args: { harness: "kimi", runner: "legacy" },
-};
 export const HermesLocal: Story = {
   args: { harness: "hermes", runner: "legacy", initialConnectionId: "chat" },
 };
-export const CursorUnverified: Story = {
-  args: { harness: "cursor", runner: "legacy" },
-};
-export const NativePiPending: Story = { args: { harness: "pi" } };
-export const NativeCopilotPending: Story = { args: { harness: "copilot" } };
 export const NewAgent: Story = { args: { newAgent: true } };
 export const NoConnections: Story = { args: { scenario: "empty" } };
 export const Loading: Story = { args: { scenario: "loading" } };

@@ -2,15 +2,6 @@ import { expect, it } from "vitest";
 import { assertProviderLossSettlement } from "./native-provider-loss-flow.js";
 import { bootstrapReadExecutionId } from "./native-bootstrap-read-proof.js";
 import type { ActiveStopPending } from "./native-active-stop-evidence.js";
-import { buildRunnerE2EProcessEnvironment } from "./harness-env.js";
-import { runnerMatrix } from "./catalog.js";
-
-it("runs qualified Cursor loss cells without qualification overrides", () => {
-  const execution = runnerMatrix.find(row => row.suite.id === "native-provider-loss" && row.environment.id === "local")!;
-  expect(buildRunnerE2EProcessEnvironment({}, [execution]).PAPERCLIP_RUNNER_ACPX_QUALIFICATION)
-    .toBeUndefined();
-  expect(() => buildRunnerE2EProcessEnvironment({}, [{ ...execution, profile: { ...execution.profile, qualificationCandidate: "copilot" } }])).toThrow("explicit provider qualification suite");
-});
 
 function fixture() {
   const pending = { scope: { runId: "run", companyId: "company", issueId: "issue" }, requestId: "permission", turnId: "turn", toolCallId: "mutation" } as ActiveStopPending;

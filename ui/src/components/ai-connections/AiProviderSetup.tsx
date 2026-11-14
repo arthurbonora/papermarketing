@@ -38,8 +38,8 @@ const providers = [
     name: "Anthropic",
     description: "Claude subscription or API key",
   },
-  { id: "google", name: "Google", description: "Antigravity sign-in or Gemini API key" },
-  { id: "xai", name: "xAI", description: "Grok subscription or API key" },
+  { id: "google", name: "Google", description: "Gemini API key" },
+  { id: "xai", name: "xAI", description: "Grok API key" },
   {
     id: "openrouter",
     name: "OpenRouter",

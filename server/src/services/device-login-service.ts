@@ -25,10 +25,6 @@ import {
   type DeviceLoginPrompt,
   type SandboxLoginDriver,
 } from "@paperclipai/adapter-codex-local/server";
-import {
-  GROK_DEVICE_LOGIN_COMMAND as DEFAULT_GROK_LOGIN_COMMAND,
-  parseGrokDeviceLoginPrompt,
-} from "@paperclipai/adapter-grok-local/server";
 import type { AdapterLoginPrompt } from "@paperclipai/adapter-utils";
 import {
   createLoginPtyTransport,
@@ -87,6 +83,7 @@ export const LOGIN_LEASE_SESSION_TAG_KEY = "adapterLoginSessionId";
  */
 export const DISPLAYED_CODE_ADAPTER_TYPES: readonly AgentAdapterType[] = [
   "codex_local",
+  // Keep historical leases visible to the cleanup reaper after removing the login command.
   "grok_local",
 ];
 
@@ -842,21 +839,7 @@ const UNCONFIGURED_PROMOTION: CredentialPromotion = {
   },
 };
 
-/**
- * The host-owned profile for every displayed-code adapter type. `AgentAdapterType`
- * covers every adapter, not only the displayed-code ones. So the map is a partial
- * record: a lookup for an adapter type with no entry yields `undefined`. Both the
- * `codex_local` entry and the `grok_local` entry are reachable today: the route
- * admission gate in `agents.ts` and the `login-command.ts` closed key map now
- * cover `grok_local` too.
- *
- * `homeEnvVar` names the environment variable the sandbox login pseudo-terminal
- * opener sets, for documentation only: no code reads this member today. The
- * opener (`composeLaunchLine` in the Daytona plugin) holds its own fixed
- * `CODEX_HOME` / `GROK_HOME` mapping, keyed off the closed login command key,
- * not off this profile. This matches the existing `codex_local` entry, whose
- * `homeEnvVar` has been unread the same way since phase 1.
- */
+/** Host-owned displayed-code profile for the Codex adapter. */
 export const DISPLAYED_CODE_PROFILES: Readonly<
   Partial<Record<AgentAdapterType, DisplayedCodeLoginProfile>>
 > = {
@@ -864,13 +847,6 @@ export const DISPLAYED_CODE_PROFILES: Readonly<
     command: DEFAULT_CODEX_LOGIN_COMMAND,
     homeEnvVar: "CODEX_HOME",
     parsePrompt: parseDeviceLoginPrompt,
-    timeoutMs: DEVICE_LOGIN_TIMEOUT_MS,
-    promotion: UNCONFIGURED_PROMOTION,
-  },
-  grok_local: {
-    command: DEFAULT_GROK_LOGIN_COMMAND,
-    homeEnvVar: "GROK_HOME",
-    parsePrompt: parseGrokDeviceLoginPrompt,
     timeoutMs: DEVICE_LOGIN_TIMEOUT_MS,
     promotion: UNCONFIGURED_PROMOTION,
   },

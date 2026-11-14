@@ -18,6 +18,7 @@ import { codexToolAcceptsResult, isCodexSemanticTool, isRetainableCodexPayload, 
 import { validateCodexResultProposal } from "../mock-core/codex-runner.js";
 import {
   resolveQualifiedAcpxProfile,
+  assertAcpxProfileReleased,
   type QualifiedAcpxAgent,
   type QualifiedAcpxProfile,
 } from "../drivers/acpx/qualified-profiles.js";
@@ -907,6 +908,7 @@ export class CapabilityLiveSessionService {
   }
 
   async create(input: CreateCapabilityLiveSessionInput = {}): Promise<CapabilityLiveSession> {
+    if (input.provider === "acpx") assertAcpxProfileReleased(input.acpxAgent ?? "codex");
     resolvePiThinkingLevel(input.provider === "acpx" ? input.acpxAgent ?? "codex" : "", input.piThinkingLevel);
     if (this.#transportOptions.acpxCandidateAdmission) {
       parseAcpxCandidateAdmission(this.#transportOptions.acpxCandidateAdmission, { companyId: input.companyId ?? "", agent: input.acpxAgent ?? "", model: input.requestedModel ?? "" });

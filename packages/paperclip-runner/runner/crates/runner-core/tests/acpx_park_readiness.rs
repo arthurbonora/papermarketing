@@ -468,24 +468,6 @@ fn rejected_read_tail_returns_a_command_error_without_starting_another_turn() {
 }
 
 #[test]
-fn hosted_park_acpx_does_not_enable_an_unqualified_park_provider() {
-    let (_fixture, _config, mut executor, _) = fixture("grok");
-    executor
-        .execute(&command(
-            3,
-            "turn.start",
-            json!({"turnId":"first", "text":"Complete on an otherwise qualified release."}),
-        ))
-        .unwrap();
-    settle(&mut executor);
-    assert!(!executor.host_park_ready().unwrap());
-    assert!(!executor
-        .prepare_for_park(Instant::now() + Duration::from_secs(20))
-        .unwrap());
-    executor.shutdown().unwrap();
-}
-
-#[test]
 fn a_turn_end_restart_waits_until_an_abandoned_park_observation_tail_is_delivered() {
     let (fixture, _config, mut executor, opened) = fixture("claude");
     executor

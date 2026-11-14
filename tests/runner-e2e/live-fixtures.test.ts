@@ -12,44 +12,6 @@ import { deleteDaytonaEnvironment, setupLiveFixtures, selectFixtureRuntimeLeases
 
 describe("live runner fixtures", () => {
   it.each([
-    ["daytona", "native-write-permission-stop", false],
-    ["daytona", "native-write-provider-loss", false],
-    ["daytona", "message-marker", true],
-    ["local", "native-write-permission-stop", null],
-    ["local", "native-write-provider-loss", null],
-  ] as const)("produces the Kimi lease lifecycle for %s %s", async (environment, task, reusable) => {
-    const execution = runnerMatrix.find(row => row.id === `kimi-qualification.runner-acpx-kimi.${environment}.${task}`)!;
-    let environmentBody: any;
-    let agentBody: any;
-    const api = {
-      async get() { return [{ id: "local", driver: "local", config: {} }]; },
-      async postSensitive(_url: string, data: any) { return { id: `secret-${data.key}` }; },
-      async post(url: string, data: any) {
-        if (url === "/api/plugins/install") return { id: "plugin", status: "ready" };
-        if (url === "/api/companies") return { id: "company", name: "Fixture" };
-        if (url.endsWith("/environments")) { environmentBody = data; return { id: "environment", driver: "sandbox", config: data.config }; }
-        if (url.endsWith("/agents")) { agentBody = data; return { id: "agent", companyId: "company", ...data }; }
-        throw new Error(`Unexpected POST ${url}`);
-      },
-      async delete() {},
-    } as unknown as RunnerApi;
-    const fixtures = await setupLiveFixtures({ api, execution, executionNonce: "lifecycle-contract", workspacePath: "/tmp/fixture",
-      credentials: { KIMI_API_KEY: "synthetic-kimi-key", DAYTONA_API_KEY: "synthetic-daytona-key" },
-      daytonaImage: `registry.example.test/runtime@sha256:${"a".repeat(64)}` });
-    try {
-      if (reusable === null) {
-        expect(environmentBody).toBeUndefined();
-        expect(fixtures.environment).toEqual({ id: "local", driver: "local", config: {} });
-      } else {
-        expect(environmentBody.config).toMatchObject({ reuseLease: reusable, runnerLifecycleMode: reusable ? "warm" : "per_turn",
-          apiKey: { type: "secret_ref", secretId: "secret-DAYTONA_API_KEY", version: "latest" } });
-        expect(fixtures.environment.config).toEqual(environmentBody.config);
-      }
-      expect(agentBody.adapterConfig).toMatchObject({ provider: "acpx", acpxAgent: "kimi", model: "kimi-for-coding" });
-    } finally { await fixtures.teardown(); }
-  });
-
-  it.each([
     ["receipt-smoke", 100], ["same-task-roundtrip", 1_000],
   ] as const)("bounds %s before creating its initial subscription agent", async (taskId, budget) => {
     const root = await realpath(await mkdtemp(path.join(tmpdir(), "case-fixture-limits-")));
@@ -162,24 +124,6 @@ describe("live runner fixtures", () => {
       await fixtures.teardown();
     },
   );
-  it("anchors extended file validation to a public project workspace for local and remote copy-back", async () => {
-    const execution = runnerMatrix.find(e => e.id === "extended-harnesses.runner-acpx-pi.local.file-edit-validate")!;
-    let projectBody: any;
-    const api = {
-      async get() { return [{ id: "local", driver: "local" }]; },
-      async postSensitive() { return { id: "secret" }; },
-      async post(url: string, data: any) {
-        if (url === "/api/companies") return { id: "company", name: "Test" };
-        if (url.endsWith("/agents")) return { id: "agent", ...data };
-        if (url.endsWith("/projects")) { projectBody = data; return { id: "project", ...data }; }
-        throw new Error(`Unexpected POST ${url}`);
-      },
-    } as unknown as RunnerApi;
-    const fixtures = await setupLiveFixtures({ api, execution, executionNonce: "nonce", workspacePath: "/tmp/fixture-workspace", credentials: { OPENROUTER_API_KEY: "fixture-key" } });
-    expect(fixtures.project?.id).toBe("project");
-    expect(projectBody).toMatchObject({ executionWorkspacePolicy: { environmentId: "local", workspaceStrategy: { type: "project_primary" } }, workspace: { cwd: "/tmp/fixture-workspace", sourceType: "local_path" } });
-  });
-
   it.each([
     ["runner-codex", "hiring-templates", "hire-coder-template-reuse"],
     ["runner-acpx-claude", "hiring-templates", "hire-coder-template-reuse"],

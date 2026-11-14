@@ -3,31 +3,22 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { readIsolatedClaudeKeychainToken } from "@paperclipai/adapter-claude-local/server";
 import { readCodexAuthInfo, fetchCodexQuota } from "@paperclipai/adapter-codex-local/server";
-import { parseGrokAuthPayload, hasUsableGrokAuthValue } from "@paperclipai/adapter-grok-local/server";
+import { parseGrokAuthPayload, hasUsableGrokAuthValue } from "./legacy-xai-subscription-auth.js";
 import type { AiProvider } from "@paperclipai/shared";
 import { unprocessable } from "../errors.js";
-import { verifyAntigravityCredential } from "../vendor/paperclip-runner/index.js";
 
 export async function readVerifiedLocalAiCredentialDetails(provider: AiProvider, loginHome: string) {
-  if (provider === "google") {
-    try {
-      const verified = await verifyAntigravityCredential(loginHome);
-      return { credential: verified.credential, accountLabel: verified.accountEmail };
-    } catch {
-      throw unprocessable("Could not verify the Google account. Finish browser sign-in, then try Connect again.");
-    }
-  }
   return { credential: await readVerifiedLocalAiCredential(provider, loginHome), accountLabel: undefined };
 }
 
 /** Read and verify a connection-specific login home. */
 export async function readVerifiedLocalAiCredential(provider: AiProvider, loginHome?: string): Promise<string> {
+  if (provider === "google") throw unprocessable("Google subscription sign-in has been removed. Use a Google API key.");
   if (provider === "openrouter") throw unprocessable("OpenRouter requires an API key.");
   if (!loginHome) throw unprocessable(provider === "xai"
     ? "Start local sign-in for this connection before connecting."
     : "Start browser sign-in for this connection before connecting.");
   try {
-    if (provider === "google") return (await verifyAntigravityCredential(loginHome)).credential;
     if (provider === "anthropic") {
       // Never change process.env or fall back to the server account when an
       // authenticated user's isolated login is missing or invalid.

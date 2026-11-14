@@ -1,4 +1,4 @@
-import { AGENT_ADAPTER_TYPES } from "@paperclipai/shared";
+import { AGENT_ADAPTER_TYPES, isRemovedAgentHarness } from "@paperclipai/shared";
 import { isAdapterExecutionPhase } from "@paperclipai/adapter-utils/execution-phase";
 import { MAX_EXECUTION_PHASE_ELAPSED_MS } from "./adapter-execution-phase.js";
 
@@ -19,11 +19,13 @@ export class AdapterStopTimeoutError extends Error {
     super("Execution is still stopping; termination has not been verified.");
     // Keep the existing Error name and timer stack for default error grouping.
     Error.captureStackTrace?.(this, AdapterStopTimeoutError);
+    const adapterType = context?.adapterType;
     this.diagnostics = Object.freeze({
       timeoutMs: Number.isSafeInteger(timeoutMs) && timeoutMs >= 0 ? timeoutMs : null,
       runId: typeof context?.runId === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(context.runId)
         ? context.runId : null,
-      adapterType: AGENT_ADAPTER_TYPES.some((type) => type === context?.adapterType) ? context!.adapterType! : "unknown",
+      adapterType: adapterType && (AGENT_ADAPTER_TYPES.some(type => type === adapterType) || isRemovedAgentHarness(adapterType))
+        ? adapterType : "unknown",
       runtimeMode: context?.runtimeMode === "native" || context?.runtimeMode === "legacy" ? context.runtimeMode : "unknown",
       abortRequested: typeof context?.abortRequested === "boolean" ? context.abortRequested : null,
       phase: isAdapterExecutionPhase(context?.phase) ? context.phase : "unknown",

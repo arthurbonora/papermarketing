@@ -3175,18 +3175,6 @@ CLI paths that use stdin avoid that separate limit for the wake prompt.
 
 ## Adding a native Runner harness
 
-Google Antigravity's pending integration uses the official ACP server 1.4.3 with
-a pinned native admission patch. `paperclipai runtime setup antigravity` installs
-its verified assets on macOS ARM64 as the OS user running Paperclip. Setup does
-not enable global execution: qualification remains pending and admission is
-closed by default. An isolated company can use a finite trusted server-startup
-candidate authorization bound to the exact model, local platform, profile and
-native closure. The candidate's recorded setup and two-turn task reused the same
-owner's managed personal-default Google subscription on macOS ARM64 with
-`gemini-3.8-flash-low`; fresh consent and API-key live acceptance remain separate
-gates. Workspace OAuth is not runtime authentication. See the
-[contract, evidence, and remaining gates](plans/2026-10-28-antigravity-integration.md).
-
 To add a harness/provider to the new native Paperclip Runner, use
 [create-runner-adapter](../.agents/skills/create-runner-adapter/SKILL.md), the
 [Runner integration playbook](RUNNER-INTEGRATION-PLAYBOOK.md) and its
@@ -3197,26 +3185,9 @@ agent conversion are outside this playbook.
 
 ## Paperclip Runner Adapter Conversion
 
-Paperclip Runner offers native Codex, OpenCode, **ACPX Claude**, **ACPX Grok Build**, and **ACPX Pi**. New
-Claude Code agents default to ACPX Claude on Apple Silicon, Intel Mac, Linux x64
-and Linux ARM64 with supported glibc. New OpenCode and Pi agents default to their native
-runtimes on Apple Silicon, Intel Mac, and Linux x64 with supported glibc;
-Linux ARM64 remains Legacy until the pinned runtimes support it.
-Unsupported or unqualified targets retain Legacy. Claude over Darwin SSH keeps
-an automatic Legacy default; explicit native execution
-requires matching remote assets. Agent setup and configuration select the runner automatically and do not expose a runner dropdown. Ordinary Claude models default to `claude-opus-5-5`; explicit models
-and provider routing remain authoritative. Existing agents keep their saved runner. Converting an existing Claude, Codex, OpenCode, or Pi agent selects its
-corresponding provider, preserves compatible models, credentials, workspace,
-and instructions, and resets execution sessions while retaining run history.
-Grok Build uses its qualified macOS ARM64 and Linux x64 targets. Its conversion
-preserves the selected model, account, and explicit reasoning effort through ACP.
-Custom commands, extra arguments, legacy permission modes, search flags, and
-nonzero turn limits require Legacy; conversion rejects them before saving.
-Other adapters require an explicit provider choice. Legacy ACPX Codex agent
-settings normalize to native Codex on configuration updates and before fresh
-runs; immutable run descriptors remain readable. The **Paperclip Runner**
-experimental setting applies to other native providers. Native Codex, OpenCode,
-ACPX Claude, ACPX Grok Build, and ACPX Pi do not require it. Company access checks still apply.
+PaperMarketing Runner supports native Codex, OpenCode, Claude through ACPX, and Cursor Cloud. Claude and Codex can also use the legacy ACP engine. Native execution depends on the selected environment and platform. Existing supported agents keep their saved runner unless the operator changes it.
+
+Existing agents that used a removed harness keep their settings and run history. Select a supported harness and configure its credentials before running the agent again.
 
 Native Codex preserves an explicit `adapterConfig.search: false` when converting
 or saving an agent. The disabled hosted-search policy is recorded in the native
@@ -3253,16 +3224,6 @@ Companies that require hire approval keep drafts paused and defer allocation and
 verification until that approval. The wizard saves the account with a pending
 verification warning instead of requiring a pre-approval computer.
 
-Pi also requires an explicit `provider/model` before testing or hiring; inactive
-setup drafts may precede model selection. Install its pinned runtime on the
-execution host with `paperclipai runtime setup pi` before testing the connection.
-The native default uses `approve-all` permissions, `per_turn` lifecycle, and
-`low` thinking. Exact native thinking levels are `off`, `low`, `high`, and `max`.
-Legacy `minimal`, `medium`, and `xhigh` thinking, custom commands/arguments, and
-raw stdout mode require Legacy. Switching back to Legacy rejects native `max`
-thinking, nondefault permission policy, or warm lifecycle instead of discarding
-them. Existing Pi agents retain their saved runner and native policies.
-
 Agent configuration uses the same section layout across adapters: model and
 provider belong to **Adapter**, environment variables have their own section,
 and command/extra arguments are folded under **Configuration → Advanced**.
@@ -3275,8 +3236,7 @@ Saving an existing agent compares AI connection bindings by value, independent
 of PostgreSQL JSONB key order. Identity, thinking-effort and run-policy edits
 avoid the connection-adoption runtime probe when the connection and execution
 selection stay the same. Connection, harness, model, provider, engine and
-environment changes still validate adoption. Explicit runtime tests and
-required Copilot metadata checks keep their existing behavior.
+environment changes still validate adoption. Explicit runtime tests keep their existing behavior.
 
 Model catalogs and refresh follow the selected provider. ACPX Claude uses the
 normal Claude catalog and accepts custom model IDs; the exact ID is sent to

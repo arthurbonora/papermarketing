@@ -4,7 +4,6 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
-import { readFileSync } from "node:fs";
 import type { CommandManagedRuntimeRunner } from "@paperclipai/adapter-utils/command-managed-runtime";
 import { describe, expect, it, vi } from "vitest";
 import { canonicalProviderPackJson, verifyRemoteProviderPack, type ProviderPackIdentity } from "./remote-provider-pack-verification.js";
@@ -21,7 +20,7 @@ const manifest = (revision: string): ProviderPackIdentity => {
       nodeCommand: "node_modules/node/bin/node", opencodeCommand: "node_modules/.bin/opencode",
       productionLock: "pnpm-lock.yaml", opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
       opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs",
-      grokLauncher: "dist/providers/grok/launcher.cjs",
+
     }).map(([name, path]) => [name, { path, sha256: sha(`${revision}-${name}`) }])) as ProviderPackIdentity["payload"]["artifacts"],
   };
   return { schema: "paperclip-runner/remote-provider-pack/v1", payload, digest: sha(canonicalProviderPackJson(payload)) };
@@ -125,51 +124,5 @@ describe("installed provider pack compatibility", () => {
     await expect(verifyRemoteProviderPack({ ...input, provider: { kind: "acpx", agent: "codex" } })).rejects.toThrow("profile is incompatible");
   });
 
-  it("rejects the published Grok pack from before native effort admission", async () => {
-    const profiles = JSON.parse(readFileSync(new URL("../../../../packages/paperclip-runner/acpx-profiles.json", import.meta.url), "utf8"));
-    const current = manifest("b"), installed = manifest("a");
-    // Published builtin Grok profile 1 predates grokEffort and grokDisableWebSearch
-    // in session.open. Its launcher bytes equal today's, so its release digest
-    // matches; the pack predates contract digests, so that gate refuses it.
-    const published = "sha256:f0b698395a3704ed2ffaf84ea19bdb20c36c8a0a70b7c629c7b6ffe144e59e55";
-    expect(profiles.profiles.grok.commandDigest).toBe(published);
-    installed.payload.acpxProfileDigests = { grok: published };
-    delete installed.payload.contractDigest;
-    current.payload.acpxProfileDigests = { grok: profiles.profiles.grok.commandDigest };
-    const execute = vi.fn();
-    await expect(verifyRemoteProviderPack({ runner: { execute }, cwd: "/workspace", packRoot: "/opt/paperclip-runner/provider-pack",
-      manifest: reseal(current), installation: { root: "/opt/paperclip-runner/provider-pack", manifest: reseal(installed), immutable: true },
-      provider: { kind: "acpx", agent: "grok" } })).rejects.toThrow("interface or installation is incompatible");
-    expect(execute).not.toHaveBeenCalled();
-  });
-
-  it("rejects an installed pack with another Grok release digest", async () => {
-    const profiles = JSON.parse(readFileSync(new URL("../../../../packages/paperclip-runner/acpx-profiles.json", import.meta.url), "utf8"));
-    const current = manifest("b"), installed = manifest("a");
-    // The last source-bound Grok profile digest.
-    installed.payload.acpxProfileDigests = { grok: "sha256:5205c2197b94cfbd3e62fbeea027f2e80d092f736ca52656dda2f7044ba9a5ca" };
-    current.payload.acpxProfileDigests = { grok: profiles.profiles.grok.commandDigest };
-    const execute = vi.fn();
-    await expect(verifyRemoteProviderPack({ runner: { execute }, cwd: "/workspace", packRoot: "/opt/paperclip-runner/provider-pack",
-      manifest: reseal(current), installation: { root: "/opt/paperclip-runner/provider-pack", manifest: reseal(installed), immutable: true },
-      provider: { kind: "acpx", agent: "grok" } })).rejects.toThrow("selected ACPX provider profile is incompatible");
-    expect(execute).not.toHaveBeenCalled();
-  });
-
-  it("reuses the current Grok profile across source-only changes and retains exact historical recovery authority", async () => {
-    const profiles = JSON.parse(readFileSync(new URL("../../../../packages/paperclip-runner/acpx-profiles.json", import.meta.url), "utf8"));
-    const current = manifest("b"), installed = manifest("a");
-    for (const pack of [current, installed]) pack.payload.acpxProfileDigests = { grok: profiles.profiles.grok.commandDigest };
-    const execute = vi.fn();
-    const input = { runner: { execute }, cwd: "/workspace", packRoot: "/opt/paperclip-runner/provider-pack",
-      manifest: reseal(current), installation: { root: "/opt/paperclip-runner/provider-pack", manifest: reseal(installed), immutable: true },
-      provider: { kind: "acpx" as const, agent: "grok" } };
-    await expect(verifyRemoteProviderPack(input)).resolves.toEqual(reseal(installed));
-    const historical = manifest("a");
-    historical.payload.acpxProfileDigests = { grok: "sha256:5205c2197b94cfbd3e62fbeea027f2e80d092f736ca52656dda2f7044ba9a5ca" };
-    await expect(verifyRemoteProviderPack({ ...input, manifest: reseal(historical),
-      installation: { ...input.installation, manifest: reseal(historical) }, requireExactIdentity: true })).resolves.toEqual(reseal(historical));
-    expect(execute).not.toHaveBeenCalled();
-  });
 
 });

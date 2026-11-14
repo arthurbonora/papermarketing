@@ -9,7 +9,6 @@ import { TooltipProvider } from "../components/ui/tooltip";
 import type { AdapterConfigFieldsProps, AdapterConfigSection } from "./types";
 import { CodexLocalConfigFields } from "./codex-local/config-fields";
 import { ClaudeLocalAdvancedFields } from "./claude-local/config-fields";
-import { GeminiLocalConfigFields } from "./gemini-local/config-fields";
 import { ProcessConfigFields } from "./process/config-fields";
 import { OpenClawGatewayConfigFields } from "./openclaw-gateway/config-fields";
 import { HermesGatewayConfigFields } from "./hermes-gateway/config-fields";
@@ -91,17 +90,20 @@ describe("adapter configuration sections", () => {
     expect(policy).not.toContain("ACP agents");
   });
 
-  it("keeps ACP agent admission choices in the adapter section", async () => {
+  it("offers Claude ACP and Cursor Cloud in the adapter section without retired harnesses", async () => {
     const config = { provider: "acpx", acpxAgent: "claude" };
-    const adapter = await renderSection(CodexLocalConfigFields, "paperclip_runner", "adapter", config, "ACP agent");
+    const adapter = await renderSection(CodexLocalConfigFields, "paperclip_runner", "adapter", config, "Harness");
     const policy = await renderSection(CodexLocalConfigFields, "paperclip_runner", "runPolicy", config);
 
     const options = new DOMParser().parseFromString(adapter, "text/html").querySelectorAll('[role="option"]');
+    expect(Array.from(options, option => option.textContent?.trim()).join("\n"))
+      .not.toMatch(/^(?:Pi|GitHub Copilot|Kimi Code|Cursor(?: CLI)?|Gemini(?: CLI)?|Grok(?: Build)?|(?:Google )?Antigravity)$/m);
     expect(Array.from(options, option => ({ label: option.textContent?.trim(), disabled: option.hasAttribute("data-disabled") })))
       .toEqual(expect.arrayContaining([
-        { label: "Claude", disabled: false }, { label: "Pi", disabled: false },
-        { label: "Cursor", disabled: false }, { label: "GitHub Copilot", disabled: false },
+        { label: "Claude (ACP)", disabled: false },
+        { label: "Cursor Cloud (experimental)", disabled: false },
       ]));
+    expect(adapter).not.toContain('aria-label="ACP agent"');
     expect(adapter).not.toContain("Runner lifecycle");
     expect(policy).toContain("Runner lifecycle");
     expect(policy).not.toContain("ACP agent");
@@ -111,7 +113,6 @@ describe("adapter configuration sections", () => {
   it.each([
     ["claude_local", ClaudeLocalAdvancedFields],
     ["codex_local", CodexLocalConfigFields],
-    ["gemini_local", GeminiLocalConfigFields],
   ] as const)(
     "separates ACP commands and lifecycle for %s",
     async (type, Component) => {

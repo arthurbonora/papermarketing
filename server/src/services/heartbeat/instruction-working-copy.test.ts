@@ -1,3 +1,4 @@
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createHeartbeatInstructionWorkingCopy } from "./instruction-working-copy.js";
 import { AGENT_FILES_CONTRACT } from "../agent-file-store.js";
@@ -67,10 +68,9 @@ describe("instruction working-copy extraction boundary", () => {
   });
 
   it.each([
-    ["copilot", false, true], ["copilot", true, true],
-    ["cursor", false, true], ["cursor", true, true],
+    [undefined, false, true], [undefined, true, true],
     ["claude", false, false], ["claude", true, false],
-  ] as const)("prepares %s instructions with the expected warm ownership on remote=%s", async (agent, remote, warm) => {
+  ] as const)("prepares instructions for ACPX agent %s with the expected warm ownership on remote=%s", async (agent, remote, warm) => {
     const target: Input["workspace"]["executionTarget"] = remote
       ? { kind: "remote", transport: "sandbox", remoteCwd: "/workspace", runnerLifecyclePolicy: { mode: "warm", idleTimeoutMs: 300_000 } }
       : null;
@@ -137,7 +137,7 @@ describe("instruction working-copy extraction boundary", () => {
     expect(order).toEqual(["reuse", "release", "fresh"]);
     expect(f.copies.prepare.mock.calls.map(([input]) => input.reuseRunId)).toEqual(["previous-run", undefined]);
     expect(f.controller.nativeInstructionReservation).toBeNull();
-    expect(config).toMatchObject({ retained: true, instructionsFilePath: "/workspace/copy/AGENTS.md" });
+    expect(config).toMatchObject({ retained: true, instructionsFilePath: path.join(f.copy.executionRoot, "AGENTS.md") });
     expect(f.controller.instructionCopy).toBe(f.copy);
   });
 

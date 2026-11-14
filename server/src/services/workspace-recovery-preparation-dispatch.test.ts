@@ -1,7 +1,7 @@
 import { nextWorkspaceRecoveryAt } from "./system-recovery.js";
 import { notifyDeferredExecutionEligibility } from "./deferred-execution-notifications.js";
 import { isPreDispatchExecutionWaitVerified } from "./pre-dispatch-execution-wait.js";
-import { heartbeatRunEvents, companyObservability, executionWorkspaceRepositories, issueWorkProducts, authUsers, companyMemberships, agents, createDb, environments, heartbeatRuns, issueRecoveryActions, issues, nativeRunResults, executionWorkspaces } from "@paperclipai/db";
+import { heartbeatRunEvents, executionWorkspaceRepositories, issueWorkProducts, authUsers, companyMemberships, agents, createDb, environments, heartbeatRuns, issueRecoveryActions, issues, nativeRunResults, executionWorkspaces } from "@paperclipai/db";
 import { settleInterruptedNativeBootstrap } from "./legacy-execution-recovery.js";
 import { DELIVERY_QUEUES, subscribeDeliveryWork } from "./delivery-work-notifications.js";
 import { environmentService } from "./environments.js";
@@ -26,6 +26,7 @@ import { recoverRetainedWorkspace, reconcileRetainedWorkspaces, retainedWorkspac
 import { createDeliveryWorkCoordinator } from "./delivery-work-coordinator.js";
 import { registerWorkspaceRecoveryWork } from "./workspace-recovery-work.js";
 import { heartbeatService } from "./heartbeat.js";
+import { appendHeartbeatRunEvent } from "./heartbeat-run-events.js";
 import { hasVerifiedWorkspaceRepair } from "./workspace-recovery-receipt.js";
 import { createSavedWorkspaceLoader } from "./remote-workspaces.js";
 import { getExecutionBlocker } from "./execution-blocker.js";
@@ -81,11 +82,7 @@ describe("automatic retained workspace recovery", () => {
         createdAt: new Date(), updatedAt: new Date() }).onConflictDoNothing();
       await db.insert(companyMemberships).values({ companyId: f.companyId, principalType: "user", principalId: "local-board", membershipRole: "owner" });
       await db.update(agents).set({ defaultEnvironmentId: f.lease.environmentId,
-        adapterConfig: withWarning ? { provider: "acpx", acpxAgent: "pi", model: "openrouter/deepseek/deepseek-v4.1-flash-1017" }
-          : { provider: "codex", model: "gpt-6.1-sol" } }).where(eq(agents.id, source.agentId));
-      if (withWarning) await db.insert(companyObservability).values({ companyId: f.companyId, revision: randomUUID(), enabled: true,
-        destination: { provider: "otlp", endpointBaseUrl: "https://collector.example.invalid/otel" },
-        capture: { userPrompts: false, assistantResponses: false, toolDetails: false, toolContent: false } });
+        adapterConfig: { provider: "codex", model: "gpt-6.1-sol" } }).where(eq(agents.id, source.agentId));
       await db.update(environments).set({ config: { provider: "fake", image: "fake:test" } }).where(eq(environments.id, f.lease.environmentId!));
       const environment = environmentService(db), oldTarget = targets.get(f.lease.id)!;
       oldTarget.runner!.syncIn = async operations => {
@@ -193,6 +190,12 @@ describe("automatic retained workspace recovery", () => {
         mode === "automatic_lost" ? eq(heartbeatRuns.scheduledRetryReason, "interrupted_preparation")
           : sql`${heartbeatRuns.contextSnapshot}->>'taskRetryRequestId' = ${receipt.requestId}`));
       expect(successors).toHaveLength(1);
+      if (withWarning) await appendHeartbeatRunEvent(db, {
+        companyId: f.companyId, agentId: source.agentId, runId: successors[0].id,
+        eventType: "agent_observability.unavailable", stream: "system", level: "warn",
+        message: "Company observability was not applied: this harness is not supported.",
+        payload: { reason: "unsupported_harness", revision: randomUUID() },
+      });
       if (unavailableCatalog) {
         const repoUrl = "https://github.com/example/revoked.git";
         await db.insert(executionWorkspaceRepositories).values({ companyId: f.companyId, executionWorkspaceId: f.workspaceId,

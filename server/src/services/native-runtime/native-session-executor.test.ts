@@ -61,8 +61,6 @@ import {
 } from "@paperclipai/db";
 import {
   canonicalNativeRuntimeContextDigest,
-  CURSOR_DISTRIBUTION_PINS,
-  KIMI_DISTRIBUTION_CLOSURE_SHA256,
   QUALIFIED_ACPX_PROFILES,
   acpxRuntimeSessionDirectoryName,
   resolveAcpxRuntimeRoot,
@@ -307,11 +305,6 @@ vi.mock("./paperclip-control-plane-port.js", async importOriginal => {
   } };
 });
 
-const grokCopyBack = vi.hoisted(() => vi.fn(async (_input: { readSandboxAuth: () => Promise<Buffer>; hostHomeDir: string }) => undefined));
-vi.mock("@paperclipai/adapter-grok-local/server", async importOriginal => ({
-  ...await importOriginal<typeof import("@paperclipai/adapter-grok-local/server")>(),
-  copyBackGrokAuth: grokCopyBack,
-}));
 
 vi.mock("../../vendor/paperclip-runner/index.js", async (importOriginal) => {
   const original = await importOriginal<
@@ -2335,7 +2328,7 @@ describe("remote provider pack manifest", () => {
     return JSON.stringify(value);
   };
 
-  it.each(["opencode", "opencode-new-durable", "opencode-new-durable-reset", "opencode-new-durable-inspect-reset", "opencode-new-durable-provider-reset", "opencode-new-durable-store-failed", "opencode-new-durable-publish-failed", "opencode-continuation", "opencode-continuation-missing", "opencode-continuation-no-receipt", "opencode-continuation-replacement", "opencode-continuation-cold", "opencode-continuation-legacy-durable", "opencode-dirty", "opencode-diagnostics", "opencode-diagnostics-stale", "cursor", "claude-x64", "claude-arm64"] as const)("uses the bundled Linux image authority for remote %s without controller overrides", async provider => {
+  it.each(["opencode", "opencode-new-durable", "opencode-new-durable-reset", "opencode-new-durable-inspect-reset", "opencode-new-durable-provider-reset", "opencode-new-durable-store-failed", "opencode-new-durable-publish-failed", "opencode-continuation", "opencode-continuation-missing", "opencode-continuation-no-receipt", "opencode-continuation-replacement", "opencode-continuation-cold", "opencode-continuation-legacy-durable", "opencode-dirty", "opencode-diagnostics", "opencode-diagnostics-stale", "claude-x64", "claude-arm64"] as const)("uses the bundled Linux image authority for remote %s without controller overrides", async provider => {
     const firstDurable = provider.startsWith("opencode-new-durable");
     // A sandbox connection drops once while the settled state is read out.
     let checkpointReadResets = provider === "opencode-new-durable-reset" ? 1 : 0;
@@ -2350,7 +2343,7 @@ describe("remote provider pack manifest", () => {
     const root = await mkdtemp(join(tmpdir(), "paperclip-bundled-image-"));
     const digest = "sha256:" + "a".repeat(64);
     const artifacts = Object.fromEntries(Object.entries({
-      grokLauncher: "dist/providers/grok/launcher.cjs", nodeCommand: "node_modules/node/bin/node",
+      nodeCommand: "node_modules/node/bin/node",
       productionLock: "pnpm-lock.yaml", opencodeCommand: "node_modules/.bin/opencode",
       opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
       opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs",
@@ -2359,18 +2352,13 @@ describe("remote provider pack manifest", () => {
       compatibility: { opencode: 1, acpx: 1 }, contractDigest: digest,
       target: { platform: "linux", architecture }, runnerSourceRevision: "a".repeat(40),
       pins: { nodeMinimum: "24.11.0", codex: QUALIFIED_ACPX_PROFILES.codex.agentRuntimeVersion,
-        opencode: "1.18.34", acpx: "0.22.0", grok: QUALIFIED_ACPX_PROFILES.grok.agentRuntimeVersion,
+        opencode: "1.18.34", acpx: "0.22.0",
         claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion, codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion },
-      acpxProfileDigests: Object.fromEntries(["grok", "claude", "codex"].map(agent =>
-        [agent, QUALIFIED_ACPX_PROFILES[agent as "grok" | "claude" | "codex"].commandDigest])),
+      acpxProfileDigests: Object.fromEntries(["claude", "codex"].map(agent =>
+        [agent, QUALIFIED_ACPX_PROFILES[agent as "claude" | "codex"].commandDigest])),
       distDigest: digest, artifacts,
       bridgeDigest: "sha256:" + createHash("sha256").update(digest + "\n" + digest + "\n" + digest).digest("hex"),
     };
-    if (provider === "cursor") Object.assign(payload, { providers: { cursor: {
-      version: QUALIFIED_ACPX_PROFILES.cursor.agentServerVersion, profileDigest: QUALIFIED_ACPX_PROFILES.cursor.commandDigest,
-      closureDigest: `sha256:${CURSOR_DISTRIBUTION_PINS["linux-x64"].closureSha256}`, qualification: "qualified",
-      path: "provider-assets/cursor/linux-x64", sha256: digest,
-    } } });
     const manifest = { schema: "paperclip-runner/remote-provider-pack/v1", payload,
       digest: "sha256:" + createHash("sha256").update(canonical(payload)).digest("hex") };
     state.bundledPackManifestPath = join(root, "provider-pack.json");
@@ -2381,7 +2369,7 @@ describe("remote provider pack manifest", () => {
     await writeFile(state.bundledRunnerBinary, daemon);
     if (claude) state.resolveRemoteRunnerBinary.mockResolvedValue(state.bundledRunnerBinary);
     const remoteExecution = { ...execution, provider: opencode
-      ? { kind: "opencode", model: null } : { kind: "acpx", agent: claude ? "claude" : "cursor", model: null },
+      ? { kind: "opencode", model: null } : { kind: "acpx", agent: "claude", model: null },
       workspace: { ...execution.workspace, cwd: root },
       session: { ...execution.session, normalizedSessionId: `bundled-${provider}-${randomUUID()}`, driverKind: opencode ? "opencode_server" : "acpx_runtime" },
     } as unknown as NativeExecutionInputV1;
@@ -2828,9 +2816,6 @@ describe("remote provider pack manifest", () => {
     const lockfile = "lockfileVersion: '9.0'\n";
     const opencodeCommand = "#!/bin/sh\n";
     const opencodeExecutable = "opencode-binary\n";
-    const grokLauncher = "grok-binary\n";
-    await mkdir(join(root, "dist/providers/grok"), { recursive: true });
-    await writeFile(join(root, "dist/providers/grok/launcher.cjs"), grokLauncher);
     await writeFile(
       join(root, "dist", "cli", "opencode-app-server-proxy.cjs"),
       proxy,
@@ -2861,21 +2846,18 @@ describe("remote provider pack manifest", () => {
         acpx: "0.22.0",
         claudeAcp: "0.73.0",
         codexAcp: "1.6.2",
-        grok: "1.0.13",
       },
       target: { platform: "linux", architecture: "x64" },
       runnerSourceRevision: "1".repeat(40),
       distDigest: sha256DirectoryTree(join(root, "dist")),
       bridgeDigest: "",
       acpxProfileDigests: {
-        grok: QUALIFIED_ACPX_PROFILES.grok.commandDigest,
         claude:
           "sha256:9d73d1f0f121fb96cc8badb28c22d5bff02d8582eb2e40360a81c189e1b9422a",
         codex:
           "sha256:443491f4e814501a5dc47347e4510e84faeec9c9382e2d4e53bfe69386d5aabc",
       },
       artifacts: {
-        grokLauncher: { path: "dist/providers/grok/launcher.cjs", sha256: digest(grokLauncher) },
         nodeCommand: {
           path: "node_modules/node/bin/node",
           sha256: digest(node),
@@ -2953,155 +2935,10 @@ describe("remote provider pack manifest", () => {
         manifest: selectedPack.manifest });
       expect(syncIn).toHaveBeenCalledTimes(mode === "uploaded" || mode === "failed-final" ? 1 : 0);
     }
-    const cursorPath = "provider-assets/cursor/linux-x64";
-    await mkdir(join(root, cursorPath), { recursive: true });
-    await writeFile(join(root, cursorPath, "runtime"), "pinned Cursor runtime");
-    const cursor = { version: QUALIFIED_ACPX_PROFILES.cursor.agentServerVersion, profileDigest: QUALIFIED_ACPX_PROFILES.cursor.commandDigest,
-      closureDigest: `sha256:${CURSOR_DISTRIBUTION_PINS["linux-x64"].closureSha256}`, qualification: "qualified", path: cursorPath,
-      sha256: sha256DirectoryTree(join(root, cursorPath)) };
-    Object.assign(payload, { providers: { cursor } });
+    Object.assign(payload, { candidateProviders: { pi: {} } });
     await writeManifest();
-    expect(readRemoteProviderPackManifest(root).payload.providers?.cursor?.version).toBe(QUALIFIED_ACPX_PROFILES.cursor.agentServerVersion);
-    // The run path streams the same checks off the event loop.
-    await expect(verifyRemoteProviderPackManifest(root)).resolves.toEqual(readRemoteProviderPackManifest(root));
-    const releaseMetadata = await mkdtemp(join(tmpdir(), "paperclip-image-identity-"));
-    const manifestPath = join(releaseMetadata, "provider-pack.json");
-    await cp(join(root, "provider-pack.json"), manifestPath);
-    expect(readBundledRemoteProviderPackManifest(manifestPath).digest).toBe(readRemoteProviderPackManifest(root).digest);
-    // Rehashing an internally valid old pack must not admit a different release.
-    for (const field of ["version", "profileDigest", "closureDigest"] as const) {
-      const previous = cursor[field];
-      Object.assign(cursor, { [field]: field === "version" ? "older-cursor" : digest(`old-${field}`) });
-      await writeManifest(); await cp(join(root, "provider-pack.json"), manifestPath);
-      expect(() => readRemoteProviderPackManifest(root)).toThrow("Cursor profile or closure");
-      expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("Cursor profile or closure");
-      Object.assign(cursor, { [field]: previous });
-    }
-    await writeManifest(); await cp(join(root, "provider-pack.json"), manifestPath);
-    // A metadata-only release identity is never accepted as a host asset tree.
-    expect(() => readRemoteProviderPackManifest(releaseMetadata)).toThrow();
-    const originalTarget = payload.target;
-    payload.target = { platform: "darwin", architecture: "arm64" };
-    await writeManifest(); await cp(join(root, "provider-pack.json"), manifestPath);
-    expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow();
-    payload.target = originalTarget; await writeManifest();
-    await rm(releaseMetadata, { recursive: true, force: true });
-    await writeFile(join(root, cursorPath, "runtime"), "substitute Cursor runtime");
-    expect(() => readRemoteProviderPackManifest(root)).toThrow("asset tree digest mismatch");
-    await expect(verifyRemoteProviderPackManifest(root)).rejects.toThrow("asset tree digest mismatch");
-    await writeFile(join(root, cursorPath, "runtime"), "pinned Cursor runtime");
-    const kimiPath = "provider-assets/kimi/linux-x64";
-    await mkdir(join(root, kimiPath), { recursive: true });
-    await writeFile(join(root, kimiPath, "runtime"), "pinned Kimi runtime");
-    const kimi = { version: QUALIFIED_ACPX_PROFILES.kimi.agentServerVersion,
-      profileDigest: QUALIFIED_ACPX_PROFILES.kimi.commandDigest,
-      closureDigest: `sha256:${KIMI_DISTRIBUTION_CLOSURE_SHA256["linux-x64"]}`,
-      qualification: "qualified", path: kimiPath, sha256: sha256DirectoryTree(join(root, kimiPath)) };
-    Object.assign(payload, { providers: { cursor, kimi } });
-    await mkdir(releaseMetadata, { recursive: true });
-    const writeKimiManifest = async () => {
-      await writeManifest();
-      await cp(join(root, "provider-pack.json"), manifestPath);
-    };
-    await writeKimiManifest();
-    expect(readRemoteProviderPackManifest(root).payload.providers?.kimi).toEqual(kimi);
-    expect(readBundledRemoteProviderPackManifest(manifestPath).payload.providers?.kimi?.qualification).toBe("qualified");
-    for (const field of ["version", "profileDigest", "closureDigest"] as const) {
-      const previous = kimi[field];
-      kimi[field] = field === "version" ? "older-kimi" : digest(`old-kimi-${field}`);
-      await writeKimiManifest();
-      expect(() => readRemoteProviderPackManifest(root)).toThrow("Kimi profile or closure");
-      expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("Kimi profile or closure");
-      kimi[field] = previous;
-    }
-    kimi.closureDigest = `sha256:${KIMI_DISTRIBUTION_CLOSURE_SHA256["darwin-arm64"]}`;
-    await writeKimiManifest();
-    expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("Kimi profile or closure");
-    kimi.closureDigest = `sha256:${KIMI_DISTRIBUTION_CLOSURE_SHA256["linux-x64"]}`;
-    for (const target of [{ platform: "linux", architecture: "arm64" }, { platform: "darwin", architecture: "arm64" }]) {
-      payload.target = target;
-      kimi.path = `provider-assets/kimi/${target.platform}-${target.architecture}`;
-      Object.assign(payload, { providers: {} });
-      await writeKimiManifest();
-      expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("bundled image pack must target linux-x64");
-    }
-    payload.target = originalTarget;
-    kimi.path = kimiPath;
-    Object.assign(payload, { providers: { cursor, kimi } });
-    kimi.qualification = "pending";
-    await writeKimiManifest();
-    expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("invalid candidate identity");
-    kimi.qualification = "qualified";
-    Object.assign(payload, { providers: { cursor, kimi }, candidateProviders: { kimi } });
-    await writeKimiManifest();
-    expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("Kimi profile or closure");
-    Object.assign(payload, { providers: { cursor, kimi } });
+    expect(() => readRemoteProviderPackManifest(root)).toThrow("invalid candidate inventory");
     Reflect.deleteProperty(payload, "candidateProviders");
-    await writeKimiManifest();
-    await writeFile(join(root, kimiPath, "runtime"), "substitute Kimi runtime");
-    expect(() => readRemoteProviderPackManifest(root)).toThrow("candidate asset tree digest mismatch");
-    await writeFile(join(root, kimiPath, "runtime"), "pinned Kimi runtime");
-    const threeCandidates = { cursor,
-      pi: { ...kimi, version: "1.0.0", qualification: "qualified", path: "provider-assets/pi/linux-x64" },
-      copilot: { ...kimi, qualification: "pending", version: QUALIFIED_ACPX_PROFILES.copilot.agentServerVersion,
-        profileDigest: QUALIFIED_ACPX_PROFILES.copilot.commandDigest,
-        closureDigest: "sha256:a3d8f4367cfa1694d79e3f8b7930b6fbfe42a229c272b375b11951d631db8d07",
-        path: "provider-assets/copilot/linux-x64" } };
-    for (const candidate of [threeCandidates.pi, threeCandidates.copilot]) {
-      await mkdir(join(root, candidate.path), { recursive: true });
-      await writeFile(join(root, candidate.path, "runtime"), "candidate runtime");
-      candidate.sha256 = sha256DirectoryTree(join(root, candidate.path));
-    }
-    Object.assign(payload, { candidateProviders: threeCandidates });
-    await writeKimiManifest();
-    expect(Object.keys(readRemoteProviderPackManifest(root).payload.candidateProviders!)).toHaveLength(3);
-    Object.assign(payload, { candidateProviders: { ...threeCandidates, unknown: kimi } });
-    await writeKimiManifest();
-    expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("invalid candidate inventory");
-    Object.assign(payload, { candidateProviders: { unknown: kimi } });
-    await writeKimiManifest();
-    expect(() => readBundledRemoteProviderPackManifest(manifestPath)).toThrow("invalid candidate identity");
-    await rm(releaseMetadata, { recursive: true, force: true });
-    const candidatePath = "provider-assets/pi/linux-x64";
-    await mkdir(join(root, candidatePath), { recursive: true });
-    await writeFile(join(root, candidatePath, "runtime"), "pinned runtime");
-    const candidates = { pi: { version: "1.0.0", profileDigest: digest("profile"),
-      closureDigest: digest("closure"), qualification: "qualified", path: candidatePath,
-      sha256: sha256DirectoryTree(join(root, candidatePath)) } };
-    Object.assign(payload, { candidateProviders: candidates });
-    await writeManifest();
-    expect(readRemoteProviderPackManifest(root).payload.candidateProviders?.pi?.qualification).toBe("qualified");
-    // The normal pack builder publishes Pi in both inventories. A Pi image
-    // must pass the same reader used by real remote runtime preparation.
-    Object.assign(payload, { providers: { cursor, pi: candidates.pi } });
-    await writeManifest();
-    expect(readRemoteProviderPackManifest(root).payload.providers?.pi?.qualification).toBe("qualified");
-    await mkdir(releaseMetadata, { recursive: true });
-    await cp(join(root, "provider-pack.json"), manifestPath);
-    expect(readBundledRemoteProviderPackManifest(manifestPath).payload.providers?.pi?.qualification).toBe("qualified");
-    Object.assign(payload, { providers: { cursor } });
-    await rm(releaseMetadata, { recursive: true, force: true });
-    await writeManifest();
-    await writeFile(join(root, candidatePath, "runtime"), "substitute runtime");
-    expect(() => readRemoteProviderPackManifest(root)).toThrow("candidate asset tree digest mismatch");
-    await writeFile(join(root, candidatePath, "runtime"), "pinned runtime");
-    candidates.pi.qualification = "pending";
-    await writeManifest();
-    expect(() => readRemoteProviderPackManifest(root)).toThrow("invalid candidate identity");
-    candidates.pi.qualification = "qualified";
-    for (const invalid of [{ path: "../outside" }, { qualification: "unknown" }]) {
-      const original = { ...candidates.pi };
-      Object.assign(candidates.pi, invalid);
-      await writeManifest();
-      expect(() => readRemoteProviderPackManifest(root)).toThrow("invalid candidate identity");
-      candidates.pi = original;
-    }
-    for (const provider of ["cursor", "copilot"]) {
-      Object.assign(candidates, { [provider]: { ...candidates.pi, path: `provider-assets/${provider}/linux-x64` } });
-      await writeManifest();
-      expect(() => readRemoteProviderPackManifest(root)).toThrow(provider === "cursor" ? "Cursor profile or closure does not match this release" : "invalid candidate identity");
-      delete (candidates as Record<string, unknown>)[provider];
-    }
     await writeManifest();
     for (const [artifactName, substituteName] of [
       ["nodeCommand", "productionLock"],
@@ -7694,13 +7531,13 @@ describe("native startup cancellation fence", () => {
     const daemon = Buffer.alloc(64); daemon.set([0x7f, 0x45, 0x4c, 0x46, 2, 1]); daemon.writeUInt16LE(62, 18);
     await writeFile(daemonPath, daemon);
     const sha = "sha256:" + "a".repeat(64);
-    const artifacts = Object.fromEntries(Object.entries({ grokLauncher: "dist/providers/grok/launcher.cjs", nodeCommand: "node_modules/node/bin/node",
+    const artifacts = Object.fromEntries(Object.entries({ nodeCommand: "node_modules/node/bin/node",
       productionLock: "pnpm-lock.yaml", opencodeCommand: "node_modules/.bin/opencode", opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
       opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs" }).map(([name, path]) => [name, { path, sha256: sha }]));
     const payload = { compatibility: { opencode: 1, acpx: 1 }, contractDigest: sha, target: { platform: "linux", architecture: "x64" }, runnerSourceRevision: "a".repeat(40),
       pins: { nodeMinimum: "24.11.0", codex: QUALIFIED_ACPX_PROFILES.codex.agentRuntimeVersion, opencode: "1.18.34", acpx: "0.22.0",
-        grok: QUALIFIED_ACPX_PROFILES.grok.agentRuntimeVersion, claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion, codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion },
-      acpxProfileDigests: Object.fromEntries(["grok", "claude", "codex"].map(agent => [agent, QUALIFIED_ACPX_PROFILES[agent as "grok" | "claude" | "codex"].commandDigest])),
+        claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion, codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion },
+      acpxProfileDigests: Object.fromEntries(["claude", "codex"].map(agent => [agent, QUALIFIED_ACPX_PROFILES[agent as "claude" | "codex"].commandDigest])),
       artifacts, distDigest: sha, bridgeDigest: "sha256:" + createHash("sha256").update(sha + "\n" + sha + "\n" + sha).digest("hex") };
     await writeFile(join(root, "provider-pack.json"), JSON.stringify({ schema: "paperclip-runner/remote-provider-pack/v1", payload,
       digest: "sha256:" + createHash("sha256").update(canonicalProviderPackJson(payload)).digest("hex") }));
@@ -14854,16 +14691,6 @@ describe("native process ownership", () => {
       "acpx_runtime",
     ],
     [
-      "GitHub Copilot ACPX",
-      {
-        kind: "acpx",
-        agent: "copilot",
-        model: "gpt-5.6-luna",
-        permissionMode: "approve-all",
-      },
-      "acpx_runtime",
-    ],
-    [
       "Codex ACPX",
       {
         kind: "acpx",
@@ -14871,11 +14698,6 @@ describe("native process ownership", () => {
         model: "gpt-5.6-sol",
         permissionMode: "deny-all",
       },
-      "acpx_runtime",
-    ],
-    [
-      "Pi ACPX without candidate authorization",
-      { kind: "acpx", agent: "pi", model: "openrouter/deepseek/deepseek-v4-flash-0731", permissionMode: "approve-reads" },
       "acpx_runtime",
     ],
   ])(
@@ -15796,124 +15618,6 @@ describe("runnerd provider runtime wiring", () => {
     });
   });
 
-  it.each(["isolated", "preconfigured"].flatMap(homeMode =>
-    [true, false].map(disableWebSearch => ({ homeMode, disableWebSearch })),
-  ))("pins Grok v10 permissions, effort and search policy at daemon startup: $homeMode $disableWebSearch", async ({ homeMode, disableWebSearch }) => {
-    const current = { ...execution, schema: "paperclip.native-execution-input.v10", homeMode,
-      provider: { kind: "acpx", agent: "grok", model: "grok-4.7", permissionMode: "approve-all",
-        grokEffort: "high", grokDisableWebSearch: disableWebSearch },
-      session: { ...execution.session, driverKind: "acpx_runtime" },
-    } as unknown as NativeExecutionInput;
-    const startup = { db: leaseDb(current), execution: current,
-      runnerInstanceId: `grok-v10-pinned-${homeMode}-${disableWebSearch}`,
-      managedAiCredentialHome: join(isolatedStateDirectory, "absent-grok-login") };
-    await createRunnerdBackend({ ...startup, runnerEnvironment: { XAI_API_KEY: "synthetic-grok-api-key" } });
-    state.createBackend.mock.calls.at(-1)![1].codexTransportFactory!();
-    expect(state.createTransport.mock.calls.at(-1)![0]).toMatchObject({
-      provider: "acpx", acpxAgent: "grok", acpxPermissionMode: "approve-all",
-      acpxPermissionModePinned: true, grokEffort: "high", grokDisableWebSearch: disableWebSearch, homeMode,
-    });
-  });
-
-  it("requires explicit Grok credentials before v10 daemon startup", async () => {
-    const current = { ...execution, schema: "paperclip.native-execution-input.v10", homeMode: "isolated",
-      provider: { kind: "acpx", agent: "grok", model: "grok-4.7", permissionMode: "approve-all", grokEffort: "high" },
-      session: { ...execution.session, driverKind: "acpx_runtime" },
-    } as unknown as NativeExecutionInput;
-    await expect(createRunnerdBackend({ db: leaseDb(current), execution: current,
-      runnerInstanceId: "grok-v10-missing-credential", runnerEnvironment: {},
-      managedAiCredentialHome: join(isolatedStateDirectory, "absent-grok-login"),
-    })).rejects.toThrow("Grok subscription login is unavailable");
-  });
-
-  it("copies back and removes Grok credentials from the exact ACPX launch home", async () => {
-    const priorHome = process.env.PAPERCLIP_HOME;
-    const privateRoot = await realpath(isolatedStateDirectory);
-    process.env.PAPERCLIP_HOME = privateRoot;
-    const managedHome = join(privateRoot, "company-login");
-    await mkdir(managedHome, { mode: 0o700 });
-    await writeFile(join(managedHome, "auth.json"), "fixture-old-login", { mode: 0o600 });
-    const grokExecution = { ...execution,
-      provider: { kind: "acpx", agent: "grok", model: "grok-4.7", permissionMode: "deny-all" },
-      session: { ...execution.session, driverKind: "acpx_runtime" },
-    } as unknown as NativeExecutionInputV1;
-    state.createBackend.mockReturnValueOnce({
-      kind: "test", openSession: async () => ({ close: vi.fn(async () => undefined) }),
-    } as never);
-    try {
-      const backend = await createRunnerdBackend({ db: leaseDb(grokExecution), execution: grokExecution,
-        runnerInstanceId: "grok-cleanup", managedAiCredentialHome: managedHome });
-      state.createBackend.mock.calls.at(-1)![1].codexTransportFactory!();
-      const runtimeDirectory = state.createTransport.mock.calls.at(-1)![0].acpxRuntimeDirectory!;
-      await mkdir(runtimeDirectory, { recursive: true });
-      // Use the runtime's real resolver, so this test cannot reproduce a
-      // controller-side guess that omits the nested ACPX namespace.
-      const agentHome = join(await resolveAcpxRuntimeRoot(runtimeDirectory, execution.session.normalizedSessionId!), "grok-home");
-      await mkdir(agentHome, { recursive: true, mode: 0o700 });
-      for (const name of ["auth.json", "auth-refresh.json", "auth-refresh.json.tmp"]) {
-        await writeFile(join(agentHome, name), "fixture-refreshed-login", { mode: 0o600 });
-      }
-      grokCopyBack.mockReset().mockImplementationOnce(async input => {
-        expect(input.hostHomeDir).toBe(managedHome);
-        expect((await input.readSandboxAuth()).toString()).toBe("fixture-refreshed-login");
-      });
-      const session = await backend.openSession({} as never);
-      await session.close({ reason: "completed" });
-      expect(grokCopyBack).toHaveBeenCalledOnce();
-      for (const name of ["auth.json", "auth-refresh.json", "auth-refresh.json.tmp"]) {
-        await expect(access(join(agentHome, name))).rejects.toMatchObject({ code: "ENOENT" });
-      }
-    } finally {
-      if (priorHome === undefined) delete process.env.PAPERCLIP_HOME;
-      else process.env.PAPERCLIP_HOME = priorHome;
-    }
-  });
-
-  it("projects the selected Antigravity subscription and copies refreshes from the exact native home after close", async () => {
-    const priorHome = process.env.PAPERCLIP_HOME;
-    const privateRoot = await realpath(isolatedStateDirectory);
-    process.env.PAPERCLIP_HOME = privateRoot;
-    const managedHome = join(privateRoot, "antigravity-managed-home");
-    await mkdir(join(managedHome, "antigravity-acp"), { recursive: true, mode: 0o700 });
-    const credential = (project?: string) => JSON.stringify({
-      client_id: "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com", client_secret: "fixture-client-secret",
-      refresh_token: "fixture-google-refresh", token_uri: "https://oauth2.googleapis.com/token", scopes: ["https://www.googleapis.com/auth/cloud-platform", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/aicode"],
-      ...(project ? { project_id: project } : {}),
-    });
-    const managedToken = join(managedHome, "antigravity-acp", "acp_token.json");
-    await writeFile(managedToken, credential(), { mode: 0o600 });
-    const current = { ...execution,
-      provider: { kind: "acpx", agent: "antigravity", model: "caller-selected-model", permissionMode: "deny-all" },
-      session: { ...execution.session, driverKind: "acpx_runtime" },
-    } as unknown as NativeExecutionInputV1;
-    const transportClose = vi.fn(async () => undefined);
-    const nativeTransport = { close: transportClose };
-    state.createTransport.mockReturnValueOnce({ transport: nativeTransport } as never);
-    const close = vi.fn(async () => nativeTransport.close());
-    state.createBackend.mockReturnValueOnce({ kind: "test", openSession: async () => ({ close }) } as never);
-    try {
-      const backend = await createRunnerdBackend({ db: leaseDb(current), execution: current,
-        runnerInstanceId: "antigravity-credential-close", managedAiCredentialHome: managedHome,
-        runnerEnvironment: { GEMINI_HOME: "/ambient", PAPERCLIP_ACPX_ANTIGRAVITY_AUTH_JSON_SECRET: "spoofed" } });
-      state.createBackend.mock.calls.at(-1)![1].codexTransportFactory!();
-      const transport = state.createTransport.mock.calls.at(-1)![0];
-      expect(transport.environment).toMatchObject({ PAPERCLIP_ACPX_ANTIGRAVITY_AUTH_JSON_SECRET: credential() });
-      expect(transport.environment?.GEMINI_HOME).toBeUndefined();
-      await mkdir(transport.acpxRuntimeDirectory!, { recursive: true, mode: 0o700 });
-      const runtimeHome = join(await resolveAcpxRuntimeRoot(transport.acpxRuntimeDirectory!, execution.session.normalizedSessionId!), "antigravity-home", "antigravity-acp");
-      await mkdir(runtimeHome, { recursive: true, mode: 0o700 });
-      for (const name of ["auth-refresh.json", "auth-refresh.json.tmp"]) await writeFile(join(runtimeHome, name), credential("resolved-project"), { mode: 0o600 });
-      const session = await backend.openSession({} as never);
-      await session.close({ reason: "completed" });
-      expect(close).toHaveBeenCalledOnce();
-      expect(transportClose).toHaveBeenCalledOnce();
-      expect(await readFile(managedToken, "utf8")).toBe(credential("resolved-project"));
-      for (const name of ["acp_token.json", "auth-refresh.json", "auth-refresh.json.tmp"]) await expect(access(join(runtimeHome, name))).rejects.toMatchObject({ code: "ENOENT" });
-    } finally {
-      if (priorHome === undefined) delete process.env.PAPERCLIP_HOME;
-      else process.env.PAPERCLIP_HOME = priorHome;
-    }
-  });
 
   it("still cleans up managed Codex credentials after an owned session closes", async () => {
     const close = vi.fn(async () => undefined);
@@ -16514,7 +16218,7 @@ describe("runnerd provider runtime wiring", () => {
     }
   });
 
-  it.each(["codex", "opencode", "claude", "pi"] as const)("adopts remote %s with no old controller launch assets", async provider => {
+  it.each(["codex", "opencode", "claude"] as const)("adopts remote %s with no old controller launch assets", async provider => {
     const base = scopedNativeExecution(`missing-launch-assets-${provider}`);
     const current = { ...base,
       provider: provider === "codex" ? base.provider : provider === "opencode"
@@ -16582,7 +16286,7 @@ describe("runnerd provider runtime wiring", () => {
         : value && typeof value === "object" ? `{${Object.keys(value).sort().map(key =>
           `${JSON.stringify(key)}:${canonical((value as Record<string, unknown>)[key])}`).join(",")}}` : JSON.stringify(value);
       const artifacts = Object.fromEntries(Object.entries({
-        grokLauncher: "dist/providers/grok/launcher.cjs", nodeCommand: "node_modules/node/bin/node",
+        nodeCommand: "node_modules/node/bin/node",
         productionLock: "pnpm-lock.yaml", opencodeCommand: "node_modules/.bin/opencode",
         opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
         opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs",
@@ -16590,10 +16294,10 @@ describe("runnerd provider runtime wiring", () => {
       const payload = { compatibility: { opencode: 1, acpx: 1 }, contractDigest: digest,
         target: { platform: "linux", architecture: "x64" }, runnerSourceRevision: "a".repeat(40),
         pins: { nodeMinimum: "24.11.0", codex: QUALIFIED_ACPX_PROFILES.codex.agentRuntimeVersion,
-          opencode: "1.18.34", acpx: "0.22.0", grok: QUALIFIED_ACPX_PROFILES.grok.agentRuntimeVersion,
+          opencode: "1.18.34", acpx: "0.22.0",
           claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion, codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion },
-        acpxProfileDigests: Object.fromEntries(["grok", "claude", "codex"].map(agent =>
-          [agent, QUALIFIED_ACPX_PROFILES[agent as "grok" | "claude" | "codex"].commandDigest])),
+        acpxProfileDigests: Object.fromEntries(["claude", "codex"].map(agent =>
+          [agent, QUALIFIED_ACPX_PROFILES[agent as "claude" | "codex"].commandDigest])),
         distDigest: digest, artifacts,
         bridgeDigest: "sha256:" + createHash("sha256").update(digest + "\n" + digest + "\n" + digest).digest("hex") };
       installed = { schema: "paperclip-runner/remote-provider-pack/v1", payload,
@@ -16697,7 +16401,7 @@ describe("runnerd provider runtime wiring", () => {
         : value && typeof value === "object" ? `{${Object.keys(value).sort().map(key =>
           `${JSON.stringify(key)}:${canonical((value as Record<string, unknown>)[key])}`).join(",")}}` : JSON.stringify(value);
       const artifacts = Object.fromEntries(Object.entries({
-        grokLauncher: "dist/providers/grok/launcher.cjs", nodeCommand: "node_modules/node/bin/node",
+        nodeCommand: "node_modules/node/bin/node",
         productionLock: "pnpm-lock.yaml", opencodeCommand: "node_modules/.bin/opencode",
         opencodeExecutable: "node_modules/opencode-ai/bin/opencode.exe",
         opencodeProxy: "dist/cli/opencode-app-server-proxy.cjs", acpxSidecar: "dist/cli/acpx-runtime-sidecar.cjs",
@@ -16705,10 +16409,10 @@ describe("runnerd provider runtime wiring", () => {
       const payload = { compatibility: { opencode: 1, acpx: 1 }, contractDigest: digest,
         target: { platform: "linux", architecture: "x64" }, runnerSourceRevision: "a".repeat(40),
         pins: { nodeMinimum: "24.11.0", codex: QUALIFIED_ACPX_PROFILES.codex.agentRuntimeVersion,
-          opencode: "1.18.34", acpx: "0.22.0", grok: QUALIFIED_ACPX_PROFILES.grok.agentRuntimeVersion,
+          opencode: "1.18.34", acpx: "0.22.0",
           claudeAcp: QUALIFIED_ACPX_PROFILES.claude.agentServerVersion, codexAcp: QUALIFIED_ACPX_PROFILES.codex.agentServerVersion },
-        acpxProfileDigests: Object.fromEntries(["grok", "claude", "codex"].map(agent =>
-          [agent, QUALIFIED_ACPX_PROFILES[agent as "grok" | "claude" | "codex"].commandDigest])),
+        acpxProfileDigests: Object.fromEntries(["claude", "codex"].map(agent =>
+          [agent, QUALIFIED_ACPX_PROFILES[agent as "claude" | "codex"].commandDigest])),
         distDigest: digest, artifacts,
         bridgeDigest: "sha256:" + createHash("sha256").update(digest + "\n" + digest + "\n" + digest).digest("hex") };
       installed = { schema: "paperclip-runner/remote-provider-pack/v1", payload,
@@ -17062,7 +16766,7 @@ describe("runnerd provider runtime wiring", () => {
     expect(task.mock.calls.some(([op]) => ["prepare", "submit", "stop"].includes(op.kind))).toBe(false);
   });
 
-  it.each(["codex", "acpx-codex", "grok"] as const)("writes managed %s events through the current warm exporter without per-turn reads", async provider => {
+  it.each(["codex", "acpx-codex"] as const)("writes managed %s events through the current warm exporter without per-turn reads", async provider => {
     const root = await realpath(await mkdtemp(join(tmpdir(), "native-managed-refresh-")));
     const previousRoot = process.env.PAPERCLIP_RUNNER_STATE_DIR;
     process.env.PAPERCLIP_RUNNER_STATE_DIR = join(root, "runner");
@@ -17072,7 +16776,7 @@ describe("runnerd provider runtime wiring", () => {
     const current = scopedNativeExecution(`managed-refresh-${provider}`);
     current.session.lifecyclePolicy = { mode: "warm", idleTimeoutMs: 60_000 };
     if (provider !== "codex") {
-      current.provider = { kind: "acpx", agent: provider === "grok" ? "grok" : "codex", model: null, permissionMode: "deny-all" } as never;
+      current.provider = { kind: "acpx", agent: "codex", model: null, permissionMode: "deny-all" } as never;
       current.session.driverKind = "acpx_runtime";
     }
     const firstStore = { read: vi.fn(async () => "first-refresh"), remove: vi.fn(async () => {}) };
@@ -17098,7 +16802,7 @@ describe("runnerd provider runtime wiring", () => {
         sourceInstanceId: "managed-runner", sourceEventId: "refresh", sourceSeq: 1, runId: current.binding.runId,
         normalizedSessionId: current.session.normalizedSessionId!, priority: 0, emittedAt: "2020-01-01T00:00:00Z",
         payload: { schema: "paperclip.auth.credentials.updated.v1", bindingId: "harness-auth", revision: 1,
-          detection: "credential_store", provider: provider === "grok" ? "grok" : "codex" },
+          detection: "credential_store", provider: "codex" },
       };
       await retainedHook(notification);
       expect(firstStore.read).toHaveBeenCalledOnce();
@@ -17113,12 +16817,12 @@ describe("runnerd provider runtime wiring", () => {
       await rm(nextHome, { recursive: true, force: true });
       await retainedHook(notification);
       expect(persist).toHaveBeenLastCalledWith(expect.anything(), current.binding.companyId, nextBinding,
-        provider === "grok" ? "grok" : "codex", nextStore.read);
+        "codex", nextStore.read);
       expect(persist.mock.calls.at(-1)![2]).toBe(nextBinding);
       await session.close({ reason: "idle retirement" });
       expect(nextStore.read).toHaveBeenCalledTimes(2);
       expect(firstStore.remove).not.toHaveBeenCalled(); expect(nextStore.remove).toHaveBeenCalledOnce();
-      expect(stores.mock.calls[0]![0].localHome).toContain(provider === "grok" ? "grok-home" : "codex-home");
+      expect(stores.mock.calls[0]![0].localHome).toContain("codex-home");
       persist.mockClear();
       await expect(retainedHook({ ...notification, payload: { provider: "unexpected" } })).rejects.toThrow("provider_mismatch");
       expect(persist).not.toHaveBeenCalled();
@@ -17639,7 +17343,7 @@ describe("runnerd provider runtime wiring", () => {
       const spans = exporter.getFinishedSpans();
       expect(spans.map(span => span.name)).toEqual(expect.arrayContaining([
         "native.controller.assigned_mcp", "native.controller.tool_authority",
-        "native.controller.wake_binding", "native.controller.companion_selection",
+        "native.controller.wake_binding",
       ]));
       for (const span of spans) {
         expect(Object.keys(span.attributes)).toEqual(["paperclip.task.run.run_id"]);
