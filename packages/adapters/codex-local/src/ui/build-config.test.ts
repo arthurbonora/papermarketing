@@ -46,73 +46,24 @@ describe("buildCodexLocalConfig", () => {
     expect(() => buildPaperclipRunnerConfig(makeValues({ model: "", adapterSchemaValues: cloud }))).toThrow("explicit model");
   });
 
-  it("round-trips qualified Kimi Code with its exact selected model", () => {
-    const first = buildPaperclipRunnerConfig(makeValues({ model: "explicit-kimi-model", adapterSchemaValues: { provider: "acpx", acpxAgent: "kimi" } }));
-    const reopened = buildPaperclipRunnerConfig(makeValues({ model: "", adapterSchemaValues: JSON.parse(JSON.stringify(first)) }));
-    expect(reopened).toMatchObject({ provider: "acpx", acpxAgent: "kimi", model: "explicit-kimi-model" });
-    expect(first).not.toHaveProperty("candidateHarnesses");
-    expect(() => buildPaperclipRunnerConfig(makeValues({ model: "", adapterSchemaValues: { provider: "acpx", acpxAgent: "kimi" } })))
-      .toThrow("kimi requires an explicit provider model");
-  });
-  it("refuses pending Antigravity selection before saving Runner config", () => {
-    expect(() => buildPaperclipRunnerConfig(makeValues({ model: "exact-antigravity-model",
-      adapterSchemaValues: { provider: "acpx", acpxAgent: "antigravity" } })))
-      .toThrow("Google Antigravity is not enabled for production");
-  });
-  it("builds only the exact candidate model from non-persisted UI context", () => {
-    const values = makeValues({ model: "exact-antigravity-model", adapterSchemaValues: { provider: "acpx", acpxAgent: "antigravity" } });
-    const context = { candidateHarnesses: [{ agent: "antigravity" as const, model: "exact-antigravity-model" }] };
-    expect(buildPaperclipRunnerConfig(values, context)).toMatchObject({ provider: "acpx", acpxAgent: "antigravity", model: values.model });
-    expect(buildPaperclipRunnerConfig(values, context)).not.toHaveProperty("candidateHarnesses");
-    expect(() => buildPaperclipRunnerConfig({ ...values, model: "another-model" }, context)).toThrow();
-    expect(() => buildPaperclipRunnerConfig(values)).toThrow();
+  it.each(["pi", "copilot", "kimi", "cursor", "gemini", "grok", "antigravity"])(
+    "rejects the retired ACPX harness %s before saving",
+    (acpxAgent) => {
+      const values = makeValues({ model: "explicit-test-model", adapterSchemaValues: { provider: "acpx", acpxAgent } });
+      expect(() => buildPaperclipRunnerConfig(values)).toThrow("This agent harness has been removed");
+    },
+  );
+
+  it("rejects Antigravity even with matching qualification data", () => {
+    const model = "exact-antigravity-model";
+    const values = makeValues({ model, adapterSchemaValues: { provider: "acpx", acpxAgent: "antigravity" } });
+    const context = { candidateHarnesses: [{ agent: "antigravity" as const, model }] };
+    expect(() => buildPaperclipRunnerConfig(values, context)).toThrow("This agent harness has been removed");
   });
 
   it("preserves explicitly disabled hosted search in native Codex configuration", () => {
     expect(buildPaperclipRunnerConfig(makeValues({ search: false }))).toHaveProperty("search", false);
     expect(buildPaperclipRunnerConfig(makeValues({ search: true }))).not.toHaveProperty("search");
-  });
-
-  describe("qualified Copilot config", () => {
-    it("round-trips Copilot with the exact selected model", () => {
-      const first = buildPaperclipRunnerConfig(makeValues({ model: "gpt-5.6-luna", adapterSchemaValues: { provider: "acpx", acpxAgent: "copilot" } }));
-      const reopened = buildPaperclipRunnerConfig(makeValues({ model: "", adapterSchemaValues: JSON.parse(JSON.stringify(first)) }));
-      expect(reopened).toMatchObject({ provider: "acpx", acpxAgent: "copilot", model: "gpt-5.6-luna" });
-    });
-    it.each(["", "auto", "default", "Auto", "DEFAULT"])("rejects a missing or implicit Copilot model (%s)", model => {
-      expect(() => buildPaperclipRunnerConfig(makeValues({ model, adapterSchemaValues: { provider: "acpx", acpxAgent: "copilot" } }))).toThrow("Select an available Copilot model");
-    });
-  });
-
-  it.each([undefined, "approve-all", "approve-paperclip", "approve-reads", "deny-all"])(
-    "defaults Grok to full auto while preserving an explicit %s permission mode",
-    (acpxPermissionMode) => {
-      const config = buildPaperclipRunnerConfig(makeValues({
-        adapterType: "paperclip_runner",
-        model: "",
-        adapterSchemaValues: { provider: "acpx", acpxAgent: "grok", acpxPermissionMode },
-      }));
-      expect(config).toMatchObject({
-        provider: "acpx",
-        acpxAgent: "grok",
-        model: "grok-4.7",
-        acpxPermissionMode: acpxPermissionMode ?? "approve-all",
-      });
-    },
-  );
-
-  it.each(["", "grok-4.7-custom"])("retains the Grok harness and its model when normalizing runner fields (%s)", (model) => {
-    const values = makeValues({
-      model,
-      adapterSchemaValues: { provider: "acpx", acpxAgent: "grok", acpxPermissionMode: "approve-paperclip" },
-    });
-    expect(buildPaperclipRunnerConfig(values)).toMatchObject({
-      provider: "acpx",
-      acpxAgent: "grok",
-      model: model || "grok-4.7",
-      acpxPermissionMode: "approve-paperclip",
-    });
-    expect(values.adapterSchemaValues?.acpxAgent).toBe("grok");
   });
 
   it("omits engine for the auto default so runtime fallback remains available", () => {
@@ -295,22 +246,6 @@ describe("buildPaperclipRunnerConfig", () => {
 
 
 
-  it.each(["agent", "plan", "ask"])("preserves Cursor's explicit model and %s mode", (mode) => {
-    expect(buildPaperclipRunnerConfig(makeValues({
-      model: "explicit-cursor-model",
-      adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor", acpxSessionMode: mode },
-    }))).toMatchObject({ provider: "acpx", acpxAgent: "cursor", model: "explicit-cursor-model", acpxSessionMode: mode });
-  });
-
-  it("defaults Cursor to Agent and requires an explicit model", () => {
-    expect(buildPaperclipRunnerConfig(makeValues({
-      model: "explicit-cursor-model", adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor" },
-    }))).toMatchObject({ acpxAgent: "cursor", acpxSessionMode: "agent", model: "explicit-cursor-model" });
-    expect(() => buildPaperclipRunnerConfig(makeValues({
-      model: "", adapterSchemaValues: { provider: "acpx", acpxAgent: "cursor" },
-    }))).toThrow("cursor requires an explicit provider model");
-  });
-
   it("builds a Claude Managed profile reference with explicit retention and spend controls", () => {
     const config = buildPaperclipRunnerConfig(makeValues({
       adapterType: "paperclip_runner",
@@ -401,12 +336,4 @@ describe("buildPaperclipRunnerConfig", () => {
 
     expect(config).not.toHaveProperty("idleTimeoutMs");
   });
-});
-
-it.each([undefined, "off", "low", "high", "max"] as const)("builds exact Pi thinking configuration %s", piThinkingLevel => {
-  const config = buildPaperclipRunnerConfig(makeValues({ adapterType: "paperclip_runner", model: "openrouter/deepseek/deepseek-v4-flash-0731", adapterSchemaValues: { provider: "acpx", acpxAgent: "pi", piThinkingLevel } }));
-  expect(config.piThinkingLevel).toBe(piThinkingLevel ?? "low");
-});
-it("rejects silently clamped Pi aliases during configuration", () => {
-  expect(() => buildPaperclipRunnerConfig(makeValues({ adapterType: "paperclip_runner", adapterSchemaValues: { provider: "acpx", acpxAgent: "pi", piThinkingLevel: "medium" } }))).toThrow();
 });
