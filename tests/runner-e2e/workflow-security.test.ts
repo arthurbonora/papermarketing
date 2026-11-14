@@ -3,8 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
-// PR #13470 uses the code-owner-reviewed default branch for this first-party workflow.
-const ordinaryPrTrustedWorkflowRevision = "master";
+// PR #10 passed with this upstream revision before Tailscale build checks were added.
+const ordinaryPrTrustedWorkflowRevision = "731b52453cfe724afc52d8f92664b2b5cb0a8af9";
 const fullStackTestNeeds =
   /needs:\s*\[\s*authorize,\s*target_lock,\s*catalog,\s*daytona_image,\s*build_runner_artifacts,\s*build_remote_provider_pack,?\s*\]/u;
 const buildRunnerNeeds =
@@ -62,7 +62,7 @@ describe("public repository paid workflow security", () => {
 
   });
 
-  it("uses the reviewed master branch for the first-party trusted PR workflow", async () => {
+  it("uses the reviewed upstream commit for the fork PR workflow", async () => {
     const ordinaryPrWorkflow = await readFile(
       path.join(repositoryRoot, ".github/workflows/pr.yml"),
       "utf8",
