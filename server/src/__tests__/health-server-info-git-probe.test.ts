@@ -45,8 +45,8 @@ function fixtureGit(cwd: string, ...args: string[]) {
     encoding: "utf8",
     env: {
       ...process.env,
-      GIT_CONFIG_GLOBAL: os.devNull,
-      GIT_CONFIG_SYSTEM: os.devNull,
+      GIT_CONFIG_GLOBAL: path.join(home, "empty.gitconfig"),
+      GIT_CONFIG_SYSTEM: path.join(home, "empty.gitconfig"),
       GIT_AUTHOR_NAME: "Test",
       GIT_AUTHOR_EMAIL: "test@example.com",
       GIT_COMMITTER_NAME: "Test",
@@ -108,6 +108,8 @@ let home: string;
 
 beforeEach(() => {
   home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-health-git-probe-")));
+  // Git for Windows does not accept Node's null-device path as a config file.
+  fs.writeFileSync(path.join(home, "empty.gitconfig"), "");
   for (const name of Object.keys(process.env)) {
     if (name.startsWith("GIT_") || name.startsWith("PAPERCLIP_CLOUD_")) vi.stubEnv(name, undefined);
   }
