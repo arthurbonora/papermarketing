@@ -6552,8 +6552,8 @@ it.each([
 
 it.each([
   { provider: "codex", acpxAgent: "cursor", acpxMode: "plan" },
-  { provider: "acpx", acpxAgent: "copilot", acpxMode: "" },
-  { provider: "acpx", acpxAgent: "cursor", acpxMode: 3 },
+  { provider: "acpx", acpxAgent: "claude", acpxMode: "" },
+  { provider: "acpx", acpxAgent: "codex", acpxMode: 3 },
 ] as const)("rejects invalid provider mode transport options before allocating resources: %j", options => {
   expect(() => createCapabilityRunnerdCodexTransport(options as unknown as Parameters<typeof createCapabilityRunnerdCodexTransport>[0]))
     .toThrow(/acpxMode|Provider mode/);

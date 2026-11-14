@@ -1,4 +1,3 @@
-import { appendSemanticToolReceipt } from "../semantic-tool-receipt.js";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { cursorToolIdentity } from "./cursor-plan-tool-identity.js";
@@ -27,25 +26,20 @@ import type {
 import type { AcpxRecoveryWorkspaceLease } from "./runtime-sandbox.js";
 
 describe("Codex ACPX harness driver", () => {
-  it.each(["claude", "codex"] as const)("scopes optional semantic receipts to the actual %s invocation turn", async agent => {
+  it.each(["claude", "codex"] as const)("does not expose the retired native receipt callback to the %s driver", async agent => {
     const fixture = driverFixture({ agent, model: "explicit-test-model", providerPolicy: { readOnly: true } }, { runtimeEvents: [] });
     const session = await fixture.driver.openSession({ runId: "run-receipt", normalizedSessionId: "session-1", workingDirectory: "/workspace" });
-    const first = await session.startTurn({ message: { role: "user", text: "First" } });
+    await session.startTurn({ message: { role: "user", text: "First" } });
     const capture = fixture.hostOptions!.semanticTools!.captureSemanticReceipt;
-    expect(typeof capture).toBe(agent === "copilot" ? "function" : "undefined");
-    const oldCallback = capture?.();
-    const bound = appendSemanticToolReceipt({ tool: "get_task_context", callId: "1", arguments: {} }, { content: [{ type: "text", text: "{}" }] });
-    oldCallback?.(bound.receipt);
+    expect(capture).toBeUndefined();
     fixture.finishTurn({ status: "completed" });
     const firstEvents = await collectUntil(session.events(), "turn.completed");
     const receipts = firstEvents.filter(e => e.eventType === "provider.notice.recorded" && e.payload.category === "paperclip_semantic_tool_receipt_v2");
-    expect(receipts).toHaveLength(agent === "copilot" ? 1 : 0);
-    if (agent === "copilot") expect(receipts[0]).toMatchObject({ runId: "run-receipt", turnId: first.turnId, payload: { provenance: { sessionId: "backend-1", turnId: first.turnId } } });
+    expect(receipts).toEqual([]);
     const transcript = JSON.parse(JSON.stringify(await session.transcript!()));
     for (const event of transcript.events) validatePrpEvent(event);
     expect(transcript.events.filter((e: PrpEvent) => e.payload.category === "paperclip_semantic_tool_receipt_v2")).toEqual(receipts);
     await session.startTurn({ message: { role: "user", text: "Second" } });
-    oldCallback?.(bound.receipt);
     fixture.finishTurn({ status: "completed" });
     const secondEvents = await collectUntil(session.events(), "turn.completed");
     expect(secondEvents.filter(e => e.payload.category === "paperclip_semantic_tool_receipt_v2")).toEqual([]);
@@ -1581,17 +1575,11 @@ describe("Codex ACPX harness driver", () => {
     const fixture = driverFixture({ agent, providerPolicy: { readOnly: false } }, { runtimeEvents });
     const session = await fixture.driver.openSession({ runId: "run-attached", normalizedSessionId: "session-1", workingDirectory: "/fixture/workspace" });
     const completed = collectUntil(session.events(), "turn.completed");
-    const { turnId } = await session.startTurn({ message: { role: "user", text: "Start attached work." } });
+    await session.startTurn({ message: { role: "user", text: "Start attached work." } });
     fixture.finishTurn({ status: "completed", stopReason: "end_turn" });
     const events = await completed;
     const evidence = events.filter(event => event.eventType === "provider.notice.recorded" && event.payload.category === "copilot_tool_evidence_v1");
-    if (agent === "copilot") {
-      expect(evidence.length).toBeGreaterThan(2);
-      expect(evidence.every(event => event.turnId === turnId && event.runId === "run-attached")).toBe(true);
-      const fields = evidence.map(event => Object.fromEntries((event.payload.details as Array<{ name: string; value: string }>).map(x => [x.name, x.value])));
-      expect(fields).toEqual(expect.arrayContaining([expect.objectContaining({ operation: "execute", mode: "async", detach: "false", commandSha256: expect.stringMatching(/^sha256:/u) }), expect.objectContaining({ shellState: "started", shellId: "0" }), expect.objectContaining({ shellState: "completed", shellId: "0", exitCode: "0", commandToolCallId: expect.any(String) })]));
-      expect(JSON.stringify(evidence)).not.toContain("sleep 2");
-    } else expect(evidence).toEqual([]);
+    expect(evidence).toEqual([]);
     await session.close({ reason: "projection verified" });
   });
 

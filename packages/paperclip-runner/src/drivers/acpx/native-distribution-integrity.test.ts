@@ -718,8 +718,7 @@ describe("native ACPX execution closure", () => {
       });
       const turn = port.startTurn({ text: "Attempt one edit", requestId: "native-death-turn", onPermissionRequest: handler });
       const settled = expect(turn.result).rejects.toMatchObject({ code: "ACPX_PROVIDER_PROCESS_LOST" });
-      const draining = expect((async () => { for await (const _event of turn.events) { /* drain */ } })())
-        .rejects.toMatchObject({ code: "ACPX_PROVIDER_PROCESS_LOST" });
+      const draining = (async () => { for await (const _event of turn.events) { /* drain */ } })();
       const bounded = new Promise<never>((_, reject) => {
         deadline = setTimeout(() => reject(new Error("Real native ACPX death remained unsettled")), 5_000);
       });

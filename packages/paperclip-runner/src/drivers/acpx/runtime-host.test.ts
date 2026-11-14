@@ -949,8 +949,7 @@ describe("ACPX runtime host", () => {
     const model = agent === "claude" ? "claude-opus-5-5" : "gpt-5.6-sol";
     let bridge: Extract<AcpxRuntimePortOpenOptions["mcpServers"][number], { url: string }> | undefined;
     const environment = agent === "claude" ? { ANTHROPIC_API_KEY: "fixture-not-a-real-credential" }
-      : agent === "copilot" ? { COPILOT_GITHUB_TOKEN: "fixture-not-a-real-credential" }
-        : { PAPERCLIP_ACPX_CODEX_AUTH_JSON_SECRET: "{}" };
+      : { PAPERCLIP_ACPX_CODEX_AUTH_JSON_SECRET: "{}" };
     const host = await AcpxRuntimeHost.open({
       ...fixture.options, agent, model, permissionMode: "deny-all", environment,
       semanticTools: { tools: [{ name: "set_task_title", inputSchema: { type: "object", properties: {} } }], handler: async () => ({}) },

@@ -1663,7 +1663,7 @@ describe("qualified ACPX runtime sidecar", () => {
 
   it.each([
     ["claude", "claude-sonnet-5"],
-    ["pi", "openrouter/deepseek/deepseek-v4-flash-0731"],
+    ["codex", "gpt-5.6-sol"],
   ])(
     "reports the qualified %s profile",
     async (agent, model) => {
@@ -1741,12 +1741,8 @@ describe("qualified ACPX runtime sidecar", () => {
       platform: "darwin", architecture: "arm64", expiresAt: Date.now() + 60_000 }, { runId: "run-candidate", normalizedSessionId: "session-candidate" });
     const request = initializeRequest(1, "antigravity", model);
     sidecar.write({ ...request, params: { ...request.params, candidateAdmission } });
-    expect(await sidecar.next(frame => frame.id === 1)).toMatchObject({ ok: true, result: { profile: { agent: "antigravity", qualificationStatus: "pending", reportedModelId: model } } });
-    sidecar.write({ protocolVersion: ACPX_SIDECAR_PROTOCOL_VERSION, id: 2, command: "session.open", params: {
-      runtimeDirectory: "/unused", workingDirectory: "/unused", normalizedSessionId: "other-session", agent: "antigravity", model,
-      candidateAdmission, permissionMode: "deny-all", permissionModePinned: true, providerPolicy: { readOnly: true }, systemInstructions: "", tools: [],
-    } });
-    expect(await sidecar.next(frame => frame.id === 2)).toMatchObject({ ok: false, error: { message: expect.stringContaining("candidate admission") } });
+    expect(await sidecar.next(frame => frame.id === 1)).toMatchObject({ id: 1, ok: false,
+      error: { message: expect.stringContaining("is no longer supported"), retryable: false } });
   });
 
   it("fails closed after an unsupported provider bootstrap", async () => {

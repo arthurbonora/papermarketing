@@ -93,13 +93,13 @@ describe("resolveNativeRuntimeMode", () => {
     })).toMatchObject({ kind: "native", profile: { backend: "opencode_server" } });
   });
 
-  it("still rejects Grok while the rollout flag is disabled", () => {
+  it.each([false, true])("rejects retired Grok Build with the rollout flag set to %s", enabled => {
     expect(() => resolveNativeRuntimeMode({
       ...eligible,
-      enabled: false,
+      enabled,
       adapterConfig: { provider: "acpx", acpxAgent: "grok", model: "openrouter/deepseek/deepseek-v4-flash-0731" },
     })).toThrow(expect.objectContaining({
-      code: "paperclip_runner_rollout_disabled",
+      code: "agent_harness_removed",
     }));
   });
 
@@ -159,13 +159,10 @@ describe("resolveNativeRuntimeMode", () => {
       kind: "native",
       profile: { backend: "acpx_runtime" },
     });
-    expect(resolveNativeRuntimeMode({
+    expect(() => resolveNativeRuntimeMode({
       ...eligible,
       adapterConfig: { provider: "acpx", acpxAgent: "copilot", model: "gpt-5.6-luna" },
-    })).toMatchObject({
-      kind: "native",
-      profile: { backend: "acpx_runtime" },
-    });
+    })).toThrow(expect.objectContaining({ code: "agent_harness_removed" }));
   });
 
   it("rejects malformed OpenCode and unregistered ACPX profiles", () => {
@@ -248,7 +245,7 @@ describe("resolveNativeRuntimeMode", () => {
 
   it("keeps a persisted experimental run native while the flag rejects a fresh start", () => {
     const disabled = { ...eligible, enabled: false,
-      adapterConfig: { provider: "acpx", acpxAgent: "grok", model: "openrouter/deepseek/deepseek-v4-flash-0731" },
+      adapterConfig: { provider: "cursor_cloud", model: "claude-sonnet-4-6", repoUrl: "https://github.com/example/workspace" },
     };
     expect(resolveHeartbeatNativeRuntimeMode({
       ...disabled,
@@ -256,7 +253,7 @@ describe("resolveNativeRuntimeMode", () => {
         runtimeMode: "native",
         runtimeModeReason: "eligible_opt_in",
         runtimeModeResolvedAt: new Date(),
-        driverKind: "acpx_runtime",
+        driverKind: "cursor_cloud_api",
       },
     })).toEqual(expect.objectContaining({
       kind: "native",
@@ -531,7 +528,7 @@ describe("resolveHeartbeatRuntimeMode compatibility", () => {
   });
   it("admits native Claude without enabling other ACPX providers", () => {
     expect(resolveNativeRuntimeMode({ ...eligible, enabled: false, adapterConfig: { provider: "acpx", acpxAgent: "claude" } })).toMatchObject({ kind: "native", profile: { backend: "acpx_runtime" } });
-    expect(() => resolveNativeRuntimeMode({ ...eligible, enabled: false, adapterConfig: { provider: "acpx", acpxAgent: "grok" } })).toThrow(expect.objectContaining({ code: "paperclip_runner_rollout_disabled" }));
+    expect(() => resolveNativeRuntimeMode({ ...eligible, enabled: false, adapterConfig: { provider: "acpx", acpxAgent: "grok" } })).toThrow(expect.objectContaining({ code: "agent_harness_removed" }));
   });
 });
 
