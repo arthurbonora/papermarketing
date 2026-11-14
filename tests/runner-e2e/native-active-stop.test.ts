@@ -2,8 +2,6 @@ import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { assertActiveStopRetirement, readActiveStopRemoteRetirement, type ActiveStopRemoteObservation, readActiveStopCaller, observeActiveStopPending, readActiveStopSettlement, type ActiveStopProvider } from "./native-active-stop-evidence.js";
 import { stopAtPendingPermission } from "./native-active-stop-flow.js";
-import { runnerMatrix, runnerSuites, suiteDefinitionHash } from "./catalog.js";
-import { selectRunnerExecutions, parseRunnerSelectors } from "./selectors.js";
 import { createCursorToolEvidence } from "../../packages/paperclip-runner/src/drivers/acpx/cursor-tool-evidence.js";
 import { createCopilotToolEvidence } from "../../packages/paperclip-runner/src/drivers/acpx/copilot-tool-evidence.js";
 import type { CanonicalProviderEvent } from "../../packages/paperclip-runner/src/provider-events.js";
@@ -366,20 +364,6 @@ describe("active Stop flow wiring", () => {
       f.settle(id); f.run.status = "failed"; f.events.length = 0; return f.run;
     } })).rejects.toThrow(/Stopped waiting.*unexpected run terminal/);
     expect(Date.now() - started).toBeLessThan(500);
-  });
-});
-
-describe("explicit active Stop discovery", () => {
-  it("adds exactly four versioned cells without enabling them in --all", () => {
-    const suite = runnerSuites.find(s => s.id === "native-active-stop")!;
-    const cells = runnerMatrix.filter(e => e.suite === suite);
-    expect(cells).toHaveLength(4); expect(suite.manualOnly).toBe(true);
-    expect(cells.map(e => `${e.profile.qualificationCandidate}/${e.environment.id}`).sort()).toEqual(["copilot/daytona", "copilot/local", "cursor/daytona", "cursor/local"]);
-    expect(cells.every(e => e.task.expectedRunCount === 1 && e.task.flow === "native_active_stop" && e.task.expectedTerminalState?.run === "cancelled")).toBe(true);
-    expect(suite.definitionMetadata).toMatchObject({ version: 20, evidence: "paperclip.e2e.native-active-stop-settlement.v2", normalCompletionAccepted: false, providerDeath: "not-covered" });
-    expect(suiteDefinitionHash(suite)).not.toBe(suiteDefinitionHash({ ...suite, definitionMetadata: { ...suite.definitionMetadata, version: 3 } }));
-    expect(suiteDefinitionHash(suite)).not.toBe(suiteDefinitionHash({ ...suite, definitionMetadata: { ...suite.definitionMetadata, normalCompletionAccepted: true } }));
-    expect(selectRunnerExecutions(parseRunnerSelectors(["--all"])).some(e => e.suite.id === suite.id)).toBe(false);
   });
 });
 

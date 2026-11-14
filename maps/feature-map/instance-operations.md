@@ -20,6 +20,8 @@ Agent access: [companion](../agent-access-map/instance-operations.md).
 - `diagnostics`: `instance-operations/diagnostics` — use doctor/health output to distinguish readiness from a listening port.
 - `backup`: `instance-operations/backup` — create and inspect backups and verify restore only into a separate disposable target.
 
+- `runtime-setup`: `instance-operations/runtime-setup` — report that an earlier harness is unavailable and select a supported harness.
+
 ## How to get to it (user POV)
 
 ### `operator-cli`

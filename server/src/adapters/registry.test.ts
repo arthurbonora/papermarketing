@@ -3,6 +3,7 @@ import { assertValidAdapterLoginCapability } from "@paperclipai/adapter-utils";
 import { listServerAdapters, requireServerAdapter } from "./registry.js";
 import * as executionTarget from "@paperclipai/adapter-utils/execution-target";
 import { BUILTIN_ADAPTER_TYPES } from "./builtin-adapter-types.js";
+import { assertHarnessTestPassed } from "../services/agent-harness-verification.js";
 
 const { probeInstallation, verifyApiKey } = vi.hoisted(() => ({
   verifyApiKey: vi.fn(),

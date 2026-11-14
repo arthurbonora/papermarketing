@@ -272,9 +272,9 @@ fn rejects_an_existing_runner_state_directory_that_is_not_private() {
 #[test]
 fn mode_round_trips_checkpoint_and_rejects_changed_or_missing_recovery_mode() {
     use paperclip_runner_core::acpx_provider_session::AcpxProviderRuntimePolicy;
-    let directory = temporary_directory("cursor-mode");
+    let directory = temporary_directory("provider-mode");
     let mut config = config(&directory);
-    config.agent = "cursor".to_owned();
+    config.agent = "claude".to_owned();
     config.mode = Some("plan".to_owned());
     config.provider_policy = Some(AcpxProviderRuntimePolicy { read_only: false });
     let mut identity = identity();
@@ -294,54 +294,8 @@ fn mode_round_trips_checkpoint_and_rejects_changed_or_missing_recovery_mode() {
         assert!(changed.admit_recovery(&config).is_err());
     }
     let mut other = config.clone();
-    other.agent = "copilot".to_owned();
+    other.agent = "codex".to_owned();
     other.mode = None;
     assert!(recovered.admit_recovery(&other).is_err());
-    fs::remove_dir_all(directory).unwrap();
-}
-
-#[test]
-fn pi_thinking_level_round_trips_and_rejects_legacy_or_changed_recovery() {
-    use paperclip_runner_core::acpx_provider_session::{
-        AcpxProviderRuntimePolicy, PiThinkingLevel,
-    };
-    let directory = temporary_directory("pi-thinking");
-    let mut config = config(&directory);
-    config.agent = "pi".to_owned();
-    config.model = "openrouter/deepseek/deepseek-v4-flash-0731".to_owned();
-    config.pi_thinking_level = Some(PiThinkingLevel::Low);
-    config.provider_policy = Some(AcpxProviderRuntimePolicy { read_only: false });
-    let mut identity = identity();
-    identity.requested_model = config.model.clone();
-    identity.effective_model = config.model.clone();
-    identity.pi_thinking_level = Some(PiThinkingLevel::Low);
-    let checkpoint = AcpxSuspensionCheckpoint::from_suspension(&config, identity.clone()).unwrap();
-    let store = AcpxSuspensionCheckpointStore::new(&directory).unwrap();
-    store.save(&checkpoint).unwrap();
-    let recovered = store.load().unwrap().unwrap();
-    assert_eq!(recovered.admit_recovery(&config).unwrap(), identity);
-    let wire = serde_json::to_value(&recovered).unwrap();
-    assert_eq!(wire["identity"]["piThinkingLevel"], json!("low"));
-    for level in [
-        None,
-        Some(PiThinkingLevel::Off),
-        Some(PiThinkingLevel::High),
-        Some(PiThinkingLevel::Max),
-    ] {
-        let mut changed_config = config.clone();
-        changed_config.pi_thinking_level = level;
-        assert!(recovered.admit_recovery(&changed_config).is_err());
-        let mut changed = wire.clone();
-        changed["identity"]["piThinkingLevel"] = json!(level);
-        let changed: AcpxSuspensionCheckpoint = serde_json::from_value(changed).unwrap();
-        assert!(changed.admit_recovery(&config).is_err());
-    }
-    let mut legacy = wire;
-    legacy["identity"]
-        .as_object_mut()
-        .unwrap()
-        .remove("piThinkingLevel");
-    let legacy: AcpxSuspensionCheckpoint = serde_json::from_value(legacy).unwrap();
-    assert!(legacy.admit_recovery(&config).is_err());
     fs::remove_dir_all(directory).unwrap();
 }

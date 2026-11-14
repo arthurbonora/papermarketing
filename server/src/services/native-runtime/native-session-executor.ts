@@ -16877,7 +16877,7 @@ async function createRunnerdBackendWithinSessionClaim(
       }
     : input.execution;
   const preconfiguredHome = "homeMode" in input.execution && input.execution.homeMode === "preconfigured";
-  const effectiveRunnerEnvironmentBase = { ...resolveNativeProviderEnvironment(input.execution.provider, runnerEnvironment) };
+  let effectiveRunnerEnvironmentBase = { ...resolveNativeProviderEnvironment(input.execution.provider, runnerEnvironment) };
   if (relayAssignedMcp) {
     // The server-held tool authority owns this credential. Do not deliver a
     // duplicate HTTP MCP server or its bearer token to the remote provider.

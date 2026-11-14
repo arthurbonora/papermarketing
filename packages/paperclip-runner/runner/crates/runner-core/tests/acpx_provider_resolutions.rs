@@ -336,24 +336,10 @@ fn interactive_permission_requires_an_offered_action_and_acknowledgement() {
 
 #[test]
 fn permission_origin_is_bound_to_the_admitted_connection_and_survives_projection() {
-    for agent in ["claude", "copilot", "cursor", "pi"] {
+    for agent in ["claude"] {
         let mut cfg = config("permissions-interactive");
         cfg.agent = agent.to_owned();
-        cfg.model = if agent == "claude" {
-            "claude-sonnet-5"
-        } else if agent == "pi" {
-            "openrouter/deepseek/deepseek-v4-flash-0731"
-        } else {
-            "explicit-test-model"
-        }
-        .to_owned();
-        if agent == "pi" {
-            cfg.pi_thinking_level =
-                Some(paperclip_runner_core::acpx_provider_session::PiThinkingLevel::Low);
-        }
-        if agent == "cursor" {
-            cfg.mode = Some("agent".to_owned());
-        }
+        cfg.model = "claude-sonnet-5".to_owned();
         cfg.provider_policy = Some(
             paperclip_runner_core::acpx_provider_session::AcpxProviderRuntimePolicy {
                 read_only: false,

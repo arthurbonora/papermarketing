@@ -237,3 +237,21 @@ own policy and access review.
 
 Gaps: API creation exists. Restore/lifecycle are operator workflows rather than ordinary
 company agent capabilities.
+
+## `runtime-setup`
+
+Capability ID: `instance-operations/runtime-setup`.
+
+Review: `baseline`.
+
+API: `not-applicable`. The removed runtime setup command has no application endpoint.
+
+Agent access: `operator-only`. Existing agent records can be read and their harness can be changed by an authorized operator.
+
+Policy: Existing agent records remain company scoped. Reconfiguration requires access to the agent.
+
+Evidence: `source-only`. [Configuration guards](../../server/src/services/agent-runner-selection.ts).
+
+Verification: `not-run`. Check that selecting a removed harness returns the permanent removal error and that reading the old record still works.
+
+Gaps: Runtime setup for retired harnesses is unavailable.

@@ -74,7 +74,7 @@ describe("rolling controller qualification", () => {
         && (!profile.qualificationCandidate || QUALIFIED_ACPX_PROFILES[profile.qualificationCandidate].qualificationStatus !== "pending"))
       .map(kind));
     expect(new Set(native.map(kind))).toEqual(registeredKinds);
-    const warmIds = new Set(["runner-codex", "runner-acpx-copilot"]);
+    const warmIds = new Set(["runner-codex"]);
     expect(new Set(runnerSuites.find(suite => suite.id === "rolling-web-deployment-warm")!.profiles.map(profile => profile.id))).toEqual(warmIds);
     for (const profile of native) {
       const cells = executions.filter(execution => execution.profile.id === profile.id);

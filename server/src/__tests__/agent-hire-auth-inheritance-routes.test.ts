@@ -340,18 +340,18 @@ describeEmbeddedPostgres("hired agent provider credential inheritance", () => {
 
   it("does not inherit a plain environment value", async () => {
     const companyId = await seedCompany();
-    const parent = await seedParentAgent(companyId, "grok_local", {
-      XAI_API_KEY: "xai-plain-value",
+    const parent = await seedParentAgent(companyId, "codex_local", {
+      OPENAI_API_KEY: "plain-provider-value",
     });
 
     const res = await hire(agentActor(companyId, parent.id), companyId, {
-      name: "Grok Plain Value Child",
+      name: "Plain Value Child",
       role: "engineer",
-      adapterType: "grok_local",
+      adapterType: "codex_local",
     });
 
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(childEnvOf(res).XAI_API_KEY).toBeUndefined();
+    expect(childEnvOf(res).OPENAI_API_KEY).toBeUndefined();
   });
 
   it("does not inherit across a mismatched adapter type", async () => {
@@ -466,7 +466,7 @@ describeEmbeddedPostgres("hired agent provider credential inheritance", () => {
     expect(childEnvOf(res).CODEX_HOME).toBeUndefined();
   });
 
-  it("adds no home override for a grok_local child with no inherited key", async () => {
+  it("rejects hiring a child with the parent's retired Grok Build harness", async () => {
     const companyId = await seedCompany();
     const parent = await seedParentAgent(companyId, "grok_local", {});
 
@@ -476,10 +476,8 @@ describeEmbeddedPostgres("hired agent provider credential inheritance", () => {
       adapterType: "grok_local",
     });
 
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    const childEnv = childEnvOf(res);
-    expect(childEnv.GROK_HOME).toBeUndefined();
-    expect(childEnv.XAI_API_KEY).toBeUndefined();
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.code).toBe("agent_harness_removed");
   });
 
   it("inherits nothing for a user actor hire", async () => {

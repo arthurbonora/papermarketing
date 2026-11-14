@@ -5375,11 +5375,15 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
           .filter((entry) => entry.action !== "skip")
           .map((entry) => entry.slug),
       );
-      const runnerSelections = sourceManifest.agents.filter((agent) =>
-        importedAgentSlugs.has(agent.slug)
-        && (input.adapterOverrides?.[agent.slug]?.adapterType ?? agent.adapterType)
-          === "paperclip_runner",
-      );
+      const runnerSelections = sourceManifest.agents.filter(agent => {
+        if (!importedAgentSlugs.has(agent.slug)) return false;
+        const override = input.adapterOverrides?.[agent.slug];
+        const adapterType = override?.adapterType ?? agent.adapterType;
+        if (isRemovedAgentHarness(adapterType, override?.adapterConfig ?? agent.adapterConfig)) {
+          throw unprocessable("This agent harness has been removed. Select a supported harness.", { code: "agent_harness_removed" });
+        }
+        return adapterType === "paperclip_runner";
+      });
       if (runnerSelections.length > 0) {
         const experimental = await instanceSettingsService(db).getExperimental();
         for (const agent of runnerSelections) {
@@ -5391,7 +5395,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
               "OpenAI Dot is experimental and disabled on this instance.",
               { code: "paperclip_runner_dot_disabled" },
             );
-          } else if (config.provider !== "codex" && config.provider !== "opencode" && config.provider !== undefined && !["claude_local", "pi_local", "grok_local"].includes(agentHarnessType("paperclip_runner", config)) && experimental.enableNativeRunner !== true) {
+          } else if (config.provider !== "codex" && config.provider !== "opencode" && config.provider !== undefined && agentHarnessType("paperclip_runner", config) !== "claude_local" && experimental.enableNativeRunner !== true) {
             throw unprocessable(
               "PaperMarketing Runner is experimental and disabled on this instance.",
               { code: "paperclip_runner_rollout_disabled" },

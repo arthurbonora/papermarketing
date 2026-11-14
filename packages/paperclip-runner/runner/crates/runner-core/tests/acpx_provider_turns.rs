@@ -37,12 +37,7 @@ fn config(mode: &str) -> AcpxProviderSessionConfig {
             request_timeout: Duration::from_secs(1),
             shutdown_grace: Duration::from_millis(100),
         },
-        agent: if mode.starts_with("controls") {
-            "pi"
-        } else {
-            "codex"
-        }
-        .to_owned(),
+        agent: "codex".to_owned(),
         model: "explicit-test-model".to_owned(),
         run_id: "run-1".to_owned(),
         catalog_revision: 1,
@@ -54,11 +49,7 @@ fn config(mode: &str) -> AcpxProviderSessionConfig {
         claude_effort: None,
         grok_effort: None,
         grok_disable_web_search: None,
-        pi_thinking_level: if mode.starts_with("controls") {
-            Some(paperclip_runner_core::acpx_provider_session::PiThinkingLevel::Low)
-        } else {
-            None
-        },
+        pi_thinking_level: None,
         permission_mode_pinned: true,
         provider_policy: if mode.starts_with("controls") {
             Some(
@@ -702,69 +693,12 @@ fn fails_closed_before_returning_an_unauthorized_tool_call() {
 }
 
 #[test]
-fn turn_controls_preserve_mode_and_reject_stale_duplicate_and_oversized_delivery() {
-    let mut session = AcpxProviderSession::start(&config("controls")).unwrap();
-    assert!(session
-        .steer_turn("turn-1", "control-1", "steer", "message")
-        .is_err());
-    session
-        .start_turn("turn-1", "Work", &std::env::temp_dir())
-        .unwrap();
-    let first = session
-        .steer_turn("turn-1", "control-1", "steer", "Change focus")
-        .unwrap();
-    assert_eq!(first["mode"], "steer");
-    assert!(session
-        .steer_turn("turn-1", "control-1", "follow_up", "Duplicate")
-        .unwrap_err()
-        .to_string()
-        .contains("already attempted"));
-    let queued = session
-        .steer_turn("turn-1", "control-2", "follow_up", "Then validate")
-        .unwrap();
-    assert_eq!(queued["mode"], "follow_up");
-    assert!(session
-        .steer_turn("turn-2", "control-3", "steer", "Stale")
-        .is_err());
-    assert!(session
-        .steer_turn("turn-1", "control-3", "cancel", "Wrong")
-        .is_err());
-    assert!(session
-        .steer_turn("turn-1", "control-3", "steer", &"a".repeat(65_537))
-        .is_err());
-    session.shutdown("verified controls").unwrap();
-}
-
-#[test]
-fn turn_controls_fail_closed_on_mismatched_acknowledgement() {
-    let mut session = AcpxProviderSession::start(&config("controls-wrong-ack")).unwrap();
-    session
-        .start_turn("turn-1", "Work", &std::env::temp_dir())
-        .unwrap();
-    assert!(session
-        .steer_turn("turn-1", "control-1", "steer", "Change focus")
-        .unwrap_err()
-        .to_string()
-        .contains("exact turn control"));
-    assert!(session
-        .steer_turn("turn-1", "control-2", "follow_up", "Do not replay")
-        .is_err());
-}
-
-#[test]
-fn lazy_warm_handshake_updates_live_turn_control_discovery() {
-    let mut session = AcpxProviderSession::start(&config("controls-lazy")).unwrap();
-    assert!(!session.turn_control_capabilities().steering);
-    assert!(!session.turn_control_capabilities().queued_follow_up);
-    session
-        .start_turn("turn-lazy", "Work", &std::env::temp_dir())
-        .unwrap();
-    assert!(session.turn_control_capabilities().steering);
-    assert!(session.turn_control_capabilities().queued_follow_up);
-    session
-        .steer_turn("turn-lazy", "control-1", "follow_up", "Then validate")
-        .unwrap();
-    session.shutdown("verified live handshake").unwrap();
+fn supported_harness_rejects_turn_control_claims_from_sidecar() {
+    let result = AcpxProviderSession::start(&config("controls"));
+    let Err(error) = result else {
+        panic!("Codex must not accept steering or queued follow-ups from the sidecar");
+    };
+    assert!(error.to_string().contains("turn controls"), "{error}");
 }
 
 #[test]

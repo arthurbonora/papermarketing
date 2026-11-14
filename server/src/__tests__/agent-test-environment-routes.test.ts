@@ -150,8 +150,16 @@ vi.mock("../services/agent-runner-selection.js", async (importOriginal) => {
 const mockValidateAiApiKey = vi.hoisted(() => vi.fn(async () => undefined));
 vi.mock("../services/ai-api-key-test.js", () => ({ validateAiApiKey: mockValidateAiApiKey }));
 const mockMarkAuthenticationFailed = vi.hoisted(() => vi.fn(async () => undefined));
-const mockSelectAiConnection = vi.hoisted(() => vi.fn(async (_input: unknown) => ({ connectionId: "copilot-connection", grantId: "copilot-grant" })));
-const mockAiCredential = vi.hoisted(() => vi.fn(async (_selection: unknown) => "synthetic-copilot-token"));
+vi.mock("../services/ai-connections.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/ai-connections.js")>();
+  return {
+    ...actual,
+    aiConnectionService: (...args: Parameters<typeof actual.aiConnectionService>) => ({
+      ...actual.aiConnectionService(...args),
+      markAuthenticationFailed: mockMarkAuthenticationFailed,
+    }),
+  };
+});
 
 function mockManagedRuntime(method: "api_key" | "subscription") {
   mockPrepareManagedAiRuntime.mockImplementation(

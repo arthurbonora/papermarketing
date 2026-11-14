@@ -661,7 +661,7 @@ describe("Runner-only plugin environments", () => {
     for (const harness of ["codex_local", "claude_local"]) {
       expect(agentRunnerAvailability(harness, target)).toEqual({ supportedRunners: ["paperclip"], defaultRunner: "paperclip" });
     }
-    expect(agentRunnerAvailability("gemini_local", target)).toEqual({ supportedRunners: ["legacy"], defaultRunner: "legacy" });
+    expect(agentRunnerAvailability("gemini_local", target)).toEqual({ supportedRunners: [], defaultRunner: "legacy" });
     expect(state.ssh).not.toHaveBeenCalled();
   });
   it("carries warm task capability from the selected driver without provider gates", async () => {

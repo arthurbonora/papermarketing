@@ -3107,10 +3107,6 @@ export function agentRoutes(
     // and explicit task adoption still need proof.
     if (probe === "always" || (probe === "legacy" && selection.connection.config.aiLegacyAdoption === true)) {
       const hasSavedAgent = !newAgent || (isUuidLike(agentId) && Boolean(await svc.getById(agentId)));
-      if (newAgent && probe === "none" && testEnvironmentId && (await environmentsSvc.getById(testEnvironmentId))?.driver === "plugin") {
-        // The lifecycle verifies the saved agent after its plugin can create the agent-owned computer.
-        return { connectionId: selection.connection.id };
-      }
       const testEnvironment = testEnvironmentId ? await environmentsSvc.getById(testEnvironmentId) : null;
       if (adapterType === "paperclip_runner" && config.homeMode === "preconfigured" && testEnvironment
         && await pluginEnvironmentRunnerTaskDriver(db, testEnvironment)) {

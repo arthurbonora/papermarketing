@@ -636,32 +636,6 @@ describe("native completion references", () => {
 });
 
 
-describe("Cursor mode native execution projection", () => {
-  function fixture(acpxSessionMode?: "agent" | "plan" | "ask") {
-    return {
-      companyId: "company-1", runId: "run-1", agentId: "agent-1",
-      issue: { id: "issue-1", identifier: "MODE-1", title: "Review a plan", description: null, workMode: "standard" },
-      taskPrompt: "Review the project.",
-      workspace: { id: "workspace-1", cwd: "/workspace", repoUrl: null, repoRef: null, branchName: null },
-      normalizedSessionId: null, provider: "acpx" as const, acpxAgent: "cursor" as const,
-      model: "exact-cursor-model", acpxSessionMode, acpxPermissionMode: "deny-all" as const,
-      completionContract: { id: "contract-1", sha256: `sha256:${"a".repeat(64)}`, schemaVersion: "paperclip.run-result.v1", contract: { revision: "1", objective: "Review", criteria: [{ id: "output", requirement: "Review" }] } },
-      runtimeContext: nativeRuntimeContextFixture(),
-    };
-  }
-  it.each([undefined, "agent", "plan", "ask"] as const)("preserves mode %s independently of permissions and task planning", mode => {
-    const result = buildNativeExecutionInput(fixture(mode));
-    expect(result.provider).toMatchObject({ kind: "acpx", agent: "cursor", mode: mode ?? "agent", permissionMode: "deny-all" });
-    expect(result.executionMode).toBe("default");
-    expect(result.task.workMode).toBe("standard");
-  });
-  it("rejects a Cursor mode attached to another harness", () => {
-    expect(() => buildNativeExecutionInput({ ...fixture("plan"), acpxAgent: "copilot" })).toThrow("only for Cursor");
-  });
-});
-
-
-
 describe("Claude effort and master home-mode compatibility", () => {
   it.each([
     ["isolated", undefined, "v5"], ["preconfigured", undefined, "v7"],
@@ -682,25 +656,5 @@ describe("Claude effort and master home-mode compatibility", () => {
     if (version !== "v5") expect(value).toHaveProperty("homeMode", homeMode);
     if (claudeEffort) expect(value.provider).toHaveProperty("claudeEffort", claudeEffort);
     expect(JSON.stringify(buildNativeModelEnvelope(value))).not.toContain("claudeEffort");
-  });
-  it.each([
-    ["isolated", undefined, undefined, "v5"], ["isolated", "high", true, "v10"], ["isolated", undefined, false, "v10"],
-  ] as const)("retains %s home mode with effort %s and search policy %s in %s", (homeMode, grokEffort, grokDisableWebSearch, version) => {
-    const value = buildNativeExecutionInput({
-      companyId: "company", runId: "run", agentId: "agent",
-      issue: { id: "issue", identifier: "CLA-1", title: "Useful output", description: null, workMode: "standard" },
-      taskPrompt: "Create the requested file.",
-      workspace: { id: "workspace", cwd: "/workspace", repoUrl: null, repoRef: null, branchName: null },
-      normalizedSessionId: null, provider: "acpx", acpxAgent: "grok", model: "grok-4.7",
-      acpxPermissionMode: "approve-all", homeMode, grokEffort, grokDisableWebSearch,
-      completionContract: { id: "contract", sha256: `sha256:${"a".repeat(64)}`, schemaVersion: "paperclip.run-result.v1",
-        contract: { revision: "1", objective: "Create a file", criteria: [{ id: "output", requirement: "Create the file" }] } },
-      runtimeContext: nativeRuntimeContextFixture(),
-    });
-    expect(value.schema).toBe(`paperclip.native-execution-input.${version}`);
-    if (version !== "v5") expect(value).toHaveProperty("homeMode", homeMode);
-    if (grokEffort) expect(value.provider).toHaveProperty("grokEffort", grokEffort);
-    if (grokDisableWebSearch !== undefined) expect(value.provider).toHaveProperty("grokDisableWebSearch", grokDisableWebSearch);
-    expect(JSON.stringify(buildNativeModelEnvelope(value))).not.toContain("grokEffort");
   });
 });

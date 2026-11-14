@@ -70,7 +70,7 @@ scenarios:
       or secrets are not published as ordinary chat attachments.
   - id: instance-operations.provision-runtime
     capabilities:
-      - instance-operations/configuration
+      - instance-operations/runtime-setup
     context: >-
       An operator asks if a retired provider can be installed on this PaperMarketing release.
     query: >-
