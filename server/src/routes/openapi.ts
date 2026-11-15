@@ -1524,6 +1524,7 @@ const BOARD_ONLY_OPERATIONS = new Set([
   "GET /api/companies/{companyId}/secret-provider-configs",
   "POST /api/companies/{companyId}/secret-provider-configs",
   "GET /api/companies/{companyId}/secret-providers/health",
+  "GET /api/companies/{companyId}/operation-alerts",
   "POST /api/companies/{companyId}/secret-provider-configs/discovery/preview",
   "GET /api/secret-provider-configs/{id}",
   "PATCH /api/secret-provider-configs/{id}",
@@ -10934,6 +10935,25 @@ for (const route of [
     ...(route[0] === "put" ? { body: updateResourceMembershipSchema } : {}),
   });
 }
+
+registerCurrentRoute({
+  method: "get",
+  path: "/api/companies/{companyId}/operation-alerts",
+  tags: ["operation-alerts"],
+  summary: "List company operation alerts",
+  description: "List delayed operations and recent ended alerts for company administrators.",
+  responses: {
+    200: r.ok(z.array(z.object({
+      id: z.string().uuid(),
+      kind: z.enum(["secret_write", "routine_dispatch"]),
+      startedAt: z.string().datetime(),
+      detectedAt: z.string().datetime(),
+      resolvedAt: z.string().datetime().nullable(),
+    }))),
+    401: r.unauthorized,
+    403: r.forbidden,
+  },
+});
 
 for (const route of [
   [
