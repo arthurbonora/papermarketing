@@ -28,6 +28,7 @@ import { useCloudInstance } from "@/hooks/useCloudInstance";
 import { useHiddenSettings } from "@/hooks/useHiddenSettings";
 import { usePluginSlots } from "@/plugins/slots";
 import { SidebarNavItem } from "./SidebarNavItem";
+import { OperationAlertsNavItem } from "./OperationAlertsNavItem";
 import { ContextualSidebarFrame } from "./ContextualSidebarFrame";
 import { primarySidebarStyles } from "./primary-sidebar-styles";
 import { getCompanySettingsTab, isMarketingSettingsPrimary } from "./access/CompanySettingsNav";
@@ -44,7 +45,10 @@ function isSandboxProviderOnly(plugin: PluginRecord): boolean {
   return drivers.every((d) => d.kind === "sandbox_provider");
 }
 
-export function CompanySettingsSidebar({ marketingNavigation = false }: { marketingNavigation?: boolean } = {}) {
+export function CompanySettingsSidebar({
+  marketingNavigation = false,
+  showOperationAlerts = false,
+}: { marketingNavigation?: boolean; showOperationAlerts?: boolean } = {}) {
   const { pathname } = useLocation();
   const { selectedCompanyId } = useCompany();
   const { hidden: hiddenSettings } = useHiddenSettings();
@@ -185,6 +189,7 @@ export function CompanySettingsSidebar({ marketingNavigation = false }: { market
             />
           )}
           <SidebarNavItem to="/company/settings/connections" label="Connections" icon={Link2} end />
+          {showOperationAlerts && <OperationAlertsNavItem companyId={selectedCompanyId} />}
           {marketingNavigation ? (
             <>
               <SidebarNavItem to="/company/settings/agent-invitations" label="External agents" icon={UserRoundPlus} end />

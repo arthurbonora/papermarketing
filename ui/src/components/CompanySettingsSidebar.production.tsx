@@ -30,6 +30,7 @@ import { useCloudInstance } from "@/hooks/useCloudInstance";
 import { useHiddenSettings } from "@/hooks/useHiddenSettings";
 import { usePluginSlots } from "@/plugins/slots";
 import { SidebarNavItem } from "./SidebarNavItem.production";
+import { OperationAlertsNavItem } from "./OperationAlertsNavItem";
 
 /**
  * Sandbox-provider-only plugins (e.g. E2B, exe.dev, Modal) have no per-plugin
@@ -43,7 +44,7 @@ function isSandboxProviderOnly(plugin: PluginRecord): boolean {
   return drivers.every((d) => d.kind === "sandbox_provider");
 }
 
-export function CompanySettingsSidebar() {
+export function CompanySettingsSidebar({ showOperationAlerts = false }: { showOperationAlerts?: boolean } = {}) {
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { isMobile, setSidebarOpen } = useSidebar();
   const { hidden: hiddenSettings } = useHiddenSettings();
@@ -144,6 +145,7 @@ export function CompanySettingsSidebar() {
             />
           )}
           <SidebarNavItem to="/company/settings/connections" label="Connections" icon={Link2} end />
+          {showOperationAlerts && <OperationAlertsNavItem companyId={selectedCompanyId} NavItem={SidebarNavItem} />}
           {showPage("instance.access") && (
             <SidebarNavItem
               to={`${INSTANCE_SETTINGS_PATH_PREFIX}/access`}

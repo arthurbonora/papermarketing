@@ -12,6 +12,7 @@ import { Outlet, useLocation, useNavigate, useNavigationType, useParams } from "
 import { Sidebar } from "./Sidebar";
 import { MarketingSidebar } from "./MarketingSidebar";
 import { CompanySettingsSidebar } from "./CompanySettingsSidebar";
+import { useOperationAlerts } from "@/hooks/useOperationAlerts";
 import { CompanySettingsNav } from "./access/CompanySettingsNav";
 import { AppsSidebar, MarketingAppsSidebar } from "./AppsSidebar";
 import { AppDetailSidebar } from "./AppConnectionSidebar";
@@ -111,6 +112,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
     selectionSource,
     setSelectedCompanyId,
   } = useCompany();
+  useOperationAlerts(selectedCompanyId, true);
   const {
     companyPrefix,
     pluginRoutePath: matchedPluginRoutePath,
@@ -192,7 +194,7 @@ export function Layout({ sidebarSections, marketingNavigation = false }: { sideb
   // exceptions in Streamlined UI: their local navigation is a second rail
   // beside the persistent company nav.
   const sharedSecondarySidebar = isCompanySettingsRoute ? (
-    <CompanySettingsSidebar marketingNavigation={marketingNavigation} />
+    <CompanySettingsSidebar marketingNavigation={marketingNavigation} showOperationAlerts={isMobile || streamlinedUiEnabled} />
   ) : !streamlinedUiEnabled && shellRoute.builtInContextualSurface === "skills" ? (
     <SkillsContextualSidebar />
   ) : appDetailConnectionId ? (

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useCoordinatorAttentionCount } from "@/hooks/useCoordinatorAttentionCount";
 import { NavLink, useLocation } from "@/lib/router";
 import {
+  BellRing,
   House,
   CircleCheck,
   SquarePen,
@@ -19,6 +20,7 @@ import { useAgentChatEnabled } from "@/hooks/useAgentChatEnabled";
 import { useCombinedInboxTasksEnabled } from "@/hooks/useCombinedInboxTasksEnabled";
 import { Badge } from "@/components/ui/badge";
 import { MARKETING_DESTINATIONS } from "@/lib/marketing-navigation";
+import { useOperationAlerts } from "@/hooks/useOperationAlerts";
 
 interface MobileBottomNavProps {
   visible: boolean;
@@ -31,6 +33,8 @@ interface MobileNavLinkItem {
   label: string;
   icon: typeof House;
   badge?: number;
+  badgeLabel?: string;
+  badgeTone?: "warning";
 }
 
 interface MobileNavActionItem {
@@ -52,13 +56,14 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
   const inboxBadge = useInboxBadge(coordinatorWorkspaceEnabled ? null : selectedCompanyId);
   const { enabled: combinedInboxTasksEnabled } = useCombinedInboxTasksEnabled();
   const attentionCount = useCoordinatorAttentionCount(selectedCompanyId, coordinatorWorkspaceEnabled);
+  const { recentCount, activeCount, canView: canViewOperationAlerts } = useOperationAlerts(selectedCompanyId);
 
   // PAP-670: with both flags off the bar is the original Home · Tasks · + ·
   // Agents · Inbox. Agent Chat adds Chat in the second slot (Home · Chat · + ·
   // Tasks · Agents). Combined Inbox + Task List drops Inbox as a destination —
   // it is a view inside Tasks, so its unread badge rides on Tasks. The grid
   // tracks the live count, so the bar stays evenly divided in every mix.
-  const items = useMemo<MobileNavItem[]>(
+  const primaryItems = useMemo<MobileNavItem[]>(
     () => marketingNavigation ? [
       { type: "link", ...MARKETING_DESTINATIONS.overview },
       { type: "link", ...MARKETING_DESTINATIONS.projects },
@@ -102,6 +107,15 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
     ],
     [openNewIssue, inboxBadge.inbox, agentChatEnabled, combinedInboxTasksEnabled, coordinatorWorkspaceEnabled, attentionCount, marketingNavigation],
   );
+  const items: MobileNavItem[] = canViewOperationAlerts ? [...primaryItems, {
+    type: "link",
+    to: "/operation-alerts",
+    label: "Alerts",
+    icon: BellRing,
+    badge: recentCount,
+    badgeLabel: "recent operation alerts",
+    badgeTone: activeCount > 0 ? "warning" : undefined,
+  }] : primaryItems;
 
   return (
     <nav
@@ -158,7 +172,14 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
                   <span className="relative">
                     <Icon className={cn("h-(--sz-18px) w-(--sz-18px)", isActive && "stroke-(length:--sw-2_3)")} />
                     {item.badge != null && item.badge > 0 && (
-                      <Badge variant="ghost" className="absolute -right-2 -top-2 bg-primary px-1.5 text-(length:--text-nano) leading-none text-primary-foreground">
+                      <Badge variant="ghost"
+                        aria-label={item.badgeLabel && `${item.badge} ${item.badgeLabel}`}
+                        className={cn(
+                          "absolute -right-2 -top-2 px-1.5 text-(length:--text-nano) leading-none",
+                          item.badgeTone === "warning"
+                            ? "border-(--tc-status-notice-warning-border) bg-(--tc-status-notice-warning-bg) text-(--tc-status-notice-warning-fg)"
+                            : "bg-primary text-primary-foreground",
+                        )}>
                         {item.badge > 99 ? "99+" : item.badge}
                       </Badge>
                     )}

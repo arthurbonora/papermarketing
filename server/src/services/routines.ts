@@ -86,6 +86,7 @@ import {
 } from "./instance-settings.js";
 import { queueIssueAssignmentWakeup, type IssueAssignmentWakeupDeps } from "./issue-assignment-wakeup.js";
 import { logActivity } from "./activity-log.js";
+import { trackCompanyOperation } from "./operation-alerts.js";
 import type { PluginWorkerManager } from "./plugin-worker-manager.js";
 import { runtimePublicOrigin } from "./cloud-runtime-identity.js";
 
@@ -1710,7 +1711,11 @@ export function routineService(
     return value;
   }
 
-  async function dispatchRoutineRun(input: {
+  function dispatchRoutineRun(input: Parameters<typeof executeRoutineRun>[0]) {
+    return trackCompanyOperation(input.routine.companyId, "routine_dispatch", () => executeRoutineRun(input));
+  }
+
+  async function executeRoutineRun(input: {
     routine: typeof routines.$inferSelect;
     trigger: typeof routineTriggers.$inferSelect | null;
     source: "schedule" | "manual" | "api" | "webhook";

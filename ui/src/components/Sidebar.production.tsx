@@ -25,6 +25,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarNavItem } from "./SidebarNavItem.production";
+import { OperationAlertsNavItem } from "./OperationAlertsNavItem";
 import { SidebarAgents } from "./SidebarAgents.production";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarStarredProjects } from "./SidebarStarredProjects.production";
@@ -161,6 +162,7 @@ export function Sidebar() {
             badgeTone={inboxBadge.failedRuns > 0 ? "danger" : "default"}
             alert={inboxBadge.failedRuns > 0}
           />
+          <OperationAlertsNavItem companyId={selectedCompanyId} NavItem={SidebarNavItem} />
           {showDecisions ? (
             <SidebarNavItem
               to="/decisions"
