@@ -515,15 +515,15 @@ ended. It highlights the count while an operation is still running. The board
 checks for changes every 20 seconds while it is open.
 
 Secret creation and rotation raise an alert after 15 seconds. Routine dispatch
-raises an alert after 60 seconds. This measures the time to dispatch the task,
-including waits inside the dispatch, rather than the time an agent spends working
-on it. Alerts show when the operation started, crossed the threshold, and ended.
+raises an alert after 60 seconds. The dispatch timer covers task setup and queue
+admission. Alerts show when the operation started, crossed the threshold, and ended.
 An ended operation can have succeeded or failed.
 
 Each API process keeps its own active operations and up to 250 completed alerts in
 memory. Completed alerts are visible for up to 24 hours. A process restart clears
 its alerts, and multiple API replicas each show their own operations. Detection
-requires no database write. Alert records contain only the operation type,
+requires no database write. The board still needs a working API and database
+connection to verify access. Alert records contain only the operation type,
 timestamps, and a generated ID.
 
 ### CSV file previews

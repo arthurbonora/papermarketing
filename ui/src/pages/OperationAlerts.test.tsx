@@ -9,11 +9,14 @@ import { OperationAlertsNavItem } from "@/components/OperationAlertsNavItem";
 import { queryKeys } from "@/lib/queryKeys";
 import { OperationAlerts } from "./OperationAlerts";
 
-const mock = vi.hoisted(() => ({ get: vi.fn(), setBreadcrumbs: vi.fn() }));
+const mock = vi.hoisted(() => ({ get: vi.fn(), getBoardAccess: vi.fn(), setBreadcrumbs: vi.fn() }));
 
 vi.mock("@/api/client", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/api/client")>(),
   api: { get: mock.get },
+}));
+vi.mock("@/api/access", () => ({
+  accessApi: { getCurrentBoardAccess: mock.getBoardAccess },
 }));
 vi.mock("@/context/CompanyContext", () => ({
   useCompany: () => ({ selectedCompanyId: "company-1" }),
@@ -39,6 +42,7 @@ describe("Operation alerts", () => {
 
   beforeEach(() => {
     mock.get.mockReset();
+    mock.getBoardAccess.mockReset();
     host = document.createElement("div");
     document.body.append(host);
     root = createRoot(host);
@@ -51,11 +55,14 @@ describe("Operation alerts", () => {
     host.remove();
   });
 
-  async function render(role: "admin" | "member", status = "active") {
-    client.setQueryData(queryKeys.access.currentBoardAccess, {
+  async function render(role: "admin" | "member", status = "active", deploymentMode = "authenticated") {
+    client.setQueryData(queryKeys.health, { deploymentMode });
+    client.setQueryData(queryKeys.auth.session, { user: { id: "board-user" } });
+    mock.getBoardAccess.mockResolvedValue({
       userId: "board-user",
-      source: "session",
+      source: deploymentMode === "local_trusted" ? "local_implicit" : "session",
       isInstanceAdmin: false,
+      companyIds: ["company-1"],
       memberships: [{ companyId: "company-1", membershipRole: role, status }],
     });
     await act(() => root.render(
@@ -94,13 +101,43 @@ describe("Operation alerts", () => {
     expect(nav()?.getAttribute("data-tone")).toBe("default");
   });
 
+  it("drops the previous admin's cached alerts when the session changes", async () => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    mock.getBoardAccess.mockResolvedValue({
+      userId: "new-board-user",
+      source: "session",
+      isInstanceAdmin: true,
+      companyIds: [],
+      memberships: [],
+    });
+
+    await act(async () => {
+      client.setQueryData(queryKeys.auth.session, { user: { id: "new-board-user" } });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(host.querySelector('[data-testid="nav"]')).toBeNull();
+    expect(host.textContent).not.toContain("Secret write");
+    await vi.waitFor(() => expect(host.textContent).toContain("Operation alerts require administrator access."));
+    expect(mock.get).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows the implicit board in a local trusted deployment", async () => {
+    mock.get.mockResolvedValue(alerts);
+    await render("member", "active", "local_trusted");
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+  });
+
   it.each([["member", "active"], ["admin", "suspended"]] as const)(
     "hides navigation and skips reads for %s with status %s",
     async (role, status) => {
       await render(role, status);
 
       expect(host.querySelector('[data-testid="nav"]')).toBeNull();
-      expect(host.textContent).toContain("Operation alerts require administrator access.");
+      await vi.waitFor(() => expect(host.textContent).toContain("Operation alerts require administrator access."));
       expect(mock.get).not.toHaveBeenCalled();
     },
   );
