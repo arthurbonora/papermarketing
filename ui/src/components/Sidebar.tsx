@@ -1,4 +1,5 @@
 import { CoordinatorSidebar } from "./CoordinatorSidebar";
+import { OperationAlertsNavItem } from "./OperationAlertsNavItem";
 import { useCoordinatorWorkspaceEnabled } from "@/hooks/useCoordinatorWorkspaceEnabled";
 import {
   Inbox,
@@ -191,6 +192,7 @@ function ClassicSidebar({ children }: { children?: ReactNode }) {
             />
           ) : null}
           {agentChatEnabled && !chatRail ? <SidebarNavItem to="/chats" label="Chat" icon={MessageCircle} badge={unreadChatCount} badgeLabel="unread chats" /> : null}
+          <OperationAlertsNavItem companyId={selectedCompanyId} />
           {showDecisions ? (
             <SidebarNavItem
               to="/decisions"

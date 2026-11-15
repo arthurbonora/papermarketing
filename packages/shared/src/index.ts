@@ -2956,3 +2956,4 @@ export {
 } from "./issue-activity-identity.js";
 export { recognizeLinkPreview, type LinkPreviewTarget, type LinkPreviewState, type LinkPreview, type LinkPreviewResult } from "./link-preview.js";
 export * from "./marketing-agents.js";
+export type { CompanyOperationAlert, CompanyOperationAlertKind } from "./types/operation-alert.js";

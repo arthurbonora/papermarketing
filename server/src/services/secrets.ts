@@ -63,6 +63,7 @@ import type {
   SecretProviderWriteContext,
 } from "../secrets/types.js";
 import { isSecretProviderClientError } from "../secrets/types.js";
+import { trackCompanyOperation } from "./operation-alerts.js";
 import { authorizationDeniedDetails, authorizationService } from "./authorization.js";
 import { findActiveServerAdapter } from "../adapters/index.js";
 import { logActivity } from "./activity-log.js";
@@ -4685,19 +4686,21 @@ export function secretService(db: Db | DbTransaction) {
       },
       actor?: { userId?: string | null; agentId?: string | null },
     ) => {
-      return withAccountHomeSecretMutationLock(undefined, companyId, async () => {
-        // A queued create can win the lock after an account-home cleanup
-        // already removed the directory this value names. Check the
-        // directory's existence inside the same lock, right before the
-        // write, so that order fails instead of committing a dangling path.
-        // `assertAccountHomeCacheDirStillValid` is a no-op for a value that is
-        // not under the account-home cache root, so this never rejects an
-        // unrelated secret write.
-        if (input.value) {
-          await assertAccountHomeCacheDirStillValid(undefined, companyId, input.value);
-        }
-        return createSecretUnlocked(companyId, input, actor);
-      });
+      return trackCompanyOperation(companyId, "secret_write", () =>
+        withAccountHomeSecretMutationLock(undefined, companyId, async () => {
+          // A queued create can win the lock after an account-home cleanup
+          // already removed the directory this value names. Check the
+          // directory's existence inside the same lock, right before the
+          // write, so that order fails instead of committing a dangling path.
+          // `assertAccountHomeCacheDirStillValid` is a no-op for a value that is
+          // not under the account-home cache root, so this never rejects an
+          // unrelated secret write.
+          if (input.value) {
+            await assertAccountHomeCacheDirStillValid(undefined, companyId, input.value);
+          }
+          return createSecretUnlocked(companyId, input, actor);
+        }),
+      );
     },
 
     // Same reasoning as `create:` above: a rotate's new value can equal a
@@ -4722,16 +4725,18 @@ export function secretService(db: Db | DbTransaction) {
     ) => {
       const preCheckSecret = await getById(secretId);
       if (!preCheckSecret) throw notFound("Secret not found");
-      return withAccountHomeSecretMutationLock(undefined, preCheckSecret.companyId, async () => {
-        // Same reasoning as `create:` above: check the new value's directory
-        // inside the same lock the write commits under, so a rotate queued
-        // behind an account-home cleanup cannot commit a directory the
-        // cleanup already removed.
-        if (input.value) {
-          await assertAccountHomeCacheDirStillValid(undefined, preCheckSecret.companyId, input.value);
-        }
-        return rotateUnlocked(secretId, input, actor);
-      });
+      return trackCompanyOperation(preCheckSecret.companyId, "secret_write", () =>
+        withAccountHomeSecretMutationLock(undefined, preCheckSecret.companyId, async () => {
+          // Same reasoning as `create:` above: check the new value's directory
+          // inside the same lock the write commits under, so a rotate queued
+          // behind an account-home cleanup cannot commit a directory the
+          // cleanup already removed.
+          if (input.value) {
+            await assertAccountHomeCacheDirStillValid(undefined, preCheckSecret.companyId, input.value);
+          }
+          return rotateUnlocked(secretId, input, actor);
+        }),
+      );
     },
 
     // A patch can rename a secret (`patch.name`) or move it out of the

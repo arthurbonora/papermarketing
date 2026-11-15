@@ -14,6 +14,7 @@ import { PluginLauncherOutlet } from "@/plugins/launchers";
 import { PluginSlotOutlet } from "@/plugins/slots";
 import { SidebarCompanyMenu } from "./SidebarCompanyMenu";
 import { SidebarNavItem } from "./SidebarNavItem";
+import { OperationAlertsNavItem } from "./OperationAlertsNavItem";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarRecentTasks } from "./SidebarRecentTasks";
 import { SidebarStarredProjects } from "./SidebarStarredProjects";
@@ -77,6 +78,7 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
             badgeLabel="unread"
             badgeTone={inbox.failedRuns > 0 ? "danger" : "default"}
           />
+          <OperationAlertsNavItem companyId={selectedCompanyId} />
           {agentChatEnabled && <SidebarNavItem to="/chats" label="Chats" icon={MessageCircle} badge={chats.data?.filter(chat => chat.isUnreadForMe).length} badgeLabel="unread chats" />}
           <SidebarNavItem to="/routines" label="Routines" icon={Repeat} />
         </SidebarSection>
