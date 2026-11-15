@@ -56,7 +56,7 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
   const inboxBadge = useInboxBadge(coordinatorWorkspaceEnabled ? null : selectedCompanyId);
   const { enabled: combinedInboxTasksEnabled } = useCombinedInboxTasksEnabled();
   const attentionCount = useCoordinatorAttentionCount(selectedCompanyId, coordinatorWorkspaceEnabled);
-  const { activeCount: operationAlertCount, canView: canViewOperationAlerts } = useOperationAlerts(selectedCompanyId);
+  const { recentCount, activeCount, canView: canViewOperationAlerts } = useOperationAlerts(selectedCompanyId);
 
   // PAP-670: with both flags off the bar is the original Home · Tasks · + ·
   // Agents · Inbox. Agent Chat adds Chat in the second slot (Home · Chat · + ·
@@ -112,9 +112,9 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
     to: "/operation-alerts",
     label: "Alerts",
     icon: BellRing,
-    badge: operationAlertCount,
-    badgeLabel: "active operation alerts",
-    badgeTone: "warning",
+    badge: recentCount,
+    badgeLabel: "recent operation alerts",
+    badgeTone: activeCount > 0 ? "warning" : undefined,
   }] : primaryItems;
 
   return (

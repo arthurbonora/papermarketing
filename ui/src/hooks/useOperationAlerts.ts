@@ -39,9 +39,9 @@ export function useOperationAlerts(companyId: string | null, poll = false) {
     },
   });
 
-  const activeCount = canView && !accessDenied(alerts.error)
-    ? alerts.data?.filter((alert) => alert.resolvedAt === null).length ?? 0
-    : 0;
+  const visibleAlerts = canView && !accessDenied(alerts.error) ? alerts.data : undefined;
+  const recentCount = visibleAlerts?.length ?? 0;
+  const activeCount = visibleAlerts?.filter((alert) => alert.resolvedAt === null).length ?? 0;
 
-  return { access, alerts, canView, activeCount };
+  return { access, alerts, canView, recentCount, activeCount };
 }

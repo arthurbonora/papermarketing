@@ -60,17 +60,21 @@ describe("Operation alerts", () => {
     });
     await act(() => root.render(
       <QueryClientProvider client={client}>
-        <OperationAlertsNavItem companyId="company-1" NavItem={({ label, badge }) => <span data-testid="nav">{label} {badge}</span>} />
+        <OperationAlertsNavItem companyId="company-1" NavItem={({ label, badge, badgeTone }) => (
+          <span data-testid="nav" data-tone={badgeTone}>{label} {badge}</span>
+        )} />
         <OperationAlerts />
       </QueryClientProvider>,
     ));
   }
 
-  it("uses a single company-scoped read, counts only active alerts, and shows timestamps", async () => {
+  it("uses a single company-scoped read, counts all recent alerts, and shows timestamps", async () => {
     mock.get.mockResolvedValue(alerts);
     await render("admin");
 
-    await vi.waitFor(() => expect(host.querySelector('[data-testid="nav"]')?.textContent).toBe("Operation alerts 1"));
+    const nav = () => host.querySelector('[data-testid="nav"]');
+    await vi.waitFor(() => expect(nav()?.textContent).toBe("Operation alerts 2"));
+    expect(nav()?.getAttribute("data-tone")).toBe("warning");
     expect(mock.get).toHaveBeenCalledExactlyOnceWith("/companies/company-1/operation-alerts", { signal: expect.any(AbortSignal) });
     const rows = host.querySelectorAll("li");
     expect(rows[0]?.textContent).toContain("Secret write");
@@ -79,6 +83,15 @@ describe("Operation alerts", () => {
     expect(rows[1]?.textContent).toContain("Routine dispatch");
     expect(rows[1]?.textContent).toContain("Ended");
     expect(rows[1]?.querySelector(`time[datetime="${resolvedAt}"]`)).not.toBeNull();
+  });
+
+  it("keeps recent ended alerts visible in the navigation with a neutral badge", async () => {
+    mock.get.mockResolvedValue(alerts.slice(1));
+    await render("admin");
+
+    const nav = () => host.querySelector('[data-testid="nav"]');
+    await vi.waitFor(() => expect(nav()?.textContent).toBe("Operation alerts 1"));
+    expect(nav()?.getAttribute("data-tone")).toBe("default");
   });
 
   it.each([["member", "active"], ["admin", "suspended"]] as const)(

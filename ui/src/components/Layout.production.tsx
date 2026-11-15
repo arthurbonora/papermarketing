@@ -22,6 +22,7 @@ import {
 } from "@/lib/router";
 import { Sidebar } from "./Sidebar.production";
 import { CompanySettingsSidebar } from "./CompanySettingsSidebar.production";
+import { useOperationAlerts } from "@/hooks/useOperationAlerts";
 import { CompanySettingsSidebar as MarketingSettingsSidebar } from "./CompanySettingsSidebar";
 import { CompanySettingsNav } from "./access/CompanySettingsNav";
 import { AppsSidebar } from "./AppsSidebar.production";
@@ -143,6 +144,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
     selectionSource,
     setSelectedCompanyId,
   } = useCompany();
+  useOperationAlerts(selectedCompanyId, true);
   const { companyPrefix, pluginRoutePath: matchedPluginRoutePath } = useParams<{
     companyPrefix: string;
     pluginRoutePath?: string;
@@ -228,7 +230,7 @@ export function Layout({ marketingNavigation = false }: { marketingNavigation?: 
   // the contextual sidebar in a second pane (PAP-10695). One resolver drives
   // both desktop (SecondarySidebar) and mobile (off-canvas drawer).
   const secondarySidebar = isCompanySettingsRoute ? (
-    marketingNavigation ? <MarketingSettingsSidebar marketingNavigation /> : <CompanySettingsSidebar />
+    marketingNavigation ? <MarketingSettingsSidebar marketingNavigation showOperationAlerts={isMobile} /> : <CompanySettingsSidebar showOperationAlerts={isMobile} />
   ) : appDetailConnectionId ? (
     <AppDetailSidebar kind="connection" connectionId={appDetailConnectionId} />
   ) : appDetailApplicationId ? (

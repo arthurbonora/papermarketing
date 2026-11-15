@@ -510,8 +510,9 @@ carry a task filter open All. Old `/inbox` links redirect to the matching view.
 ### Board operation alerts
 
 Company owners and administrators can open **Operation alerts** from the board navigation.
-The navigation badge counts monitored operations that are still running after the
-alert threshold. The board checks for changes every 20 seconds while it is open.
+The navigation badge counts recent alerts, including operations that already
+ended. It highlights the count while an operation is still running. The board
+checks for changes every 20 seconds while it is open.
 
 Secret creation and rotation raise an alert after 15 seconds. Routine dispatch
 raises an alert after 60 seconds. This measures the time to dispatch the task,
