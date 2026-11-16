@@ -1817,10 +1817,13 @@ export function routineService(
           : input.routine.updatedByAgentId ?? (input.routine.updatedByUserId ? null : input.routine.createdByAgentId));
       const interactionActorCompanyId = interactionActorAgentId ? await tx.select({ companyId: agents.companyId }).from(agents)
         .where(eq(agents.id, interactionActorAgentId)).then(rows => rows[0]?.companyId) : undefined;
-      await assertAgentInteraction(tx, { companyId: input.routine.companyId, actorAgentId: interactionActorAgentId,
+      const assignment = { companyId: input.routine.companyId, actorAgentId: interactionActorAgentId,
         actorCompanyId: interactionActorCompanyId,
-        operation: "assign", targetAgentId: assigneeAgentId, parentIssueId: input.routine.parentIssueId,
-        texts: [title, description ?? ""], lock: true });
+        operation: "assign" as const, targetAgentId: assigneeAgentId, parentIssueId: input.routine.parentIssueId,
+        texts: [title, description ?? ""] };
+      // A new task locks its assignment authority inside the issue transaction.
+      // Locking its parent here would block the task insert's foreign key check.
+      await assertAgentInteraction(tx, assignment);
 
       if (input.trigger && (input.source === "webhook" || input.source === "schedule")) {
         const currentTrigger = await txDb.select().from(routineTriggers).where(eq(routineTriggers.id, input.trigger.id)).then((rows) => rows[0]);
@@ -1848,6 +1851,7 @@ export function routineService(
           .limit(1)
           .then((rows) => rows[0] ?? null);
         if (existing) {
+          await assertAgentInteraction(tx, { ...assignment, lock: true });
           if (input.rejectIdempotencyReplay) {
             throw conflict("Webhook replay detected");
           }
@@ -1916,6 +1920,7 @@ export function routineService(
           allowLegacyDefault: !creationRunFingerprint,
         });
         if (activeIssue && input.routine.concurrencyPolicy !== "always_enqueue") {
+          await assertAgentInteraction(tx, { ...assignment, lock: true });
           const status = input.routine.concurrencyPolicy === "skip_if_active" ? "skipped" : "coalesced";
           const updated = await finalizeRun(createdRun.id, {
             status,
@@ -1948,6 +1953,9 @@ export function routineService(
             status: "todo",
             priority: input.routine.priority,
             assigneeAgentId,
+            assignmentActor: interactionActorAgentId
+              ? { agentId: interactionActorAgentId, companyId: interactionActorCompanyId }
+              : undefined,
             createdByAgentId: input.source === "manual" ? input.actor?.agentId ?? null : null,
             createdByUserId: manualRunnerUserId,
             responsibleUserId,
@@ -1979,6 +1987,7 @@ export function routineService(
             allowLegacyDefault: !creationRunFingerprint,
           });
           if (!existingIssue) throw error;
+          await assertAgentInteraction(tx, { ...assignment, lock: true });
           const status = input.routine.concurrencyPolicy === "skip_if_active" ? "skipped" : "coalesced";
           const updated = await finalizeRun(createdRun.id, {
             status,

@@ -1815,6 +1815,57 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
     expect(wakeupResolved).toBe(true);
   });
 
+  it("dispatches an agent-authored schedule with a parent task without waiting on its own lock", async () => {
+    const { companyId, agentId, issueSvc } = await seedFixture();
+    const parent = await issueSvc.create(companyId, { title: "Routine parent", assigneeAgentId: agentId, status: "todo" });
+
+    // Bound PostgreSQL's lock wait so the self-deadlock produces a failed run
+    // before the test times out, and the test can clean up its database rows.
+    const url = new URL(externalUrl ?? tempDb!.connectionString);
+    const existingOptions = url.searchParams.get("options");
+    url.searchParams.set("options", [existingOptions, "-c lock_timeout=2000"].filter(Boolean).join(" "));
+    const dispatchDb = createDb(url.href);
+    try {
+      const wakeup = vi.fn(async () => null);
+      const svc = routineService(dispatchDb, { heartbeat: { wakeup } });
+      const routine = await svc.create(companyId, createRoutineSchema.parse({
+        title: "Agent's scheduled follow-up", parentIssueId: parent.id, assigneeAgentId: agentId, status: "active",
+      }), { agentId });
+      const { trigger } = await svc.createTrigger(routine.id, {
+        kind: "schedule", enabled: true, cronExpression: "0 * * * *", timezone: "UTC",
+      }, { agentId });
+      const due = new Date("2026-07-16T12:00:00.000Z");
+      await db.update(routineTriggers).set({ nextRunAt: due }).where(eq(routineTriggers.id, trigger.id));
+
+      expect(await svc.tickScheduledTriggers(due)).toEqual({ triggered: 1 });
+      const [run] = await db.select().from(routineRuns).where(eq(routineRuns.routineId, routine.id));
+      expect(run).toMatchObject({ status: "issue_created", linkedIssueId: expect.any(String) });
+      const [issue] = await db.select().from(issues).where(eq(issues.id, run!.linkedIssueId!));
+      expect(issue).toMatchObject({ parentId: parent.id, assigneeAgentId: agentId, createdByAgentId: null });
+      expect(wakeup).toHaveBeenCalledOnce();
+    } finally {
+      await dispatchDb.$client.end({ timeout: 1 });
+    }
+  });
+
+  it("enforces the routine author's current permissions on the configured parent", async () => {
+    const { companyId, agentId, issueSvc, svc, wakeups } = await seedFixture();
+    const authorId = randomUUID();
+    await db.insert(agents).values({ id: authorId, companyId, name: "Routine author", status: "active", adapterType: "process" });
+    const parent = await issueSvc.create(companyId, { title: "Another agent's task", assigneeAgentId: agentId, status: "todo" });
+    const routine = await svc.create(companyId, createRoutineSchema.parse({
+      title: "Restricted follow-up", parentIssueId: parent.id, assigneeAgentId: agentId, status: "active",
+    }), { agentId: authorId });
+    await db.update(agents).set({ permissions: { interactions: { canEditOtherTasks: false } } }).where(eq(agents.id, authorId));
+
+    await expect(svc.runRoutine(routine.id, { source: "api" })).rejects.toMatchObject({
+      status: 403,
+      details: { permission: "canEditOtherTasks", actorAgentId: authorId, issueId: parent.id },
+    });
+    expect(await db.select().from(routineRuns).where(eq(routineRuns.routineId, routine.id))).toEqual([]);
+    expect(wakeups).toEqual([]);
+  });
+
   it("coalesces only when the existing routine issue has a live execution run", async () => {
     const { agentId, companyId, issueSvc, routine, svc } = await seedFixture();
     const previousRunId = randomUUID();

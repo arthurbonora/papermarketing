@@ -1,14 +1,17 @@
 import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  DollarSign, History, Inbox, MessageCircle, Repeat, Search, Settings, SquarePen, Users,
+  DollarSign, History, Inbox, ListChecks, MessageCircle, Repeat, Search, Settings, SquarePen, Users,
 } from "lucide-react";
 import { useAgentChatNavigation } from "@/hooks/useAgentChatNavigation";
 import { useCompany } from "@/context/CompanyContext";
 import { useDialogActions } from "@/context/DialogContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { useInboxBadge } from "@/hooks/useInboxBadge";
+import { attentionApi } from "@/api/attention";
 import { heartbeatsApi } from "@/api/heartbeats";
+import { instanceSettingsApi } from "@/api/instanceSettings";
+import { coordinatorAttentionSummaryQueryKey } from "@/lib/coordinator-attention";
 import { queryKeys } from "@/lib/queryKeys";
 import { PluginLauncherOutlet } from "@/plugins/launchers";
 import { PluginSlotOutlet } from "@/plugins/slots";
@@ -29,6 +32,16 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
   const rail = collapsed && !peeking && !isMobile;
   const { enabled: agentChatEnabled, chats } = useAgentChatNavigation();
   const inbox = useInboxBadge(selectedCompanyId);
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
+  });
+  const showDecisions = experimentalSettings?.enableDecisions === true;
+  const { data: attentionSummary } = useQuery({
+    queryKey: coordinatorAttentionSummaryQueryKey(selectedCompanyId!),
+    queryFn: () => attentionApi.summary(selectedCompanyId!),
+    enabled: showDecisions && Boolean(selectedCompanyId),
+  });
   const { data: liveRuns } = useQuery({
     queryKey: queryKeys.liveRuns(selectedCompanyId ?? "__none__"),
     queryFn: () => heartbeatsApi.liveRunsForCompany(selectedCompanyId!),
@@ -78,6 +91,15 @@ export function MarketingSidebar({ children }: { children?: ReactNode }) {
             badgeLabel="unread"
             badgeTone={inbox.failedRuns > 0 ? "danger" : "default"}
           />
+          {showDecisions && (
+            <SidebarNavItem
+              to="/decisions"
+              label="Decisions"
+              icon={ListChecks}
+              badge={attentionSummary?.totalCount}
+              badgeLabel="decisions"
+            />
+          )}
           <OperationAlertsNavItem companyId={selectedCompanyId} />
           {agentChatEnabled && <SidebarNavItem to="/chats" label="Chats" icon={MessageCircle} badge={chats.data?.filter(chat => chat.isUnreadForMe).length} badgeLabel="unread chats" />}
           <SidebarNavItem to="/routines" label="Routines" icon={Repeat} />

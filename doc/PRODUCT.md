@@ -498,6 +498,10 @@ over. Unread, Recent, Blocked, and Everything are also task views. Organization
 views retain the task table and board. The table saves column selection and
 order per person and company. Old `/inbox/*` links redirect to their Tasks view.
 
+PaperMarketing navigation lists **Decisions** under Updates when Decisions is
+enabled in experimental settings. It opens the decision feed and shows the
+pending count separately from the task Inbox and Approvals.
+
 ### Combined Inbox + Task List
 
 In the Classic workspace, an opt-in setting (`enableCombinedInboxTasks`, off by default)
