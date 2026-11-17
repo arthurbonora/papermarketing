@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Sidebar } from "./Sidebar";
+import { MarketingSidebar } from "./MarketingSidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 vi.mock("@/hooks/useCoordinatorWorkspaceEnabled", () => ({
@@ -18,6 +19,7 @@ const mockHeartbeatsApi = vi.hoisted(() => ({
 
 const mockAttentionApi = vi.hoisted(() => ({
   list: vi.fn(),
+  summary: vi.fn(),
 }));
 
 const mockInstanceSettingsApi = vi.hoisted(() => ({
@@ -138,7 +140,7 @@ async function flushReact() {
 describe("Sidebar", () => {
   let container: HTMLDivElement;
 
-  async function renderSidebar() {
+  async function renderSidebar(SidebarComponent = Sidebar) {
     const root = createRoot(container);
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -148,7 +150,7 @@ describe("Sidebar", () => {
       root.render(
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <Sidebar />
+            <SidebarComponent />
           </TooltipProvider>
         </QueryClientProvider>,
       );
@@ -482,6 +484,35 @@ describe("Sidebar", () => {
     flushSync(() => {
       root.unmount();
     });
+  });
+
+  it("links to Decisions separately from Inbox and Approvals in the marketing sidebar", async () => {
+    mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableDecisions: true });
+    mockAttentionApi.summary.mockResolvedValue({ totalCount: 3 });
+    const root = await renderSidebar(MarketingSidebar);
+
+    try {
+      const decisions = container.querySelector('nav a[href="/decisions"]');
+      expect(decisions?.textContent ?? "").toMatch(/Decisions\s*3/);
+      expect(container.querySelector('nav a[href="/inbox"]')?.textContent).toContain("Inbox");
+      expect(container.querySelector('nav a[href="/approvals/pending"]')?.textContent).toContain("Approvals");
+      expect(mockAttentionApi.summary).toHaveBeenCalledWith("company-1");
+      expect(mockAttentionApi.list).not.toHaveBeenCalled();
+    } finally {
+      flushSync(() => root.unmount());
+    }
+  });
+
+  it("keeps Decisions out of the marketing sidebar when disabled", async () => {
+    mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableDecisions: false });
+    const root = await renderSidebar(MarketingSidebar);
+
+    try {
+      expect(container.querySelector('nav a[href="/decisions"]')).toBeNull();
+      expect(mockAttentionApi.summary).not.toHaveBeenCalled();
+    } finally {
+      flushSync(() => root.unmount());
+    }
   });
 
   it("shows Status directly below Decisions in primary navigation", async () => {

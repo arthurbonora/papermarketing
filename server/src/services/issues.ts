@@ -2065,6 +2065,8 @@ type IssueCreateInput = Omit<typeof issues.$inferInsert, "companyId" | "title" |
   initialPlan?: string | null;
   /** Internal, server-derived provenance for an accepted in-app chat suggestion. */
   conversationHandoff?: { conversationId: string; sessionGeneration: number };
+  /** Internal authority for automated assignment when the task author is not the assigning agent. */
+  assignmentActor?: { agentId: string; companyId?: string };
   labelIds?: string[];
   blockedByIssueIds?: string[];
   inheritExecutionWorkspaceFromIssueId?: string | null;
@@ -10364,6 +10366,7 @@ export function issueService(db: Db) {
         workspaceSelection, workspaceSelectionSource = "explicit", workspaceSelectionActor,
         initialPlan,
         conversationHandoff,
+        assignmentActor,
         labelIds: inputLabelIds,
         blockedByIssueIds,
         inheritExecutionWorkspaceFromIssueId,
@@ -10424,8 +10427,9 @@ export function issueService(db: Db) {
       const persist = async (tx: DbTransaction) => {
         await tx.select({ id: companies.id }).from(companies).where(eq(companies.id, companyId)).for("no key update");
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`issue-privacy-tree:${companyId}`}, 0))`);
+        const assignmentAgentId = assignmentActor?.agentId ?? issueData.createdByAgentId;
         await assertAgentInteraction(tx as unknown as Db, {
-          companyId, actorAgentId: issueData.createdByAgentId,
+          companyId, actorAgentId: assignmentAgentId, actorCompanyId: assignmentActor?.companyId,
           operation: "assign", targetAgentId: issueData.assigneeAgentId,
           assigneeUserId: issueData.assigneeUserId, parentIssueId: requestedParentId,
           texts: [resolvedTitle, issueData.description ?? "", initialPlan ?? ""], lock: true,
@@ -10442,7 +10446,7 @@ export function issueService(db: Db) {
         parentAdjustment = parentResolution.adjustment;
         issueData.parentId = parentResolution.effectiveParentId;
         if (issueData.parentId && issueData.parentId !== requestedParentId) {
-          await assertAgentInteraction(tx, { companyId, actorAgentId: issueData.createdByAgentId,
+          await assertAgentInteraction(tx, { companyId, actorAgentId: assignmentAgentId, actorCompanyId: assignmentActor?.companyId,
             operation: "edit", issueId: issueData.parentId, lock: true });
         }
         await assertParentInCompany(tx, companyId, issueData.parentId);
