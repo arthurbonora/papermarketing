@@ -7,9 +7,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CompanyOperationAlert } from "@paperclipai/shared";
 import { OperationAlertsNavItem } from "@/components/OperationAlertsNavItem";
 import { queryKeys } from "@/lib/queryKeys";
+import { markCachedSession } from "@/lib/cached-session";
+import { ApiError } from "@/api/client";
 import { OperationAlerts } from "./OperationAlerts";
 
-const mock = vi.hoisted(() => ({ get: vi.fn(), getBoardAccess: vi.fn(), setBreadcrumbs: vi.fn() }));
+const mock = vi.hoisted(() => ({ get: vi.fn(), getBoardAccess: vi.fn(), getSession: vi.fn(), setBreadcrumbs: vi.fn() }));
+
+vi.mock("@/api/auth", () => ({
+  authApi: { getSession: mock.getSession },
+}));
 
 vi.mock("@/api/client", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/api/client")>(),
@@ -43,6 +49,7 @@ describe("Operation alerts", () => {
   beforeEach(() => {
     mock.get.mockReset();
     mock.getBoardAccess.mockReset();
+    mock.getSession.mockReset();
     host = document.createElement("div");
     document.body.append(host);
     root = createRoot(host);
@@ -99,6 +106,105 @@ describe("Operation alerts", () => {
     const nav = () => host.querySelector('[data-testid="nav"]');
     await vi.waitFor(() => expect(nav()?.textContent).toBe("Operation alerts 1"));
     expect(nav()?.getAttribute("data-tone")).toBe("default");
+  });
+
+  it("keeps the same navigation node while revalidating the account without showing cached alerts", async () => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    const nav = host.querySelector('[data-testid="nav"]');
+    let finish!: (value: { user: { id: string } }) => void;
+    mock.getSession.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    let refresh!: Promise<void>;
+
+    await act(async () => {
+      refresh = client.invalidateQueries({ queryKey: queryKeys.auth.session });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.querySelector('[data-testid="nav"]')).toBe(nav);
+    expect(nav?.textContent?.trim()).toBe("Operation alerts");
+    expect(host.textContent).not.toContain("Secret write");
+    expect(mock.get).toHaveBeenCalledTimes(1);
+    expect(mock.getBoardAccess).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      finish({ user: { id: "board-user" } });
+      await refresh;
+    });
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    expect(host.querySelector('[data-testid="nav"]')).toBe(nav);
+    expect(nav?.textContent).toBe("Operation alerts 2");
+  });
+
+  it.each(["signed-out", "unverified"] as const)("hides cached alerts and navigation for a %s session", async (state) => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+
+    await act(async () => {
+      if (state === "unverified") {
+        markCachedSession(client);
+        mock.getSession.mockResolvedValue({ user: { id: "board-user" } });
+        await client.invalidateQueries({ queryKey: queryKeys.auth.session });
+      } else {
+        client.setQueryData(queryKeys.auth.session, null);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.querySelector('[data-testid="nav"]')).toBeNull();
+    expect(host.textContent).not.toContain("Secret write");
+    expect(mock.get).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["signed-out", "other-account"] as const)("drops the previous account's alerts when session verification returns %s", async (state) => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    let finish!: (value: { user: { id: string } } | null) => void;
+    mock.getSession.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    let refresh!: Promise<void>;
+    await act(async () => {
+      refresh = client.invalidateQueries({ queryKey: queryKeys.auth.session });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    mock.getBoardAccess.mockResolvedValue({
+      userId: "other", source: "session", isInstanceAdmin: false, companyIds: [], memberships: [],
+    });
+    await act(async () => {
+      finish(state === "signed-out" ? null : { user: { id: "other" } });
+      await refresh;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.querySelector('[data-testid="nav"]')).toBeNull();
+    expect(host.textContent).not.toContain("Secret write");
+    expect(mock.get).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([401, 403])("hides cached alert data and navigation after the alerts endpoint denies access with %s", async (status) => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    mock.get.mockRejectedValue(new ApiError("Access denied", status));
+
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: queryKeys.operationAlerts("company-1", "user:board-user") });
+    });
+    await vi.waitFor(() => expect(host.querySelector('[data-testid="nav"]')).toBeNull());
+    expect(host.textContent).not.toContain("Secret write");
+  });
+
+  it.each([401, 403])("hides navigation and cached alerts after access is denied with %s", async (status) => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    mock.getBoardAccess.mockRejectedValue(new ApiError("Access denied", status));
+
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: queryKeys.access.currentBoardAccess });
+    });
+    await vi.waitFor(() => expect(host.querySelector('[data-testid="nav"]')).toBeNull());
+    expect(host.textContent).not.toContain("Secret write");
+    expect(mock.get).toHaveBeenCalledTimes(1);
   });
 
   it("drops the previous admin's cached alerts when the session changes", async () => {

@@ -21,9 +21,9 @@ export function useOperationAlerts(companyId: string | null, poll = false) {
   const userId = session.isSuccess
     && session.fetchStatus !== "paused"
     && !hasUnverifiedSession(queryClient)
-    && !queryClient.getQueryState(queryKeys.auth.session)?.isInvalidated
     ? session.data?.user.id ?? null
     : null;
+  const sessionVerified = !queryClient.getQueryState(queryKeys.auth.session)?.isInvalidated;
   const accountKey = localTrusted ? "local_implicit" : userId && `user:${userId}`;
 
   const access = useQuery({
@@ -37,11 +37,11 @@ export function useOperationAlerts(companyId: string | null, poll = false) {
       }
       return board;
     },
-    enabled: Boolean(companyId && accountKey),
+    enabled: Boolean(companyId && accountKey && (localTrusted || sessionVerified)),
   });
   const board = access.data;
   const membership = board?.memberships?.find((item) => item.companyId === companyId);
-  const canView = Boolean(companyId && board && !accessDenied(access.error) && (
+  const permittedAccount = Boolean(companyId && board && !accessDenied(access.error) && (
     (localTrusted && board.source === "local_implicit") ||
     (userId === board.userId && board.companyIds.includes(companyId) && (
       board.isInstanceAdmin ||
@@ -49,6 +49,7 @@ export function useOperationAlerts(companyId: string | null, poll = false) {
         (membership.membershipRole === "owner" || membership.membershipRole === "admin"))
     ))
   ));
+  const accountVerified = permittedAccount && (localTrusted || sessionVerified);
 
   const alerts = useQuery({
     queryKey: queryKeys.operationAlerts(companyId, accountKey),
@@ -57,17 +58,21 @@ export function useOperationAlerts(companyId: string | null, poll = false) {
       detachInflightGet(path);
       return api.get<CompanyOperationAlert[]>(path, { signal });
     },
-    enabled: canView,
+    enabled: accountVerified,
     staleTime: OPERATION_ALERTS_INTERVAL_MS,
     refetchInterval: (query) => {
-      if (!poll || !canView || accessDenied(query.state.error)) return false;
+      if (!poll || !accountVerified || accessDenied(query.state.error)) return false;
       return OPERATION_ALERTS_INTERVAL_MS;
     },
   });
 
-  const visibleAlerts = canView && !accessDenied(alerts.error) ? alerts.data : undefined;
+  const canView = accountVerified && !accessDenied(alerts.error);
+  const visibleAlerts = canView ? alerts.data : undefined;
   const recentCount = visibleAlerts?.length ?? 0;
   const activeCount = visibleAlerts?.filter((alert) => alert.resolvedAt === null).length ?? 0;
 
-  return { access, alerts, canView, recentCount, activeCount };
+  // An ordinary session refresh can retain the generic destination. Alert data
+  // and its badge still wait for the account to be verified.
+  const canShowNav = permittedAccount && !accessDenied(alerts.error);
+  return { access, alerts, canView, canShowNav, recentCount, activeCount };
 }

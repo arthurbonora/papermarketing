@@ -9,15 +9,15 @@ interface OperationAlertsNavItemProps {
 }
 
 export function OperationAlertsNavItem({ companyId, NavItem = SidebarNavItem, className }: OperationAlertsNavItemProps) {
-  const { recentCount, activeCount, canView } = useOperationAlerts(companyId);
-  if (!canView) return null;
+  const { recentCount, activeCount, canView, canShowNav } = useOperationAlerts(companyId);
+  if (!canShowNav) return null;
 
   return (
     <NavItem
       to="/operation-alerts"
       label="Operation alerts"
       icon={BellRing}
-      badge={recentCount}
+      badge={canView ? recentCount : undefined}
       badgeLabel="recent alerts"
       badgeTone={activeCount > 0 ? "warning" : "default"}
       className={className}

@@ -514,6 +514,9 @@ carry a task filter open All. Old `/inbox` links redirect to the matching view.
 ### Board operation alerts
 
 Company owners and administrators can open **Operation alerts** from the board navigation.
+The navigation link stays in place during session revalidation for the same
+known account. Counts and alert data remain hidden until the session is verified;
+signing out, changing accounts, or losing access removes the link.
 The navigation badge counts recent alerts, including operations that already
 ended. It highlights the count while an operation is still running. The board
 checks for changes every 20 seconds while it is open.
