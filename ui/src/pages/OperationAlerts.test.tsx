@@ -9,6 +9,7 @@ import { OperationAlertsNavItem } from "@/components/OperationAlertsNavItem";
 import { queryKeys } from "@/lib/queryKeys";
 import { markCachedSession } from "@/lib/cached-session";
 import { ApiError } from "@/api/client";
+import { isLiveReconciledQuery } from "@/lib/live-reconcile";
 import { OperationAlerts } from "./OperationAlerts";
 
 const mock = vi.hoisted(() => ({ get: vi.fn(), getBoardAccess: vi.fn(), getSession: vi.fn(), setBreadcrumbs: vi.fn() }));
@@ -23,6 +24,9 @@ vi.mock("@/api/client", async (importOriginal) => ({
 }));
 vi.mock("@/api/access", () => ({
   accessApi: { getCurrentBoardAccess: mock.getBoardAccess },
+}));
+vi.mock("@/api/health", () => ({
+  healthApi: { get: vi.fn().mockResolvedValue({ deploymentMode: "authenticated" }) },
 }));
 vi.mock("@/context/CompanyContext", () => ({
   useCompany: () => ({ selectedCompanyId: "company-1" }),
@@ -156,6 +160,59 @@ describe("Operation alerts", () => {
     expect(mock.get).toHaveBeenCalledTimes(1);
   });
 
+  it("finishes the access read when a background session refresh confirms the same account", async () => {
+    mock.get.mockResolvedValue(alerts);
+    let finishAccess!: (value: unknown) => void;
+    mock.getBoardAccess.mockReturnValueOnce(new Promise((resolve) => { finishAccess = resolve; }));
+    await render("admin");
+    let finishSession!: (value: { user: { id: string } }) => void;
+    mock.getSession.mockReturnValue(new Promise((resolve) => { finishSession = resolve; }));
+    let refresh!: Promise<void>;
+    await act(async () => {
+      refresh = client.refetchQueries({ queryKey: queryKeys.auth.session });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await act(async () => {
+      finishSession({ user: { id: "board-user" } });
+      await refresh;
+      finishAccess({
+        userId: "board-user", source: "session", isInstanceAdmin: true,
+        companyIds: ["company-1"], memberships: [],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await vi.waitFor(() => expect(host.querySelector('[data-testid="nav"]')?.textContent).toBe("Operation alerts 2"));
+    expect(host.textContent).toContain("Secret write");
+  });
+
+  it("keeps the navigation stable without starting alert reads during a live reconnect reconcile", async () => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    const nav = host.querySelector('[data-testid="nav"]');
+    let finish!: (value: { user: { id: string } }) => void;
+    mock.getSession.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    let refresh!: Promise<void>;
+
+    await act(async () => {
+      refresh = client.invalidateQueries({ type: "active", predicate: isLiveReconciledQuery }, { cancelRefetch: false });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    try {
+      expect(host.querySelector('[data-testid="nav"]')).toBe(nav);
+      expect(nav?.textContent?.trim()).toBe("Operation alerts");
+      expect(host.textContent).not.toContain("Secret write");
+      expect(mock.get).toHaveBeenCalledTimes(1);
+      expect(mock.getBoardAccess).toHaveBeenCalledTimes(1);
+    } finally {
+      await act(async () => {
+        finish({ user: { id: "board-user" } });
+        await refresh;
+      });
+    }
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+  });
+
   it.each(["signed-out", "other-account"] as const)("drops the previous account's alerts when session verification returns %s", async (state) => {
     mock.get.mockResolvedValue(alerts);
     await render("admin");
@@ -191,6 +248,35 @@ describe("Operation alerts", () => {
     });
     await vi.waitFor(() => expect(host.querySelector('[data-testid="nav"]')).toBeNull());
     expect(host.textContent).not.toContain("Secret write");
+  });
+
+  it.each(["response", "denial"] as const)("discards a late alert %s after the session changes and returns to the same account", async (outcome) => {
+    mock.get.mockResolvedValue(alerts);
+    await render("admin");
+    await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
+    let resolveRead!: (value: CompanyOperationAlert[]) => void;
+    let rejectRead!: (error: Error) => void;
+    mock.get.mockReturnValueOnce(new Promise((resolve, reject) => {
+      resolveRead = resolve;
+      rejectRead = reject;
+    }));
+    const key = queryKeys.operationAlerts("company-1", "user:board-user");
+    let refresh!: Promise<void>;
+    await act(async () => {
+      refresh = client.invalidateQueries({ queryKey: key });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      client.setQueryData(queryKeys.auth.session, null);
+      client.setQueryData(queryKeys.auth.session, { user: { id: "board-user" } });
+    });
+    await act(async () => {
+      if (outcome === "denial") rejectRead(new ApiError("Other account denied", 403));
+      else resolveRead([{ ...alerts[0], id: "other-account-alert" }]);
+      await refresh;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(client.getQueryData(key)).toEqual(alerts);
+    expect(client.getQueryState(key)?.error).toBeNull();
+    expect(host.querySelector('[data-testid="nav"]')?.textContent).toBe("Operation alerts 2");
   });
 
   it.each([401, 403])("hides navigation and cached alerts after access is denied with %s", async (status) => {

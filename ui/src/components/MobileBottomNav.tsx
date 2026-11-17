@@ -56,7 +56,7 @@ export function MobileBottomNav({ visible, marketingNavigation = false }: Mobile
   const inboxBadge = useInboxBadge(coordinatorWorkspaceEnabled ? null : selectedCompanyId);
   const { enabled: combinedInboxTasksEnabled } = useCombinedInboxTasksEnabled();
   const attentionCount = useCoordinatorAttentionCount(selectedCompanyId, coordinatorWorkspaceEnabled);
-  const { recentCount, activeCount, canView: canViewOperationAlerts } = useOperationAlerts(selectedCompanyId);
+  const { recentCount, activeCount, canShowNav: canViewOperationAlerts } = useOperationAlerts(selectedCompanyId);
 
   // PAP-670: with both flags off the bar is the original Home · Tasks · + ·
   // Agents · Inbox. Agent Chat adds Chat in the second slot (Home · Chat · + ·
