@@ -241,7 +241,7 @@ describe("Operation alerts", () => {
     mock.get.mockResolvedValue(alerts);
     await render("admin");
     await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
-    mock.get.mockRejectedValue(new ApiError("Access denied", status));
+    mock.get.mockRejectedValue(new ApiError("Access denied", status, null));
 
     await act(async () => {
       await client.invalidateQueries({ queryKey: queryKeys.operationAlerts("company-1", "user:board-user") });
@@ -269,7 +269,7 @@ describe("Operation alerts", () => {
       client.setQueryData(queryKeys.auth.session, { user: { id: "board-user" } });
     });
     await act(async () => {
-      if (outcome === "denial") rejectRead(new ApiError("Other account denied", 403));
+      if (outcome === "denial") rejectRead(new ApiError("Other account denied", 403, null));
       else resolveRead([{ ...alerts[0], id: "other-account-alert" }]);
       await refresh;
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -283,7 +283,7 @@ describe("Operation alerts", () => {
     mock.get.mockResolvedValue(alerts);
     await render("admin");
     await vi.waitFor(() => expect(host.textContent).toContain("Secret write"));
-    mock.getBoardAccess.mockRejectedValue(new ApiError("Access denied", status));
+    mock.getBoardAccess.mockRejectedValue(new ApiError("Access denied", status, null));
 
     await act(async () => {
       await client.invalidateQueries({ queryKey: queryKeys.access.currentBoardAccess });
