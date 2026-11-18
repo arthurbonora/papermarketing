@@ -3297,6 +3297,85 @@ describeEmbeddedPostgres("tool gateway service", () => {
     expect(calls[0].params).toEqual({ name: "search_messages", arguments: parameters });
   });
 
+  it.each([
+    { mixedSuccess: false, isError: true, sensitiveName: false, label: "classifies a failed Composio batch with an absent upstream tool" },
+    { mixedSuccess: false, isError: false, sensitiveName: false, label: "classifies an absent Composio upstream tool when the MCP error flag is omitted" },
+    { mixedSuccess: false, isError: true, sensitiveName: true, label: "redacts secret-like names in a failed Composio batch" },
+    { mixedSuccess: true, isError: false, sensitiveName: false, label: "preserves mixed Composio batch results" },
+  ])("$label without replaying the call", async ({ mixedSuccess, isError, sensitiveName }) => {
+    const { company, agent, run } = await createRunFixture(db);
+    const { connection, catalogEntry } = await createRemoteMcpToolFixture(db, company.id);
+    await db.update(toolConnections).set({
+      config: { url: "https://8.8.8.8/mcp", sourceTemplateKey: "composio" },
+    }).where(eq(toolConnections.id, connection.id));
+    await db.update(toolCatalogEntries).set({
+      name: "COMPOSIO_MULTI_EXECUTE_TOOL",
+      toolName: "COMPOSIO_MULTI_EXECUTE_TOOL",
+    }).where(eq(toolCatalogEntries.id, catalogEntry.id));
+    await db.insert(toolPolicies).values(readPolicyRow(company, "Allow remote batch fixture"));
+    const upstreamName = sensitiveName ? "ghp_" + "a".repeat(36) : "start-editing-transaction";
+    const providerError = `MCP tool error: MCP error -32602: Tool ${upstreamName} not found`;
+    const results = [{
+      response: { successful: false, data: {}, error: providerError },
+      tool_slug: "CANVA_MCP_START_EDITING_TRANSACTION",
+      index: 0,
+    }, ...(mixedSuccess ? [{
+      response: { successful: true, data: { design_id: "design_fixture" }, error: null },
+      tool_slug: "CANVA_GET_DESIGN",
+      index: 1,
+    }] : [])];
+    const envelope = {
+      successful: mixedSuccess,
+      data: {
+        results,
+        total_count: results.length,
+        success_count: mixedSuccess ? 1 : 0,
+        error_count: 1,
+      },
+      error: `1 out of ${results.length} tools failed`,
+      log_id: "log_fixture",
+    };
+    const content = [{ type: "text", text: JSON.stringify(envelope) }];
+    const provider = vi.fn(async (_url, init) => {
+      const payload = JSON.parse(String(init.body));
+      return Response.json({ jsonrpc: "2.0", id: payload.id, result: {
+        content,
+        ...(isError ? { isError: true, structuredContent: { error_code: "COMPOSIO_EXECUTION_ERROR" } } : {}),
+      } });
+    });
+    const gateway = createTestToolGatewayService(db, { remoteHttpRequest: provider });
+    const session = await gateway.createSession(runSessionInput(company, agent, run));
+    const tool = (await gateway.listToolsForSession(session.token))
+      .find((candidate) => candidate.upstreamToolName === "COMPOSIO_MULTI_EXECUTE_TOOL")!;
+    expect(tool).toBeTruthy();
+    const execution = gateway.executeTool({ sessionToken: session.token, tool: tool.name, parameters: {} });
+
+    if (mixedSuccess) {
+      await expect(execution).resolves.toMatchObject({
+        status: "completed",
+        result: { content: JSON.stringify(envelope), data: { content } },
+      });
+    } else {
+      const expectedName = sensitiveName ? "***REDACTED***" : upstreamName;
+      await expect(execution).rejects.toMatchObject({
+        reasonCode: "upstream_tool_not_found",
+        message: expect.stringContaining(`Tool ${expectedName} not found`),
+      });
+      const [invocation] = await db.select().from(toolInvocations)
+        .where(eq(toolInvocations.companyId, company.id));
+      expect(invocation).toMatchObject({ status: "failed", errorCode: "upstream_tool_not_found" });
+      expect(invocation.errorMessage).toContain(`Tool ${expectedName} not found`);
+      if (sensitiveName) expect(invocation.errorMessage).not.toContain(upstreamName);
+      expect(invocation.errorMessage).toContain("log_fixture");
+      expect(invocation.errorMessage).toContain("CANVA_MCP_START_EDITING_TRANSACTION");
+      const events = await db.select().from(toolCallEvents).where(and(
+        eq(toolCallEvents.companyId, company.id), eq(toolCallEvents.eventType, "call_failed"),
+      ));
+      expect(events).toMatchObject([{ outcome: "failure", reasonCode: "upstream_tool_not_found" }]);
+    }
+    expect(provider).toHaveBeenCalledTimes(1);
+  });
+
   it("explains Google Workspace preview enrollment when a tool call is denied", async () => {
     const { company, agent, run } = await createRunFixture(db);
     const { connection } = await createRemoteMcpToolFixture(db, company.id);

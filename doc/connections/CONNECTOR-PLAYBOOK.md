@@ -2810,6 +2810,14 @@ to company, saved gateway, viewing human, and credential identity, including
 secret versions. Credential replacement or rotation hides the old inventory.
 Discovery and app setup never create agent grants or change saved policies.
 
+An active Composio account confirms account availability. Check the actual
+tool call to verify a capability. When every operation in a Composio execution
+batch reports a missing upstream MCP tool, the gateway records
+`upstream_tool_not_found` with the reported tool names and any Composio log ID.
+Check that the toolkit catalog matches the tool list from the MCP session that
+executes the call. The gateway preserves mixed batch results and does not replay
+the request.
+
 Apps starts a background check of the entire supported public Composio catalog,
 independent of search and pagination. `POST /tool-connections/:id/composio/apps/sync`
 returns cached observations and sync progress; `{force:true}` requests a refresh.

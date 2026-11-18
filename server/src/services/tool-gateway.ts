@@ -49,6 +49,7 @@ import { captureRunIdentity } from "./run-identity.js";
 import { emitConnectionInvoked } from "./connector-telemetry.js";
 import { resolveManagedGitHubIdentitySelection } from "./git-credentials.js";
 import { extractRemoteMcpPending } from "./remote-mcp-pending.js";
+import { composioUnavailableToolMessage } from "./composio-tool-result.js";
 import { logger } from "../middleware/logger.js";
 import { getAppDefinitionForApplicationKey, isConnectorFeatureEnabled } from "@paperclipai/shared";
 import { instanceSettingsService } from "./instance-settings.js";
@@ -6739,6 +6740,12 @@ export function createToolGatewayService(
         "ok",
         "Remote MCP server responded to tools/call.",
       );
+      if (sourceTemplateKey === "composio" && entry.toolName === "COMPOSIO_MULTI_EXECUTE_TOOL") {
+        const unavailable = composioUnavailableToolMessage(payloadRecord.result);
+        if (unavailable) {
+          throw new ToolGatewayHttpError(502, redactSensitiveText(unavailable), "upstream_tool_not_found", { execution });
+        }
+      }
       return { result, failureInstructions, headerSummary, execution };
     } catch (error) {
       execution.error = remoteHttpErrorEvidence(error);
