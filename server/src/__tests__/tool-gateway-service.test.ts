@@ -3301,7 +3301,7 @@ describeEmbeddedPostgres("tool gateway service", () => {
     { mixedSuccess: false, isError: true, sensitiveName: false, label: "classifies a failed Composio batch with an absent upstream tool" },
     { mixedSuccess: false, isError: false, sensitiveName: false, label: "classifies an absent Composio upstream tool when the MCP error flag is omitted" },
     { mixedSuccess: false, isError: true, sensitiveName: true, label: "redacts secret-like names in a failed Composio batch" },
-    { mixedSuccess: true, isError: false, sensitiveName: false, label: "preserves mixed Composio batch results" },
+    { mixedSuccess: true, isError: true, sensitiveName: false, label: "preserves mixed Composio batch results" },
   ])("$label without replaying the call", async ({ mixedSuccess, isError, sensitiveName }) => {
     const { company, agent, run } = await createRunFixture(db);
     const { connection, catalogEntry } = await createRemoteMcpToolFixture(db, company.id);
@@ -3321,11 +3321,11 @@ describeEmbeddedPostgres("tool gateway service", () => {
       index: 0,
     }, ...(mixedSuccess ? [{
       response: { successful: true, data: { design_id: "design_fixture" }, error: null },
-      tool_slug: "CANVA_GET_DESIGN",
+      tool_slug: "CANVA_MCP_SEARCH_DESIGNS",
       index: 1,
     }] : [])];
     const envelope = {
-      successful: mixedSuccess,
+      successful: false,
       data: {
         results,
         total_count: results.length,
@@ -3351,9 +3351,9 @@ describeEmbeddedPostgres("tool gateway service", () => {
     const execution = gateway.executeTool({ sessionToken: session.token, tool: tool.name, parameters: {} });
 
     if (mixedSuccess) {
-      await expect(execution).resolves.toMatchObject({
-        status: "completed",
-        result: { content: JSON.stringify(envelope), data: { content } },
+      await expect(execution).rejects.toMatchObject({
+        reasonCode: "tool_error",
+        message: JSON.stringify(envelope),
       });
     } else {
       const expectedName = sensitiveName ? "***REDACTED***" : upstreamName;
